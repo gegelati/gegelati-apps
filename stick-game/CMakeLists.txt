@@ -66,8 +66,9 @@ endif()
 # ************** Executable  ****************
 # *******************************************
 file(GLOB_RECURSE
-     stick_game_files
-     ./src/*.cpp
+	stick_game_files
+	./src/*.cpp
+	./src/*.h
 )
 
 include_directories(${GEGELATI_INCLUDE_DIRS})
