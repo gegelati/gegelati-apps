@@ -63,7 +63,7 @@ int main() {
 	printf("Gen\tNbVert\tMin\tAvg\tMax\n");
 	for (int i = 0; i < 300; i++) {
 		char buff[11];
-		sprintf(buff, "out_%3d.dot", i);
+		sprintf(buff, "out_%03d.dot", i);
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
 		std::multimap<double, const TPG::TPGVertex*> result;
