@@ -58,7 +58,7 @@ public:
 	virtual void doAction(uint64_t actionID) override;
 
 	/// Inherited via LearningEnvironment
-	virtual void reset(size_t seed = 0) override;
+	virtual void reset(size_t seed = 0, Learn::LearningMode mode = Learn::LearningMode::TRAINING) override;
 
 	/// Inherited via LearningEnvironment
 	virtual std::vector<std::reference_wrapper<DataHandlers::DataHandler>> getDataSources() override;

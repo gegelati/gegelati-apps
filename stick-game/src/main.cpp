@@ -67,7 +67,7 @@ int main() {
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
 		std::multimap<double, const TPG::TPGVertex*> result;
-		result = la.evaluateAllRoots(i);
+		result = la.evaluateAllRoots(i, Learn::LearningMode::VALIDATION);
 		auto iter = result.begin();
 		double min = iter->first;
 		std::advance(iter, result.size() - 1);
