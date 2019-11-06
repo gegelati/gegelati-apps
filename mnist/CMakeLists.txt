@@ -34,6 +34,22 @@ else()
 endif()
 
 # *******************************************
+# ************ MNIST database ***************
+# *******************************************
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/dat/train-images-idx3-ubyte.gz")
+	message(STATUS "Download MNIST training database 1/4 (may take a few seconds).")
+	file(DOWNLOAD http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz ${CMAKE_CURRENT_SOURCE_DIR}/dat/train-images-idx3-ubyte.gz)
+	message(STATUS "Download MNIST training database 2/4 (may take a few seconds).")
+	file(DOWNLOAD http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz ${CMAKE_CURRENT_SOURCE_DIR}/dat/train-labels-idx1-ubyte.gz)
+	message(STATUS "Download MNIST training database 3/4 (may take a few seconds).")
+	file(DOWNLOAD http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz ${CMAKE_CURRENT_SOURCE_DIR}/dat/t10k-images-idx3-ubyte.gz)
+	message(STATUS "Download MNIST training database 4/4 (may take a few seconds).")
+	file(DOWNLOAD http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz ${CMAKE_CURRENT_SOURCE_DIR}/dat/t10k-labels-idx1-ubyte.gz)
+else()
+	message(STATUS "MNIST data already downloaded.")
+endif()	
+
+# *******************************************
 # *********** GEGELATI LIBRARY **************
 # *******************************************
 
