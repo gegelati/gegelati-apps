@@ -49,6 +49,16 @@ else()
 	message(STATUS "MNIST data already downloaded.")
 endif()	
 
+message(STATUS "Extract MNIST database.")
+execute_process(
+	COMMAND gzip -dfk ${CMAKE_SOURCE_DIR}/dat/train-images-idx3-ubyte.gz
+	COMMAND gzip -dfk ${CMAKE_SOURCE_DIR}/dat/train-labels-idx1-ubyte.gz
+	COMMAND gzip -dfk ${CMAKE_SOURCE_DIR}/dat/t10k-images-idx3-ubyte.gz
+	COMMAND gzip -dfk ${CMAKE_SOURCE_DIR}/dat/t10k-labels-idx1-ubyte.gz
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/dat
+)
+set(MNIST_DATA_DIR ${CMAKE_SOURCE_DIR}/dat)
+
 # *******************************************
 # *********** GEGELATI LIBRARY **************
 # *******************************************
@@ -85,8 +95,10 @@ file(GLOB_RECURSE
 	mnist_files
 	./src/*.cpp
 	./src/*.h
+	./src/mnist_reader/*.hpp
 )
 
 include_directories(${GEGELATI_INCLUDE_DIRS})
 add_executable(mnist ${mnist_files})
 target_link_libraries(mnist ${GEGELATI_LIBRARIES})
+target_compile_definitions(mnist PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}")
