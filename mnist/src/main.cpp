@@ -44,10 +44,11 @@ int main() {
 	params.mutation.prog.pMutate = 1.0;
 	params.mutation.prog.pSwap = 1.0;
 	params.mutation.prog.maxProgramSize = 20;
-	params.archiveSize = 50;
 	params.maxNbActionsPerEval = 500;
 	params.nbIterationsPerPolicyEvaluation = 1;
 	params.ratioDeletedRoots = 0.80;
+	params.archiveSize = 500;
+	params.archivingProbability = 0.01;
 
 	// Instantiate the LearningEnvironment
 	MNIST mnistLE;
@@ -62,7 +63,7 @@ int main() {
 	// Train for 300 generations
 	printf("Gen\tNbVert\tMin\tAvg\tMax\n");
 	for (int i = 0; i < 300; i++) {
-		char buff[11];
+		char buff[12];
 		sprintf(buff, "out_%03d.dot", i);
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
