@@ -23,7 +23,7 @@ void MNIST::changeCurrentImage()
 
 }
 
-MNIST::MNIST() : LearningEnvironment(11), dataset(mnist::read_dataset<std::vector, std::vector, double, uint8_t>(MNIST_DATA_LOCATION)),
+MNIST::MNIST() : LearningEnvironment(10), dataset(mnist::read_dataset<std::vector, std::vector, double, uint8_t>(MNIST_DATA_LOCATION)),
 nbCorrectGuesses{ 0 }, nbIncorrectGuesses{ 0 }, nbNoGuesses{ 0 }, currentImage(28 * 28), currentLabel{ 0 }
 {
 	std::cout << "Nbr of training images = " << dataset.training_images.size() << std::endl;
@@ -34,13 +34,9 @@ nbCorrectGuesses{ 0 }, nbIncorrectGuesses{ 0 }, nbNoGuesses{ 0 }, currentImage(2
 
 void MNIST::doAction(uint64_t actionID)
 {
-	// If the action is 10 -> no guess was made by the network.
-	if (actionID == 10) {
-		this->nbNoGuesses++;
-	}
 	// An action has been done.
 	// Check if the given action corresponds to the image label.
-	else if (actionID == this->currentLabel) {
+	if (actionID == this->currentLabel) {
 		this->nbCorrectGuesses++;
 	}
 	else {
@@ -72,7 +68,7 @@ std::vector<std::reference_wrapper<DataHandlers::DataHandler>> MNIST::getDataSou
 
 double MNIST::getScore() const
 {
-	uint64_t totalNbGuesses = this->nbCorrectGuesses + this->nbIncorrectGuesses + this->nbNoGuesses;
+	uint64_t totalNbGuesses = this->nbCorrectGuesses + this->nbIncorrectGuesses;
 	return (double)this->nbCorrectGuesses / (double)totalNbGuesses;
 }
 

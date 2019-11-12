@@ -46,7 +46,7 @@ int main() {
 	params.mutation.prog.maxProgramSize = 20;
 	params.maxNbActionsPerEval = 500;
 	params.nbIterationsPerPolicyEvaluation = 1;
-	params.ratioDeletedRoots = 0.80;
+	params.ratioDeletedRoots = 0.90;
 	params.archiveSize = 500;
 	params.archivingProbability = 0.01;
 
