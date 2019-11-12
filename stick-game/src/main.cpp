@@ -2,6 +2,8 @@
 #include <unordered_set>
 #include <numeric>
 #include <string>
+#include <cfloat>
+#include <inttypes.h>
 
 #include <gegelati.h>
 
@@ -62,7 +64,7 @@ int main() {
 	// Train for 300 generations
 	printf("Gen\tNbVert\tMin\tAvg\tMax\n");
 	for (int i = 0; i < 300; i++) {
-		char buff[11];
+		char buff[12];
 		sprintf(buff, "out_%03d.dot", i);
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
@@ -75,7 +77,7 @@ int main() {
 		double avg = std::accumulate(result.begin(), result.end(), 0.0,
 			[](double acc, std::pair<double, const TPG::TPGVertex*> pair)->double {return acc + pair.first; });
 		avg /= result.size();
-		printf("%3d\t%4lld\t%1.2lf\t%1.2lf\t%1.2lf\n", i, la.getTPGGraph().getNbVertices(), min, avg, max);
+		printf("%3d\t%4" PRIu64 "\t%1.2lf\t%1.2lf\t%1.2lf\n", i, la.getTPGGraph().getNbVertices(), min, avg, max);
 		la.trainOneGeneration(i);
 
 	}
