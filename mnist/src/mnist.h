@@ -97,6 +97,9 @@ public:
 
 	/**
 	* \brief Function printing the statistics of the classification.
+	*
+	* \param[in] result the Map containing the list of roots within a TPGGraph,
+	* with their score in ascending order.
 	*/
 	void MNIST::printClassifStatsTable(std::multimap<double, const TPG::TPGVertex*>& result);
 };

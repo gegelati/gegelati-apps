@@ -1,9 +1,39 @@
 #include <iostream>
 #include <numeric>
+#include <thread>
+#include <atomic>
 
 #include <gegelati.h>
 
 #include "mnist.h"
+
+void getKey(std::atomic<bool>& exit, std::atomic<bool>& printStats) {
+	std::cout << std::endl;
+	std::cout << "Press `q` then [Enter] to exit." << std::endl;
+	std::cout << "Press `p` then [Enter] to print classification statistics of the best root." << std::endl;
+
+	exit = false;
+
+	while (!exit) {
+		char c;
+		std::cin >> c;
+		switch (c) {
+		case 'q':
+		case 'Q':
+			exit = true;
+			printStats = true;
+			break;
+		case 'p':
+		case 'P':
+			printStats = true;
+			break;
+		default:
+			printf("Invalid key '%c' pressed.", c);
+		}
+	}
+
+	printf("Program will terminate at the end of next generation.\n");
+}
 
 int main() {
 	std::cout << "Start MNIST application." << std::endl;
@@ -17,7 +47,6 @@ int main() {
 	auto max = [](double a, double b)->double {return std::max(a, b); };
 	auto ln = [](double a, double b)->double {return std::log(a); };
 	auto exp = [](double a, double b)->double {return std::exp(a); };
-
 
 	set.add(*(new Instructions::LambdaInstruction<double>(minus)));
 	set.add(*(new Instructions::LambdaInstruction<double>(add)));
@@ -60,9 +89,16 @@ int main() {
 	// Create an exporter for all graphs
 	Exporter::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
 
+	// Start a thread for controlling the loop
+	std::atomic<bool> exitProgram = true; // (set to false by other thread) 
+	std::atomic<bool> printStats = false;
+	std::thread threadKeyboard(getKey, std::ref(exitProgram), std::ref(printStats));
+
+	while (exitProgram); // Wait for other thread to print key info.
+
 	// Train for 300 generations
-	printf("Gen\tNbVert\tMin\tAvg\tMax\n");
-	for (int i = 0; i < 300; i++) {
+	printf("\nGen\tNbVert\tMin\tAvg\tMax\n");
+	for (int i = 0; i < 300 && !exitProgram; i++) {
 		char buff[12];
 		sprintf(buff, "out_%03d.dot", i);
 		dotExporter.setNewFilePath(buff);
@@ -78,7 +114,10 @@ int main() {
 		avg /= result.size();
 		printf("%3d\t%4lld\t%1.2lf\t%1.2lf\t%1.2lf\n", i, la.getTPGGraph().getNbVertices(), min, avg, max);
 
-		mnistLE.printClassifStatsTable(result);
+		if (printStats) {
+			mnistLE.printClassifStatsTable(result);
+			printStats = false;
+		}
 
 		la.trainOneGeneration(i);
 	}
@@ -92,6 +131,10 @@ int main() {
 	for (int i = 0; i < set.getNbInstructions(); i++) {
 		delete (&set.getInstruction(i));
 	}
+
+	// Exit the thread
+	std::cout << "Exiting program, press a key then [enter] to exit if nothing happens.";
+	threadKeyboard.join();
 
 	return 0;
 }

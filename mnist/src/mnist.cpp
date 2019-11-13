@@ -17,7 +17,7 @@ void MNIST::changeCurrentImage()
 	}
 	else {
 		// If the mode is TESTING, just go to the next image
-		this->currentIndex++;
+		this->currentIndex = (this->currentIndex + 1) % dataSource.size();
 	}
 
 	// Load the image in the dataSource
@@ -106,7 +106,7 @@ void MNIST::printClassifStatsTable(std::multimap<double, const TPG::TPGVertex*>&
 	uint64_t classifTable[10][10] = { 0 };
 	uint64_t nbPerClass[10] = { 0 };
 
-	const int TOTAL_NB_IMAGE = 1000;
+	const int TOTAL_NB_IMAGE = 10000;
 	for (int nbImage = 0; nbImage < TOTAL_NB_IMAGE; nbImage++) {
 		// Get answer
 		uint8_t currentLabel = this->getCurrentImageLabel();
@@ -137,4 +137,5 @@ void MNIST::printClassifStatsTable(std::multimap<double, const TPG::TPGVertex*>&
 		}
 		printf("%lld\n", nbPerClass[i]);
 	}
+	std::cout << std::endl;
 }
