@@ -5,6 +5,58 @@
 
 #include "mnist.h"
 
+/**
+* \brief Function printing the statistics of the classification.
+*/
+void printClassifStatsTable(MNIST& mnistLE, std::multimap<double, const TPG::TPGVertex*>& result) {
+	// Print table of classif of the best
+	TPG::TPGExecutionEngine tee(NULL);
+
+	// Get best root		
+	auto iterResults = result.begin();
+	std::advance(iterResults, result.size() - 1);
+	auto bestRoot = iterResults->second;
+
+	// Change the MODE of mnist
+	mnistLE.reset(0, Learn::LearningMode::TESTING);
+
+	// Fill the table
+	uint64_t classifTable[10][10] = { 0 };
+	uint64_t nbPerClass[10] = { 0 };
+
+	const int TOTAL_NB_IMAGE = 1000;
+	for (int nbImage = 0; nbImage < TOTAL_NB_IMAGE; nbImage++) {
+		// Get answer
+		uint8_t currentLabel = mnistLE.getCurrentImageLabel();
+		nbPerClass[currentLabel]++;
+
+		// Execute
+		auto path = tee.executeFromRoot(*bestRoot);
+		const TPG::TPGAction* action = (const TPG::TPGAction*)path.at(path.size() - 1);
+		uint8_t actionID = (uint8_t)action->getActionID();
+
+		// Increment table
+		classifTable[currentLabel][actionID]++;
+
+		// Do action (to trigger image update)
+		mnistLE.doAction(action->getActionID());
+	}
+
+	// Print the table
+	printf("\t");
+	for (int i = 0; i < 10; i++) {
+		printf("%d\t", i);
+	}
+	printf("Nb\n");
+	for (int i = 0; i < 10; i++) {
+		printf("%d\t", i);
+		for (int j = 0; j < 10; j++) {
+			printf("%2.1f\t", 100.0 * (double)classifTable[i][j] / (double)nbPerClass[i]);
+		}
+		printf("%lld\n", nbPerClass[i]);
+	}
+}
+
 int main() {
 	std::cout << "Start MNIST application." << std::endl;
 
@@ -77,8 +129,10 @@ int main() {
 			[](double acc, std::pair<double, const TPG::TPGVertex*> pair)->double {return acc + pair.first; });
 		avg /= result.size();
 		printf("%3d\t%4lld\t%1.2lf\t%1.2lf\t%1.2lf\n", i, la.getTPGGraph().getNbVertices(), min, avg, max);
-		la.trainOneGeneration(i);
 
+		printClassifStatsTable(mnistLE, result);
+
+		la.trainOneGeneration(i);
 	}
 
 	// Keep best policy

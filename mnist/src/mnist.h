@@ -30,11 +30,14 @@ protected:
 	/// Number of no guesses since the last reset.
 	uint64_t nbNoGuesses;
 
-	/// 
+	/// Current image provided to the LearningAgent
 	DataHandlers::PrimitiveTypeArray<double> currentImage;
 
 	/// Label of the current image
 	uint8_t currentLabel;
+
+	/// Current index of the image in the dataset.
+	uint64_t currentIndex;
 
 	/**
 	* \brief Change the image currently available in the dataSources of the LearningEnvironment.
@@ -84,6 +87,13 @@ public:
 	* \return false.
 	*/
 	virtual bool isTerminal() const override;
+
+	/**
+	* \brief Retrieve the label of the current image.
+	*
+	* Should not be used to cheat.
+	*/
+	uint8_t getCurrentImageLabel();
 };
 
 #endif
