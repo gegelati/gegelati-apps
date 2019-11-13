@@ -133,7 +133,13 @@ void MNIST::printClassifStatsTable(std::multimap<double, const TPG::TPGVertex*>&
 	for (int i = 0; i < 10; i++) {
 		printf("%d\t", i);
 		for (int j = 0; j < 10; j++) {
+			if (i == j) {
+				printf("\033[0;32m");
+			}
 			printf("%2.1f\t", 100.0 * (double)classifTable[i][j] / (double)nbPerClass[i]);
+			if (i == j) {
+				printf("\033[0m");
+			}
 		}
 		printf("%lld\n", nbPerClass[i]);
 	}
