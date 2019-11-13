@@ -11,6 +11,7 @@ void getKey(std::atomic<bool>& exit, std::atomic<bool>& printStats) {
 	std::cout << std::endl;
 	std::cout << "Press `q` then [Enter] to exit." << std::endl;
 	std::cout << "Press `p` then [Enter] to print classification statistics of the best root." << std::endl;
+	std::cout.flush();
 
 	exit = false;
 
@@ -21,7 +22,6 @@ void getKey(std::atomic<bool>& exit, std::atomic<bool>& printStats) {
 		case 'q':
 		case 'Q':
 			exit = true;
-			printStats = true;
 			break;
 		case 'p':
 		case 'P':
@@ -29,10 +29,12 @@ void getKey(std::atomic<bool>& exit, std::atomic<bool>& printStats) {
 			break;
 		default:
 			printf("Invalid key '%c' pressed.", c);
+			std::cout.flush();
 		}
 	}
 
 	printf("Program will terminate at the end of next generation.\n");
+	std::cout.flush();
 }
 
 int main() {
@@ -115,9 +117,10 @@ int main() {
 		printf("%3d\t%4lld\t%1.2lf\t%1.2lf\t%1.2lf\n", i, la.getTPGGraph().getNbVertices(), min, avg, max);
 
 		if (printStats) {
-			mnistLE.printClassifStatsTable(result);
+			mnistLE.printClassifStatsTable(iter->second);
 			printStats = false;
 		}
+		std::cout.flush();
 
 		la.trainOneGeneration(i);
 	}
@@ -126,6 +129,9 @@ int main() {
 	la.keepBestPolicy();
 	dotExporter.setNewFilePath("out_best.dot");
 	dotExporter.print();
+
+	// Print stats one last time
+	mnistLE.printClassifStatsTable(la.getTPGGraph().getRootVertices().at(0));
 
 	// cleanup
 	for (int i = 0; i < set.getNbInstructions(); i++) {

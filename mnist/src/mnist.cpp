@@ -90,14 +90,9 @@ uint8_t MNIST::getCurrentImageLabel()
 	return this->currentLabel;
 }
 
-void MNIST::printClassifStatsTable(std::multimap<double, const TPG::TPGVertex*>& result) {
+void MNIST::printClassifStatsTable(const TPG::TPGVertex * bestRoot) {
 	// Print table of classif of the best
 	TPG::TPGExecutionEngine tee(NULL);
-
-	// Get best root		
-	auto iterResults = result.begin();
-	std::advance(iterResults, result.size() - 1);
-	auto bestRoot = iterResults->second;
 
 	// Change the MODE of mnist
 	this->reset(0, Learn::LearningMode::TESTING);

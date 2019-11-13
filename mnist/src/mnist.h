@@ -101,7 +101,7 @@ public:
 	* \param[in] result the Map containing the list of roots within a TPGGraph,
 	* with their score in ascending order.
 	*/
-	void MNIST::printClassifStatsTable(std::multimap<double, const TPG::TPGVertex*>& result);
+	void MNIST::printClassifStatsTable(const TPG::TPGVertex* bestRoot);
 };
 
 #endif
