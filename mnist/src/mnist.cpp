@@ -89,3 +89,52 @@ uint8_t MNIST::getCurrentImageLabel()
 {
 	return this->currentLabel;
 }
+
+void MNIST::printClassifStatsTable(std::multimap<double, const TPG::TPGVertex*>& result) {
+	// Print table of classif of the best
+	TPG::TPGExecutionEngine tee(NULL);
+
+	// Get best root		
+	auto iterResults = result.begin();
+	std::advance(iterResults, result.size() - 1);
+	auto bestRoot = iterResults->second;
+
+	// Change the MODE of mnist
+	this->reset(0, Learn::LearningMode::TESTING);
+
+	// Fill the table
+	uint64_t classifTable[10][10] = { 0 };
+	uint64_t nbPerClass[10] = { 0 };
+
+	const int TOTAL_NB_IMAGE = 1000;
+	for (int nbImage = 0; nbImage < TOTAL_NB_IMAGE; nbImage++) {
+		// Get answer
+		uint8_t currentLabel = this->getCurrentImageLabel();
+		nbPerClass[currentLabel]++;
+
+		// Execute
+		auto path = tee.executeFromRoot(*bestRoot);
+		const TPG::TPGAction* action = (const TPG::TPGAction*)path.at(path.size() - 1);
+		uint8_t actionID = (uint8_t)action->getActionID();
+
+		// Increment table
+		classifTable[currentLabel][actionID]++;
+
+		// Do action (to trigger image update)
+		this->doAction(action->getActionID());
+	}
+
+	// Print the table
+	printf("\t");
+	for (int i = 0; i < 10; i++) {
+		printf("%d\t", i);
+	}
+	printf("Nb\n");
+	for (int i = 0; i < 10; i++) {
+		printf("%d\t", i);
+		for (int j = 0; j < 10; j++) {
+			printf("%2.1f\t", 100.0 * (double)classifTable[i][j] / (double)nbPerClass[i]);
+		}
+		printf("%lld\n", nbPerClass[i]);
+	}
+}

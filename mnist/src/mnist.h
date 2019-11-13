@@ -94,6 +94,11 @@ public:
 	* Should not be used to cheat.
 	*/
 	uint8_t getCurrentImageLabel();
+
+	/**
+	* \brief Function printing the statistics of the classification.
+	*/
+	void MNIST::printClassifStatsTable(std::multimap<double, const TPG::TPGVertex*>& result);
 };
 
 #endif
