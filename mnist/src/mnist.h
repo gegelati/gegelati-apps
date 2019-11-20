@@ -13,7 +13,7 @@
 class MNIST : public Learn::LearningEnvironment {
 protected:
 	/// MNIST dataset for the training.
-	mnist::MNIST_dataset<std::vector, std::vector<double>, uint8_t> dataset;
+	static mnist::MNIST_dataset<std::vector, std::vector<double>, uint8_t> dataset;
 
 	/// Current LearningMode of the LearningEnvironment.
 	Learn::LearningMode currentMode;
@@ -64,7 +64,13 @@ public:
 	virtual void reset(size_t seed = 0, Learn::LearningMode mode = Learn::LearningMode::TRAINING) override;
 
 	/// Inherited via LearningEnvironment
-	virtual std::vector<std::reference_wrapper<DataHandlers::DataHandler>> getDataSources() override;
+	virtual std::vector<std::reference_wrapper<const DataHandlers::DataHandler>> getDataSources() override;
+
+	/// Inherited via LearningEnvironment
+	virtual bool isCopyable() const override;
+
+	/// Inherited via LearningEnvironment
+	virtual LearningEnvironment* clone() const;
 
 	/**
 	* Get the score of the current evaluation session (i.e. since the last reset).
@@ -101,7 +107,7 @@ public:
 	* \param[in] result the Map containing the list of roots within a TPGGraph,
 	* with their score in ascending order.
 	*/
-	void MNIST::printClassifStatsTable(const TPG::TPGVertex* bestRoot);
+	void MNIST::printClassifStatsTable(const Environment& env, const TPG::TPGVertex* bestRoot);
 };
 
 #endif

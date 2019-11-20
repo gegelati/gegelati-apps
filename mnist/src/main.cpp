@@ -117,7 +117,7 @@ int main() {
 		printf("%3d\t%4lld\t%1.2lf\t%1.2lf\t%1.2lf\n", i, la.getTPGGraph().getNbVertices(), min, avg, max);
 
 		if (printStats) {
-			mnistLE.printClassifStatsTable(iter->second);
+			mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), iter->second);
 			printStats = false;
 		}
 		std::cout.flush();
@@ -131,7 +131,7 @@ int main() {
 	dotExporter.print();
 
 	// Print stats one last time
-	mnistLE.printClassifStatsTable(la.getTPGGraph().getRootVertices().at(0));
+	mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), la.getTPGGraph().getRootVertices().at(0));
 
 	// cleanup
 	for (int i = 0; i < set.getNbInstructions(); i++) {

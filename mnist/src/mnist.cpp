@@ -2,6 +2,8 @@
 
 #include "mnist.h"
 
+mnist::MNIST_dataset<std::vector, std::vector<double>, uint8_t> MNIST::dataset(mnist::read_dataset<std::vector, std::vector, double, uint8_t>(MNIST_DATA_LOCATION));
+
 void MNIST::changeCurrentImage()
 {
 	// Get the container for the current mode.
@@ -31,13 +33,18 @@ void MNIST::changeCurrentImage()
 
 }
 
-MNIST::MNIST() : LearningEnvironment(10), dataset(mnist::read_dataset<std::vector, std::vector, double, uint8_t>(MNIST_DATA_LOCATION)),
-nbCorrectGuesses{ 0 }, nbIncorrectGuesses{ 0 }, nbNoGuesses{ 0 }, currentImage(28 * 28), currentLabel{ 0 }
+MNIST::MNIST() : LearningEnvironment(10), nbCorrectGuesses{ 0 }, nbIncorrectGuesses{ 0 }, nbNoGuesses{ 0 }, currentImage(28 * 28), currentLabel{ 0 }
 {
-	std::cout << "Nbr of training images = " << dataset.training_images.size() << std::endl;
-	std::cout << "Nbr of training labels = " << dataset.training_labels.size() << std::endl;
-	std::cout << "Nbr of test images = " << dataset.test_images.size() << std::endl;
-	std::cout << "Nbr of test labels = " << dataset.test_labels.size() << std::endl;
+	// Fill shared dataset dataset(mnist::read_dataset<std::vector, std::vector, double, uint8_t>(MNIST_DATA_LOCATION))
+	if (MNIST::dataset.training_labels.size() != 0) {
+		std::cout << "Nbr of training images = " << dataset.training_images.size() << std::endl;
+		std::cout << "Nbr of training labels = " << dataset.training_labels.size() << std::endl;
+		std::cout << "Nbr of test images = " << dataset.test_images.size() << std::endl;
+		std::cout << "Nbr of test labels = " << dataset.test_labels.size() << std::endl;
+	}
+	else {
+		throw std::runtime_error("Initialization of MNIST databased failed.");
+	}
 }
 
 void MNIST::doAction(uint64_t actionID)
@@ -67,11 +74,21 @@ void MNIST::reset(size_t seed, Learn::LearningMode mode)
 	this->changeCurrentImage();
 }
 
-std::vector<std::reference_wrapper<DataHandlers::DataHandler>> MNIST::getDataSources()
+std::vector<std::reference_wrapper<const DataHandlers::DataHandler>> MNIST::getDataSources()
 {
-	std::vector<std::reference_wrapper<DataHandlers::DataHandler>> res = { currentImage };
+	std::vector<std::reference_wrapper<const DataHandlers::DataHandler>> res = { currentImage };
 
 	return res;
+}
+
+bool MNIST::isCopyable() const
+{
+	return true;
+}
+
+Learn::LearningEnvironment* MNIST::clone() const
+{
+	return new MNIST(*this);
 }
 
 double MNIST::getScore() const
@@ -90,9 +107,9 @@ uint8_t MNIST::getCurrentImageLabel()
 	return this->currentLabel;
 }
 
-void MNIST::printClassifStatsTable(const TPG::TPGVertex * bestRoot) {
+void MNIST::printClassifStatsTable(const Environment& env, const TPG::TPGVertex* bestRoot) {
 	// Print table of classif of the best
-	TPG::TPGExecutionEngine tee(NULL);
+	TPG::TPGExecutionEngine tee(env, NULL);
 
 	// Change the MODE of mnist
 	this->reset(0, Learn::LearningMode::TESTING);
