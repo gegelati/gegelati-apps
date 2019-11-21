@@ -2,6 +2,7 @@
 #include <numeric>
 #include <thread>
 #include <atomic>
+#include <chrono>
 
 #include <gegelati.h>
 
@@ -85,7 +86,7 @@ int main() {
 	MNIST mnistLE;
 
 	// Instantiate and init the learning agent
-	Learn::LearningAgent la(mnistLE, set, params);
+	Learn::ParallelLearningAgent la(mnistLE, set, params);
 	la.init();
 
 	// Create an exporter for all graphs
@@ -99,14 +100,16 @@ int main() {
 	while (exitProgram); // Wait for other thread to print key info.
 
 	// Train for 300 generations
-	printf("\nGen\tNbVert\tMin\tAvg\tMax\n");
+	printf("\nGen\tNbVert\tMin\tAvg\tMax\tTvalid\tTtrain\n");
 	for (int i = 0; i < 300 && !exitProgram; i++) {
 		char buff[12];
 		sprintf(buff, "out_%03d.dot", i);
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
 		std::multimap<double, const TPG::TPGVertex*> result;
+		auto startEval = std::chrono::high_resolution_clock::now();
 		result = la.evaluateAllRoots(i, Learn::LearningMode::VALIDATION);
+		auto stopEval = std::chrono::high_resolution_clock::now();
 		auto iter = result.begin();
 		double min = iter->first;
 		std::advance(iter, result.size() - 1);
@@ -114,7 +117,8 @@ int main() {
 		double avg = std::accumulate(result.begin(), result.end(), 0.0,
 			[](double acc, std::pair<double, const TPG::TPGVertex*> pair)->double {return acc + pair.first; });
 		avg /= result.size();
-		printf("%3d\t%4lld\t%1.2lf\t%1.2lf\t%1.2lf\n", i, la.getTPGGraph().getNbVertices(), min, avg, max);
+		printf("%3d\t%4lld\t%1.2lf\t%1.2lf\t%1.2lf", i, la.getTPGGraph().getNbVertices(), min, avg, max);
+		std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopEval - startEval).count();
 
 		if (printStats) {
 			mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), iter->second);
@@ -122,7 +126,11 @@ int main() {
 		}
 		std::cout.flush();
 
+		auto startTrain = std::chrono::high_resolution_clock::now();
 		la.trainOneGeneration(i);
+		auto stopTrain = std::chrono::high_resolution_clock::now();
+
+		std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopTrain - startTrain).count() << std::endl;
 	}
 
 	// Keep best policy
