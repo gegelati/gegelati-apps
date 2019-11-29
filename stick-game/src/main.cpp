@@ -88,7 +88,7 @@ int main() {
 	dotExporter.print();
 
 	// cleanup
-	for (int i = 0; i < set.getNbInstructions(); i++) {
+	for (unsigned int i = 0; i < set.getNbInstructions(); i++) {
 		delete (&set.getInstruction(i));
 	}
 

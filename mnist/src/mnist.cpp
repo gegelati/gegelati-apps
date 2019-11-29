@@ -1,4 +1,5 @@
 #include <random>
+#include <inttypes.h>
 
 #include "mnist.h"
 
@@ -153,7 +154,7 @@ void MNIST::printClassifStatsTable(const Environment& env, const TPG::TPGVertex*
 				printf("\033[0m");
 			}
 		}
-		printf("%lld\n", nbPerClass[i]);
+		printf("%4" PRIu64 "\n", nbPerClass[i]);
 	}
 	std::cout << std::endl;
 }

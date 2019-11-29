@@ -3,6 +3,7 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <inttypes.h>
 
 #include <gegelati.h>
 
@@ -85,6 +86,8 @@ int main() {
 	// Instantiate the LearningEnvironment
 	MNIST mnistLE;
 
+	std::cout << "Number of threads: " << std::thread::hardware_concurrency() << std::endl;
+
 	// Instantiate and init the learning agent
 	Learn::ParallelLearningAgent la(mnistLE, set, params);
 	la.init();
@@ -117,7 +120,7 @@ int main() {
 		double avg = std::accumulate(result.begin(), result.end(), 0.0,
 			[](double acc, std::pair<double, const TPG::TPGVertex*> pair)->double {return acc + pair.first; });
 		avg /= result.size();
-		printf("%3d\t%4lld\t%1.2lf\t%1.2lf\t%1.2lf", i, la.getTPGGraph().getNbVertices(), min, avg, max);
+		printf("%3d\t%4" PRIu64 "\t%1.2lf\t%1.2lf\t%1.2lf", i, la.getTPGGraph().getNbVertices(), min, avg, max);
 		std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopEval - startEval).count();
 
 		if (printStats) {
@@ -142,7 +145,7 @@ int main() {
 	mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), la.getTPGGraph().getRootVertices().at(0));
 
 	// cleanup
-	for (int i = 0; i < set.getNbInstructions(); i++) {
+	for (unsigned int i = 0; i < set.getNbInstructions(); i++) {
 		delete (&set.getInstruction(i));
 	}
 

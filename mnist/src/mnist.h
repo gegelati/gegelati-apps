@@ -107,7 +107,7 @@ public:
 	* \param[in] result the Map containing the list of roots within a TPGGraph,
 	* with their score in ascending order.
 	*/
-	void MNIST::printClassifStatsTable(const Environment& env, const TPG::TPGVertex* bestRoot);
+	void printClassifStatsTable(const Environment& env, const TPG::TPGVertex* bestRoot);
 };
 
 #endif
