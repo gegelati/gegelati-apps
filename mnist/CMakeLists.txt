@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.12.4)
 
 # *******************************************
 # ************* CMake Content ***************
@@ -47,7 +47,15 @@ if(NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
 	set(CMAKE_EXTRA_LIB m)
 else()
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
+
+# Add definitions for testing purposes
+if(${TESTING})
+	MESSAGE("Testing mode")
+	add_definitions(-DNO_CONSOLE_CONTROL -DNB_GENERATIONS=10)
+endif()
+
 
 # *******************************************
 # ************ MNIST database ***************
@@ -115,6 +123,6 @@ file(GLOB_RECURSE
 )
 
 include_directories(${GEGELATI_INCLUDE_DIRS})
-add_executable(mnist ${mnist_files})
-target_link_libraries(mnist ${GEGELATI_LIBRARIES})
-target_compile_definitions(mnist PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}")
+add_executable(${PROJECT_NAME} ${mnist_files})
+target_link_libraries(${PROJECT_NAME} ${GEGELATI_LIBRARIES})
+target_compile_definitions(${PROJECT_NAME} PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}")

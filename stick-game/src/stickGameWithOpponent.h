@@ -61,7 +61,7 @@ public:
 	virtual void reset(size_t seed = 0, Learn::LearningMode mode = Learn::LearningMode::TRAINING) override;
 
 	/// Inherited via LearningEnvironment
-	virtual std::vector<std::reference_wrapper<DataHandlers::DataHandler>> getDataSources() override;
+	virtual std::vector<std::reference_wrapper<const DataHandlers::DataHandler>> getDataSources() override;
 
 	/**
 	* Inherited from LearningEnvironment.

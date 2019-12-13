@@ -8,13 +8,28 @@ cmake_minimum_required(VERSION 3.8)
 # Programs
 #  - stick_game
 
-set (PROJECT_NAME stick_game)
+set (PROJECT_NAME stick-game)
 
 project(${PROJECT_NAME})
+
+# Disable C and C++ compiler extensions.
+# C/CXX_EXTENSIONS are ON by default to allow the compilers to use extended
+# variants of the C/CXX language.
+# However, this could expose cross-platform bugs in user code or in the headers
+# of third-party dependencies and thus it is strongly suggested to turn
+# extensions off.
+set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
 	# Set to 1 to activate debug compilation (0 for release)
 	set(DEBUG 0)
+	
+	# Link with pthread
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 	if(${DEBUG})
 			MESSAGE("Generate Debug project")
@@ -31,6 +46,13 @@ if(NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
 	set(CMAKE_EXTRA_LIB m)
 else()
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
+# Add definitions for testing purposes
+if(${TESTING})
+	MESSAGE("Testing mode")
+	add_definitions(-DNB_GENERATIONS=10)
 endif()
 
 # *******************************************
@@ -72,5 +94,5 @@ file(GLOB_RECURSE
 )
 
 include_directories(${GEGELATI_INCLUDE_DIRS})
-add_executable(stick_game ${stick_game_files})
-target_link_libraries(stick_game ${GEGELATI_LIBRARIES})
+add_executable(${PROJECT_NAME} ${stick_game_files})
+target_link_libraries(${PROJECT_NAME} ${GEGELATI_LIBRARIES})
