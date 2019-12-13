@@ -9,6 +9,11 @@
 
 #include "mnist.h"
 
+#ifndef NB_GENERATIONS
+#define NB_GENERATIONS 300
+#endif
+
+
 void getKey(std::atomic<bool>& exit, std::atomic<bool>& printStats) {
 	std::cout << std::endl;
 	std::cout << "Press `q` then [Enter] to exit." << std::endl;
@@ -95,16 +100,23 @@ int main() {
 	// Create an exporter for all graphs
 	Exporter::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
 
+	
 	// Start a thread for controlling the loop
+	#ifndef NO_CONSOLE_CONTROL
 	std::atomic<bool> exitProgram = true; // (set to false by other thread) 
 	std::atomic<bool> printStats = false;
+	
 	std::thread threadKeyboard(getKey, std::ref(exitProgram), std::ref(printStats));
 
 	while (exitProgram); // Wait for other thread to print key info.
+	#else 
+	std::atomic<bool> exitProgram = false; // (set to false by other thread) 
+	std::atomic<bool> printStats = false;
+	#endif
 
-	// Train for 300 generations
+	// Train for NB_GENERATIONS generations
 	printf("\nGen\tNbVert\tMin\tAvg\tMax\tTvalid\tTtrain\n");
-	for (int i = 0; i < 300 && !exitProgram; i++) {
+	for (int i = 0; i < NB_GENERATIONS && !exitProgram; i++) {
 		char buff[12];
 		sprintf(buff, "out_%03d.dot", i);
 		dotExporter.setNewFilePath(buff);
@@ -149,9 +161,11 @@ int main() {
 		delete (&set.getInstruction(i));
 	}
 
+	#ifndef NO_CONSOLE_CONTROL
 	// Exit the thread
 	std::cout << "Exiting program, press a key then [enter] to exit if nothing happens.";
 	threadKeyboard.join();
+	#endif
 
 	return 0;
 }

@@ -9,6 +9,10 @@
 
 #include "stickGameWithOpponent.h"
 
+#ifndef NB_GENERATIONS
+#define NB_GENERATIONS 300
+#endif
+
 
 int main() {
 	// Create the instruction set for programs
@@ -61,9 +65,9 @@ int main() {
 	// Create an exporter for all graphs
 	Exporter::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
 
-	// Train for 300 generations
+	// Train for NB_GENERATIONS generations
 	printf("Gen\tNbVert\tMin\tAvg\tMax\n");
-	for (int i = 0; i < 300; i++) {
+	for (int i = 0; i < NB_GENERATIONS; i++) {
 		char buff[12];
 		sprintf(buff, "out_%03d.dot", i);
 		dotExporter.setNewFilePath(buff);

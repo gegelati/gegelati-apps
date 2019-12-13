@@ -54,7 +54,7 @@ install:
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export CXX=g++-7 ; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then git clone --branch develop https://github.com/gegelati/gegelati.git ; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cd gegelati/bin;  fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cmake .. -DCMAKE_BUILD_TYPE=Debug ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cmake .. -DCMAKE_BUILD_TYPE=Release ; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo make install; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cd ../.. ; fi
       
@@ -62,5 +62,9 @@ script:
   - cd $APPLI
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cp -r ../${LATEST_FOLDER} ./lib/ ; fi
   - cd bin
-  - cmake ..
-  - cmake --build . --target $APPLI
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cmake .. -DTESTING=1 ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cmake .. -DTESTING=1 -DCMAKE_BUILD_TYPE=Release ; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cmake --build . --target $APPLI --config Release ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cmake --build . --target $APPLI ; fi
+  - ./Release/${APPLI}
+  

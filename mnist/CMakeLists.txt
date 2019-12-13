@@ -47,7 +47,15 @@ if(NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
 	set(CMAKE_EXTRA_LIB m)
 else()
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
+
+# Add definitions for testing purposes
+if(${TESTING})
+	MESSAGE("Testing mode")
+	add_definitions(-DNO_CONSOLE_CONTROL -DNB_GENERATIONS=10)
+endif()
+
 
 # *******************************************
 # ************ MNIST database ***************
