@@ -1,21 +1,19 @@
 language: cpp
 
-env:
-  - APPLI=mnist
-  - APPLI=stick-game
-
-matrix:
+jobs:
   include:
     - os: windows
-      env: GENERATOR="Visual Studio 16 2019"
+      env: 
+        - GENERATOR="Visual Studio 16 2019"
+        - APPLI=mnist
       compiler: msvc19
-      before_install:
-        - choco install visualstudio2019buildtools --package-parameters "--includeRecommended --includeOptional"
-        - choco install visualstudio2019-workload-vctools
-      install:
-        - curl https://gegelati.github.io/neutral-builds/gegelatilib-latest-develop.zip -o gegelatilib-latest-develop.zip
-        - 7z x gegelatilib-latest-develop.zip
-        - export LATEST_FOLDER=$(find -maxdepth 1 -regextype posix-egrep -regex "./gegelatilib-[0-9]+\.[0-9]+\.[0-9]+\$" | cut -d'/' -f 2)
+        
+    - os: windows
+      env: 
+        - GENERATOR="Visual Studio 16 2019"
+        - APPLI=stick-game
+      compiler: msvc19
+       
     - os: linux
       compiler: gcc-7
       addons:
@@ -28,18 +26,41 @@ matrix:
                 - gcovr
       env:
         - GENERATOR="Unix Makefile"
-      install:
-        - export CC=gcc-7
-        - export CXX=g++-7
-        - git clone --branch develop https://github.com/gegelati/gegelati.git
-        - cd gegelati/bin
-        - cmake .. -DCMAKE_BUILD_TYPE=Debug
-        - sudo make install
-        - cd ../..
+        - APPLI=mnist
 
+    - os: linux
+      compiler: gcc-7
+      addons:
+        apt:
+            sources:
+                - ubuntu-toolchain-r-test
+            packages:
+                - g++-7
+                - doxygen
+                - gcovr
+      env:
+        - GENERATOR="Unix Makefile"
+        - APPLI=stick-game
+ 
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install visualstudio2019buildtools --package-parameters "--includeRecommended --includeOptional"; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install visualstudio2019-workload-vctools; fi
+  
+install:
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then curl https://gegelati.github.io/neutral-builds/gegelatilib-latest-develop.zip -o gegelatilib-latest-develop.zip; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then 7z x gegelatilib-latest-develop.zip; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then export LATEST_FOLDER=$(find -maxdepth 1 -regextype posix-egrep -regex "./gegelatilib-[0-9]+\.[0-9]+\.[0-9]+\$" | cut -d'/' -f 2) ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export CC=gcc-7 ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export CXX=g++-7 ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then git clone --branch develop https://github.com/gegelati/gegelati.git ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cd gegelati/bin;  fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cmake .. -DCMAKE_BUILD_TYPE=Debug ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo make install; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cd ../.. ; fi
+      
 script: 
   - cd $APPLI
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cp -r ../{LATEST_FOLDER} ./lib/ ; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cp -r ../${LATEST_FOLDER} ./lib/ ; fi
   - cd bin
   - cmake ..
   - cmake --build . --target $APPLI
