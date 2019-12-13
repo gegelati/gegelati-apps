@@ -1,5 +1,9 @@
 language: cpp
 
+env:
+  - APPLI=mnist
+  - APPLI=stick-game
+
 matrix:
   include:
     - os: windows
@@ -32,5 +36,10 @@ matrix:
         - cmake .. -DCMAKE_BUILD_TYPE=Debug
         - sudo make install
         - cd ../..
+
 script: 
-  - echo "Hello ${LATEST_FOLDER}"
+  - cd $APPLI
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cp -r ../{LATEST_FOLDER} ./lib/ ; fi
+  - cd bin
+  - cmake ..
+  - cmake --build . --target $APPLI
