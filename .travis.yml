@@ -1,0 +1,36 @@
+language: cpp
+
+matrix:
+  include:
+    - os: windows
+      env: GENERATOR="Visual Studio 16 2019"
+      compiler: msvc19
+      before_install:
+        - choco install visualstudio2019buildtools --package-parameters "--includeRecommended --includeOptional"
+        - choco install visualstudio2019-workload-vctools
+      install:
+        - curl https://gegelati.github.io/neutral-builds/gegelatilib-latest-develop.zip -o gegelatilib-latest-develop.zip
+        - 7z x gegelatilib-latest-develop.zip
+        - export LATEST_FOLDER=$(find -maxdepth 1 -regextype posix-egrep -regex "./gegelatilib-[0-9]+\.[0-9]+\.[0-9]+\$" | cut -d'/' -f 2)
+    - os: linux
+      compiler: gcc-7
+      addons:
+        apt:
+            sources:
+                - ubuntu-toolchain-r-test
+            packages:
+                - g++-7
+                - doxygen
+                - gcovr
+      env:
+        - GENERATOR="Unix Makefile"
+      install:
+        - export CC=gcc-7
+        - export CXX=g++-7
+        - git clone --branch develop https://github.com/gegelati/gegelati.git
+        - cd gegelati/bin
+        - cmake .. -DCMAKE_BUILD_TYPE=Debug
+        - sudo make install
+        - cd ../..
+script: 
+  - echo "Hello ${LATEST_FOLDER}"
