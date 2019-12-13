@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.8)
 # Programs
 #  - stick_game
 
-set (PROJECT_NAME stick_game)
+set (PROJECT_NAME stick-game)
 
 project(${PROJECT_NAME})
 
@@ -72,5 +72,5 @@ file(GLOB_RECURSE
 )
 
 include_directories(${GEGELATI_INCLUDE_DIRS})
-add_executable(stick_game ${stick_game_files})
-target_link_libraries(stick_game ${GEGELATI_LIBRARIES})
+add_executable(${PROJECT_NAME} ${stick_game_files})
+target_link_libraries(${PROJECT_NAME} ${GEGELATI_LIBRARIES})

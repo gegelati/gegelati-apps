@@ -115,6 +115,6 @@ file(GLOB_RECURSE
 )
 
 include_directories(${GEGELATI_INCLUDE_DIRS})
-add_executable(mnist ${mnist_files})
-target_link_libraries(mnist ${GEGELATI_LIBRARIES})
-target_compile_definitions(mnist PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}")
+add_executable(${PROJECT_NAME} ${mnist_files})
+target_link_libraries(${PROJECT_NAME} ${GEGELATI_LIBRARIES})
+target_compile_definitions(${PROJECT_NAME} PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}")
