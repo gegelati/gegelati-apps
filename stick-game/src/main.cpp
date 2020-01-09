@@ -72,14 +72,14 @@ int main() {
 		sprintf(buff, "out_%03d.dot", i);
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
-		std::multimap<double, const TPG::TPGVertex*> result;
+		std::multimap<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*> result;
 		result = la.evaluateAllRoots(i, Learn::LearningMode::VALIDATION);
 		auto iter = result.begin();
-		double min = iter->first;
+		double min = iter->first->getResult();
 		std::advance(iter, result.size() - 1);
-		double max = iter->first;
+		double max = iter->first->getResult();
 		double avg = std::accumulate(result.begin(), result.end(), 0.0,
-			[](double acc, std::pair<double, const TPG::TPGVertex*> pair)->double {return acc + pair.first; });
+			[](double acc, std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*> pair)->double {return acc + pair.first->getResult(); });
 		avg /= result.size();
 		printf("%3d\t%4" PRIu64 "\t%1.2lf\t%1.2lf\t%1.2lf\n", i, la.getTPGGraph().getNbVertices(), min, avg, max);
 		la.trainOneGeneration(i);
