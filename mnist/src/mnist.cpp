@@ -29,12 +29,12 @@ void MNIST::changeCurrentImage()
 	}
 
 	// Keep current label too.
-	currentLabel = (this->currentMode == Learn::LearningMode::TRAINING) ?
+	this->currentClass = (this->currentMode == Learn::LearningMode::TRAINING) ?
 		this->dataset.training_labels.at(this->currentIndex) : this->dataset.test_labels.at(this->currentIndex);
 
 }
 
-MNIST::MNIST() : LearningEnvironment(10), nbCorrectGuesses{ 0 }, nbIncorrectGuesses{ 0 }, nbNoGuesses{ 0 }, currentImage(28 * 28), currentLabel{ 0 }
+MNIST::MNIST() : ClassificationLearningEnvironment(10), currentImage(28 * 28)
 {
 	// Fill shared dataset dataset(mnist::read_dataset<std::vector, std::vector, double, uint8_t>(MNIST_DATA_LOCATION))
 	if (MNIST::dataset.training_labels.size() != 0) {
@@ -50,25 +50,19 @@ MNIST::MNIST() : LearningEnvironment(10), nbCorrectGuesses{ 0 }, nbIncorrectGues
 
 void MNIST::doAction(uint64_t actionID)
 {
-	// An action has been done.
-	// Check if the given action corresponds to the image label.
-	if (actionID == this->currentLabel) {
-		this->nbCorrectGuesses++;
-	}
-	else {
-		nbIncorrectGuesses++;
-	}
+	// Call to devault method to increment classificationTable
+	ClassificationLearningEnvironment::doAction(actionID);
 
 	this->changeCurrentImage();
 }
 
 void MNIST::reset(size_t seed, Learn::LearningMode mode)
 {
+	// Reset the classificationTable
+	ClassificationLearningEnvironment::reset(seed);
+
 	this->currentMode = mode;
 	this->engine.seed(seed);
-	this->nbCorrectGuesses = 0;
-	this->nbIncorrectGuesses = 0;
-	this->nbNoGuesses = 0;
 
 	// Reset at -1 so that in TESTING mode, first value tested is 0.
 	this->currentIndex = -1;
@@ -94,8 +88,8 @@ Learn::LearningEnvironment* MNIST::clone() const
 
 double MNIST::getScore() const
 {
-	uint64_t totalNbGuesses = this->nbCorrectGuesses + this->nbIncorrectGuesses;
-	return (double)this->nbCorrectGuesses / (double)totalNbGuesses;
+	// Return the default classification score
+	return ClassificationLearningEnvironment::getScore();
 }
 
 bool MNIST::isTerminal() const
@@ -105,7 +99,7 @@ bool MNIST::isTerminal() const
 
 uint8_t MNIST::getCurrentImageLabel()
 {
-	return this->currentLabel;
+	return (uint8_t)this->currentClass;
 }
 
 void MNIST::printClassifStatsTable(const Environment& env, const TPG::TPGVertex* bestRoot) {

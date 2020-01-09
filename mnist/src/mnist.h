@@ -10,7 +10,7 @@
 /**
 * LearningEnvironment to train an agent to classify the MNIST database.
 */
-class MNIST : public Learn::LearningEnvironment {
+class MNIST : public Learn::ClassificationLearningEnvironment {
 protected:
 	/// MNIST dataset for the training.
 	static mnist::MNIST_dataset<std::vector, std::vector<double>, uint8_t> dataset;
@@ -21,20 +21,8 @@ protected:
 	/// Randomness control
 	std::mt19937_64 engine;
 
-	/// Number of correct guesses since the last reset.
-	uint64_t nbCorrectGuesses;
-
-	/// Number of incorrect guesses since the last reset.
-	uint64_t nbIncorrectGuesses;
-
-	/// Number of no guesses since the last reset.
-	uint64_t nbNoGuesses;
-
 	/// Current image provided to the LearningAgent
 	DataHandlers::PrimitiveTypeArray<double> currentImage;
-
-	/// Label of the current image
-	uint8_t currentLabel;
 
 	/// Current index of the image in the dataset.
 	uint64_t currentIndex;
