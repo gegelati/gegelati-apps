@@ -94,7 +94,7 @@ int main() {
 	std::cout << "Number of threads: " << std::thread::hardware_concurrency() << std::endl;
 
 	// Instantiate and init the learning agent
-	Learn::ParallelLearningAgent la(mnistLE, set, params);
+	Learn::ClassificationLearningAgent la(mnistLE, set, params);
 	la.init();
 
 	// Create an exporter for all graphs
