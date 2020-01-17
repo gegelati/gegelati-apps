@@ -1,0 +1,75 @@
+language: cpp
+
+branches:
+  except:
+    - /^v\d+.\d+.\d+$/ # Do not build on tags
+
+jobs:
+  include:
+    - os: windows
+      env: 
+        - GENERATOR="Visual Studio 16 2019"
+        - APPLI=mnist
+      compiler: msvc19
+        
+    - os: windows
+      env: 
+        - GENERATOR="Visual Studio 16 2019"
+        - APPLI=stick-game
+      compiler: msvc19
+       
+    - os: linux
+      compiler: gcc-7
+      addons:
+        apt:
+            sources:
+                - ubuntu-toolchain-r-test
+            packages:
+                - g++-7
+                - doxygen
+                - gcovr
+      env:
+        - GENERATOR="Unix Makefile"
+        - APPLI=mnist
+
+    - os: linux
+      compiler: gcc-7
+      addons:
+        apt:
+            sources:
+                - ubuntu-toolchain-r-test
+            packages:
+                - g++-7
+                - doxygen
+                - gcovr
+      env:
+        - GENERATOR="Unix Makefile"
+        - APPLI=stick-game
+ 
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install visualstudio2019buildtools --package-parameters "--includeRecommended --includeOptional"; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install visualstudio2019-workload-vctools; fi
+  
+install:
+  - if [ "$TRAVIS_OS_NAME" = "windows" ] && [ "$TRAVIS_BRANCH" != "master" ]; then curl https://gegelati.github.io/neutral-builds/gegelatilib-latest-develop.zip -o gegelatilib-latest.zip; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ] && [ "$TRAVIS_BRANCH" = "master" ]; then curl -L -J $(curl -s https://api.github.com/repos/gegelati/gegelati/releases/latest | grep "browser_download_url.*zip" | cut -d':' -f 2,3 | tr -d \") -o gegelatilib-latest.zip ; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then 7z x gegelatilib-latest.zip; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then export LATEST_FOLDER=$(find -maxdepth 1 -regextype posix-egrep -regex "./gegelatilib-[0-9]+\.[0-9]+\.[0-9]+\$" | cut -d'/' -f 2) ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export CC=gcc-7 ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export CXX=g++-7 ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then git clone --branch $([ "$TRAVIS_BRANCH" = "master" ] && echo "master" || echo "develop") $() https://github.com/gegelati/gegelati.git ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cd gegelati/bin;  fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cmake .. -DCMAKE_BUILD_TYPE=Release ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo make install; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cd ../.. ; fi
+      
+script: 
+  - cd $APPLI
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cp -r ../${LATEST_FOLDER} ./lib/ ; fi
+  - cd bin
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cmake .. -DTESTING=1 ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cmake .. -DTESTING=1 -DCMAKE_BUILD_TYPE=Release ; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cmake --build . --target $APPLI --config Release ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cmake --build . --target $APPLI ; fi
+  - ./Release/${APPLI}
+  

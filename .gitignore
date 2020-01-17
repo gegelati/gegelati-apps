@@ -43,6 +43,7 @@ Thumbs.db
 # Typical folders
 **/bin/
 **/lib/
+**/dat/
 
 # CLion generated files
 **/.idea/
