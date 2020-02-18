@@ -69,9 +69,9 @@ void MNIST::reset(size_t seed, Learn::LearningMode mode)
 	this->changeCurrentImage();
 }
 
-std::vector<std::reference_wrapper<const DataHandlers::DataHandler>> MNIST::getDataSources()
+std::vector<std::reference_wrapper<const Data::DataHandler>> MNIST::getDataSources()
 {
-	std::vector<std::reference_wrapper<const DataHandlers::DataHandler>> res = { currentImage };
+	std::vector<std::reference_wrapper<const Data::DataHandler>> res = { currentImage };
 
 	return res;
 }
