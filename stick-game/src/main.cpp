@@ -63,7 +63,7 @@ int main() {
 	la.init();
 
 	// Create an exporter for all graphs
-	Exporter::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
+	File::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
 
 	// Train for NB_GENERATIONS generations
 	printf("Gen\tNbVert\tMin\tAvg\tMax\n");
