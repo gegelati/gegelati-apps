@@ -25,7 +25,7 @@ void MNIST::changeCurrentImage()
 
 	// Load the image in the dataSource
 	for (uint64_t pxlIndex = 0; pxlIndex < 28 * 28; pxlIndex++) {
-		this->currentImage.setDataAt(typeid(Data::PrimitiveType<double>), pxlIndex, dataSource.at(this->currentIndex).at(pxlIndex));
+		this->currentImage.setDataAt(typeid(double), pxlIndex, dataSource.at(this->currentIndex).at(pxlIndex));
 	}
 
 	// Keep current label too.

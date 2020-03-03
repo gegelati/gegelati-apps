@@ -8,19 +8,19 @@ void StickGameWithOpponent::doAction(uint64_t actionID)
 	if (!this->isTerminal()) {
 		// Execute the action
 		// Get current state
-		int currentState = (int)*((this->remainingSticks.getDataAt(typeid(Data::PrimitiveType<int>), 0)).getSharedPointer<const Data::PrimitiveType<int>>());
+		int currentState = (int)*((this->remainingSticks.getDataAt(typeid(int), 0)).getSharedPointer<const int>());
 		if ((actionID + 1) > currentState) {
 			// Illegal move
 			this->forbiddenMove = true;
 			// and game over
-			this->remainingSticks.setDataAt(typeid(Data::PrimitiveType<int>), 0, 0);
+			this->remainingSticks.setDataAt(typeid(int), 0, 0);
 			// stop there
 			return;
 		}
 		else {
 			// update state
 			currentState -= ((int)actionID + 1);
-			this->remainingSticks.setDataAt(typeid(Data::PrimitiveType<int>), 0, currentState);
+			this->remainingSticks.setDataAt(typeid(int), 0, currentState);
 			// if current state is now zero, the player lost
 		}
 
@@ -35,7 +35,7 @@ void StickGameWithOpponent::doAction(uint64_t actionID)
 				currentState -= distribution(engine);
 			}
 
-			this->remainingSticks.setDataAt(typeid(Data::PrimitiveType<int>), 0, currentState);
+			this->remainingSticks.setDataAt(typeid(int), 0, currentState);
 			if (currentState == 0) {
 				this->win = true;
 			}
@@ -48,7 +48,7 @@ void StickGameWithOpponent::reset(size_t seed, Learn::LearningMode mode)
 	// Create seed from seed and mode
 	size_t hash_seed = std::hash<size_t>()(seed) ^ std::hash<Learn::LearningMode>()(mode);
 	this->engine.seed(hash_seed);
-	this->remainingSticks.setDataAt(typeid(Data::PrimitiveType<int>), 0, 21);
+	this->remainingSticks.setDataAt(typeid(int), 0, 21);
 	this->win = false;
 	this->forbiddenMove = false;
 }
@@ -78,5 +78,5 @@ double StickGameWithOpponent::getScore() const
 
 bool StickGameWithOpponent::isTerminal() const
 {
-	return (int)*((this->remainingSticks.getDataAt(typeid(Data::PrimitiveType<int>), 0)).getSharedPointer<const Data::PrimitiveType<int>>()) == 0;
+	return (int)*((this->remainingSticks.getDataAt(typeid(int), 0)).getSharedPointer<const int>()) == 0;
 }
