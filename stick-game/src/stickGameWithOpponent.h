@@ -31,7 +31,7 @@ protected:
 	bool forbiddenMove;
 
 	/// Randomness control
-	std::mt19937_64 engine;
+	Mutator::RNG rng;
 
 	// Error rate of the opponent algo.
 	int errorRate = 4; // error will (potentially) be made 1/errorRate of the time
