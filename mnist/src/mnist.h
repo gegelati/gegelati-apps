@@ -19,7 +19,7 @@ protected:
 	Learn::LearningMode currentMode;
 
 	/// Randomness control
-	std::mt19937_64 engine;
+	Mutator::RNG rng;
 
 	/// Current image provided to the LearningAgent
 	Data::PrimitiveTypeArray<double> currentImage;
