@@ -24,7 +24,7 @@ void MNIST::changeCurrentImage()
 
 	// Load the image in the dataSource
 	for (uint64_t pxlIndex = 0; pxlIndex < 28 * 28; pxlIndex++) {
-		this->currentImage.setDataAt(typeid(PrimitiveType<double>), pxlIndex, dataSource.at(this->currentIndex).at(pxlIndex));
+		this->currentImage.setDataAt(typeid(double), pxlIndex, dataSource.at(this->currentIndex).at(pxlIndex));
 	}
 
 	// Keep current label too.
@@ -68,9 +68,9 @@ void MNIST::reset(size_t seed, Learn::LearningMode mode)
 	this->changeCurrentImage();
 }
 
-std::vector<std::reference_wrapper<const DataHandlers::DataHandler>> MNIST::getDataSources()
+std::vector<std::reference_wrapper<const Data::DataHandler>> MNIST::getDataSources()
 {
-	std::vector<std::reference_wrapper<const DataHandlers::DataHandler>> res = { currentImage };
+	std::vector<std::reference_wrapper<const Data::DataHandler>> res = { currentImage };
 
 	return res;
 }
