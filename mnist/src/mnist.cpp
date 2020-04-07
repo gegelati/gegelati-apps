@@ -15,8 +15,7 @@ void MNIST::changeCurrentImage()
 	// If the mode is training or validation
 	if (this->currentMode == Learn::LearningMode::TRAINING || this->currentMode == Learn::LearningMode::VALIDATION) {
 		// Select a random image index
-		std::uniform_int_distribution<uint64_t> distribution(0, dataSource.size() - 1);
-		this->currentIndex = distribution(this->engine);
+		this->currentIndex = rng.getUnsignedInt64(0, dataSource.size() - 1);
 	}
 	else {
 		// If the mode is TESTING, just go to the next image
@@ -25,7 +24,7 @@ void MNIST::changeCurrentImage()
 
 	// Load the image in the dataSource
 	for (uint64_t pxlIndex = 0; pxlIndex < 28 * 28; pxlIndex++) {
-		this->currentImage.setDataAt(typeid(PrimitiveType<double>), pxlIndex, dataSource.at(this->currentIndex).at(pxlIndex));
+		this->currentImage.setDataAt(typeid(double), pxlIndex, dataSource.at(this->currentIndex).at(pxlIndex));
 	}
 
 	// Keep current label too.
@@ -62,16 +61,16 @@ void MNIST::reset(size_t seed, Learn::LearningMode mode)
 	ClassificationLearningEnvironment::reset(seed);
 
 	this->currentMode = mode;
-	this->engine.seed(seed);
+	this->rng.setSeed(seed);
 
 	// Reset at -1 so that in TESTING mode, first value tested is 0.
 	this->currentIndex = -1;
 	this->changeCurrentImage();
 }
 
-std::vector<std::reference_wrapper<const DataHandlers::DataHandler>> MNIST::getDataSources()
+std::vector<std::reference_wrapper<const Data::DataHandler>> MNIST::getDataSources()
 {
-	std::vector<std::reference_wrapper<const DataHandlers::DataHandler>> res = { currentImage };
+	std::vector<std::reference_wrapper<const Data::DataHandler>> res = { currentImage };
 
 	return res;
 }

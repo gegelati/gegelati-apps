@@ -19,10 +19,10 @@
 class StickGameWithOpponent : public Learn::LearningEnvironment {
 protected:
 	/// During a game, number of remaining sticks.
-	DataHandlers::PrimitiveTypeArray<int> remainingSticks;
+	Data::PrimitiveTypeArray<int> remainingSticks;
 
 	/// This source of data give useful numbers for helping undertanding the game.
-	DataHandlers::PrimitiveTypeArray<int> hints;
+	Data::PrimitiveTypeArray<int> hints;
 
 	/// Did the player win or lose at the end of a game.
 	bool win;
@@ -31,7 +31,7 @@ protected:
 	bool forbiddenMove;
 
 	/// Randomness control
-	std::mt19937_64 engine;
+	Mutator::RNG rng;
 
 	// Error rate of the opponent algo.
 	int errorRate = 4; // error will (potentially) be made 1/errorRate of the time
@@ -45,10 +45,10 @@ public:
 		// Set hints
 		// This data source contains number 1 to 4 which can be helpful for
 		// programs to make smart decisions.
-		this->hints.setDataAt(typeid(PrimitiveType<int>), 0, 1);
-		this->hints.setDataAt(typeid(PrimitiveType<int>), 1, 2);
-		this->hints.setDataAt(typeid(PrimitiveType<int>), 2, 3);
-		this->hints.setDataAt(typeid(PrimitiveType<int>), 3, 4);
+		this->hints.setDataAt(typeid(int), 0, 1);
+		this->hints.setDataAt(typeid(int), 1, 2);
+		this->hints.setDataAt(typeid(int), 2, 3);
+		this->hints.setDataAt(typeid(int), 3, 4);
 	};
 
 	/// Destructor
@@ -61,7 +61,7 @@ public:
 	virtual void reset(size_t seed = 0, Learn::LearningMode mode = Learn::LearningMode::TRAINING) override;
 
 	/// Inherited via LearningEnvironment
-	virtual std::vector<std::reference_wrapper<const DataHandlers::DataHandler>> getDataSources() override;
+	virtual std::vector<std::reference_wrapper<const Data::DataHandler>> getDataSources() override;
 
 	/**
 	* Inherited from LearningEnvironment.

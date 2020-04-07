@@ -19,10 +19,10 @@ protected:
 	Learn::LearningMode currentMode;
 
 	/// Randomness control
-	std::mt19937_64 engine;
+	Mutator::RNG rng;
 
 	/// Current image provided to the LearningAgent
-	DataHandlers::PrimitiveTypeArray<double> currentImage;
+	Data::PrimitiveTypeArray<double> currentImage;
 
 	/// Current index of the image in the dataset.
 	uint64_t currentIndex;
@@ -52,7 +52,7 @@ public:
 	virtual void reset(size_t seed = 0, Learn::LearningMode mode = Learn::LearningMode::TRAINING) override;
 
 	/// Inherited via LearningEnvironment
-	virtual std::vector<std::reference_wrapper<const DataHandlers::DataHandler>> getDataSources() override;
+	virtual std::vector<std::reference_wrapper<const Data::DataHandler>> getDataSources() override;
 
 	/// Inherited via LearningEnvironment
 	virtual bool isCopyable() const override;

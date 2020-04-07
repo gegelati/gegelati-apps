@@ -98,7 +98,7 @@ int main() {
 	la.init();
 
 	// Create an exporter for all graphs
-	Exporter::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
+	File::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
 
 	
 	// Start a thread for controlling the loop
