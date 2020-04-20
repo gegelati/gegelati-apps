@@ -113,7 +113,7 @@ bool Pendulum::isTerminal() const
 		accumulatedReward /= (double)Pendulum::REWARD_HISTORY_SIZE;
 
 		// Check stability
-		result = accumulatedReward < Pendulum::STABILITY_THRESHOLD;
+		result = fabs(accumulatedReward) < Pendulum::STABILITY_THRESHOLD;
 	}
 
 	// The history is too short, or the pendulum was not stabilized.
