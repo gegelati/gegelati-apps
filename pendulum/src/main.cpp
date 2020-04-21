@@ -4,41 +4,15 @@
 #include <atomic>
 #include <chrono>
 #include <inttypes.h>
+#define _USE_MATH_DEFINES // To get M_PI
+#include <math.h>
 
 #include "pendulum.h"
-extern "C" {
 #include "render.h"
-}
 
 #ifndef NB_GENERATIONS
 #define NB_GENERATIONS 1200
 #endif
-
-void getKey(std::atomic<bool>& exit, std::atomic<bool>& printStats) {
-	std::cout << std::endl;
-	std::cout << "Press `q` then [Enter] to exit." << std::endl;
-	//std::cout << "Press `p` then [Enter] to print classification statistics of the best root." << std::endl;
-	std::cout.flush();
-
-	exit = false;
-
-	while (!exit) {
-		char c;
-		std::cin >> c;
-		switch (c) {
-		case 'q':
-		case 'Q':
-			exit = true;
-			break;
-		default:
-			printf("Invalid key '%c' pressed.", c);
-			std::cout.flush();
-		}
-	}
-
-	printf("Program will terminate at the end of next generation.\n");
-	std::cout.flush();
-}
 
 int main() {
 
@@ -53,6 +27,10 @@ int main() {
 	auto max = [](double a, double b)->double {return std::max(a, b); };
 	auto ln = [](double a, double b)->double {return std::log(a); };
 	auto exp = [](double a, double b)->double {return std::exp(a); };
+	auto cos = [](double a, double b)->double {return std::cos(a); };
+	auto sin = [](double a, double b)->double {return std::sin(a); };
+	auto tan = [](double a, double b)->double {return std::tan(a); };
+	auto pi = [](double a, double b)->double {return M_PI; };
 
 	set.add(*(new Instructions::LambdaInstruction<double>(minus)));
 	set.add(*(new Instructions::LambdaInstruction<double>(add)));
@@ -61,14 +39,18 @@ int main() {
 	set.add(*(new Instructions::LambdaInstruction<double>(max)));
 	set.add(*(new Instructions::LambdaInstruction<double>(exp)));
 	set.add(*(new Instructions::LambdaInstruction<double>(ln)));
+	set.add(*(new Instructions::LambdaInstruction<double>(cos)));
+	set.add(*(new Instructions::LambdaInstruction<double>(sin)));
+	set.add(*(new Instructions::LambdaInstruction<double>(tan)));
 	set.add(*(new Instructions::MultByConstParam<double, float>()));
+	set.add(*(new Instructions::LambdaInstruction<double>(pi)));
 
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
 	// among other things)
 	Learn::LearningParameters params;
 	params.mutation.tpg.maxInitOutgoingEdges = 3;
-	params.mutation.tpg.nbRoots = 100;
+	params.mutation.tpg.nbRoots = 2000;
 	params.mutation.tpg.pEdgeDeletion = 0.7;
 	params.mutation.tpg.pEdgeAddition = 0.7;
 	params.mutation.tpg.pProgramMutation = 0.2;
@@ -80,10 +62,10 @@ int main() {
 	params.mutation.prog.pMutate = 1.0;
 	params.mutation.prog.pSwap = 1.0;
 	params.mutation.prog.maxProgramSize = 20;
-	params.maxNbActionsPerEval = 1500;
+	params.maxNbActionsPerEval = 1000;
 	params.nbIterationsPerPolicyEvaluation = 5;
-	params.ratioDeletedRoots = 0.90;
-	params.archiveSize = 500;
+	params.ratioDeletedRoots = 0.998;
+	params.archiveSize = 2000;
 	params.archivingProbability = 0.01;
 
 	// Instantiate the LearningEnvironment
@@ -92,7 +74,7 @@ int main() {
 	std::cout << "Number of threads: " << std::thread::hardware_concurrency() << std::endl;
 
 	// Instantiate and init the learning agent
-	Learn::LearningAgent la(pendulumLE, set, params);
+	Learn::ParallelLearningAgent la(pendulumLE, set, params);
 	la.init();
 
 	// Create an exporter for all graphs
@@ -101,15 +83,21 @@ int main() {
 
 	// Start a thread for controlling the loop
 #ifndef NO_CONSOLE_CONTROL
+	// Console
 	std::atomic<bool> exitProgram = true; // (set to false by other thread) 
-	std::atomic<bool> printStats = false;
+	std::atomic<bool> toggleDisplay = true;
+	std::atomic<bool> doDisplay = false;
+	std::atomic<uint64_t> generation = 0;
 
-	std::thread threadKeyboard(getKey, std::ref(exitProgram), std::ref(printStats));
+	const TPG::TPGVertex* bestRoot = NULL;
+
+	std::thread threadDisplay(Render::controlerLoop, std::ref(exitProgram), std::ref(toggleDisplay), std::ref(doDisplay),
+		&bestRoot, std::ref(set), std::ref(pendulumLE), std::ref(params), std::ref(generation));
 
 	while (exitProgram); // Wait for other thread to print key info.
 #else 
 	std::atomic<bool> exitProgram = false; // (set to false by other thread) 
-	std::atomic<bool> printStats = false;
+	std::atomic<bool> toggleDisplay = false;
 #endif
 
 	// Train for NB_GENERATIONS generations
@@ -133,17 +121,23 @@ int main() {
 		printf("%3d\t%4" PRIu64 "\t%1.2lf\t%1.2lf\t%1.2lf", i, la.getTPGGraph().getNbVertices(), min, avg, max);
 		std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopEval - startEval).count();
 
-		if (printStats || i % 10 == 0) {
-			//mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), iter->second);
-			//printStats = false;
+#ifndef NO_CONSOLE_CONTROL
+		generation = i;
+		if (toggleDisplay) {
+			bestRoot = iter->second;
+			doDisplay = true;
+			while (doDisplay);
 		}
+#endif
 		std::cout.flush();
 
-		auto startTrain = std::chrono::high_resolution_clock::now();
-		la.trainOneGeneration(i);
-		auto stopTrain = std::chrono::high_resolution_clock::now();
+		if (!exitProgram) {
+			auto startTrain = std::chrono::high_resolution_clock::now();
+			la.trainOneGeneration(i);
+			auto stopTrain = std::chrono::high_resolution_clock::now();
 
-		std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopTrain - startTrain).count() << std::endl;
+			std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopTrain - startTrain).count() << std::endl;
+		}
 	}
 
 	// Keep best policy
@@ -162,7 +156,7 @@ int main() {
 #ifndef NO_CONSOLE_CONTROL
 	// Exit the thread
 	std::cout << "Exiting program, press a key then [enter] to exit if nothing happens.";
-	threadKeyboard.join();
+	threadDisplay.join();
 #endif
 
 	return 0;

@@ -73,6 +73,13 @@ public:
 		availableActions{ actions }
 	{};
 
+	/**
+	* \brief Copy constructor for the Pendulum.
+	*
+	* Default copy constructor since all attributes are trivially copyable.
+	*/
+	Pendulum(const Pendulum& other) = default;
+
 	/// Getter for angle state
 	double getAngle() const;
 
@@ -87,6 +94,12 @@ public:
 
 	/// Inherited via LearningEnvironment
 	virtual void doAction(uint64_t actionID) override;
+
+	/// Inherited via LearningEnvironment
+	virtual bool isCopyable() const override;
+
+	/// Inherited via LearningEnvironment
+	virtual LearningEnvironment* clone() const;
 
 	/**
 	* \brief Get a score for the pendulum stabilization.

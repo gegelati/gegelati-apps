@@ -87,12 +87,22 @@ void Pendulum::doAction(uint64_t actionID)
 	this->setVelocity(velocity);
 }
 
+bool Pendulum::isCopyable() const
+{
+	return true;
+}
+
+Learn::LearningEnvironment* Pendulum::clone() const
+{
+	return new Pendulum(*this);
+}
+
 double Pendulum::getScore() const
 {
 	if (isTerminal()) {
 		// 10/ln(nbActions-MinimumNumberOfActionToConsiderStability)
-		// The epsilon is added to avoid dividing by ln(1) = 0.
-		return 10.0 / std::log(((double)this->nbActionsExecuted - (double)Pendulum::REWARD_HISTORY_SIZE + 1.0) + DBL_EPSILON);
+		// The +2 is added to avoid dividing by ln(1) = 0.
+		return 10.0 / std::log(((double)this->nbActionsExecuted - (double)Pendulum::REWARD_HISTORY_SIZE + 2.0));
 	}
 	else {
 		return this->totalReward / (double)this->nbActionsExecuted;
@@ -113,10 +123,9 @@ bool Pendulum::isTerminal() const
 		accumulatedReward /= (double)Pendulum::REWARD_HISTORY_SIZE;
 
 		// Check stability
-		result = fabs(accumulatedReward) < Pendulum::STABILITY_THRESHOLD;
+		result = (fabs(accumulatedReward) < Pendulum::STABILITY_THRESHOLD);
 	}
 
 	// The history is too short, or the pendulum was not stabilized.
 	return result;
-
 }
