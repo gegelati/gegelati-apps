@@ -54,11 +54,16 @@ void Pendulum::reset(size_t seed, Learn::LearningMode mode)
 	this->totalReward = 0.0;
 }
 
+double Pendulum::getActionFromID(const uint64_t& actionID)
+{
+	double result = (actionID == 0) ? 0.0 : this->availableActions.at((actionID - 1) % availableActions.size());
+	return (actionID <= availableActions.size()) ? result : -result;
+}
+
 void Pendulum::doAction(uint64_t actionID)
 {
 	// Get the action
-	double currentAction = (actionID == 0) ? 0.0 : this->availableActions.at((actionID - 1) % availableActions.size());
-	currentAction = (actionID <= availableActions.size()) ? currentAction : -currentAction;
+	double currentAction = getActionFromID(actionID);
 	currentAction *= Pendulum::MAX_TORQUE;
 
 	// Get current state

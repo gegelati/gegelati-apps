@@ -19,7 +19,8 @@
 typedef struct sdlDisplay {
 	SDL_Renderer* renderer;
 	SDL_Window* screen;
-	SDL_Texture* texture;
+	SDL_Texture* texturePendulum;
+	SDL_Texture* textureArrow;
 	TTF_Font* font;
 }sdlDisplay;
 
@@ -65,16 +66,33 @@ void Render::renderInit() {
 		fprintf(stderr, "SDL: could not create renderer - exiting\n");
 		exit(1);
 	}
-	SDL_Surface* surface = IMG_Load(PATH);
 
-	if (!surface) {
+	// Open pendulum image
+	SDL_Surface* surfacePendulum = IMG_Load(PATH_PENDULUM);
+
+	if (!surfacePendulum) {
 		fprintf(stderr, "IMG_Load: %s\n", IMG_GetError());
 		exit(1);
 	}
 
-	display.texture = SDL_CreateTextureFromSurface(display.renderer,
-		surface);
-	if (!display.texture) {
+	display.texturePendulum = SDL_CreateTextureFromSurface(display.renderer,
+		surfacePendulum);
+	if (!display.texturePendulum) {
+		fprintf(stderr, "SDL: could not create pendulum texture - exiting\n");
+		exit(1);
+	}
+
+	// Open arrow image
+	SDL_Surface* surfaceArrow = IMG_Load(PATH_ARROW);
+
+	if (!surfaceArrow) {
+		fprintf(stderr, "IMG_Load: %s\n", IMG_GetError());
+		exit(1);
+	}
+
+	display.textureArrow = SDL_CreateTextureFromSurface(display.renderer,
+		surfaceArrow);
+	if (!display.textureArrow) {
 		fprintf(stderr, "SDL: could not create texture - exiting\n");
 		exit(1);
 	}
@@ -91,10 +109,11 @@ void Render::controllerLoop(std::atomic<bool>& exit, std::atomic<bool>& toggleDi
 
 	// Prepare objects for replays
 	float angleDisplay = (float)M_PI;
+	float torqueDisplay = 0.0;
 	Environment env(set, pendulumLE.getDataSources(), 8);
 	TPG::TPGExecutionEngine tee(env);
 	uint64_t frame = 0;
-	std::deque<std::tuple<uint64_t, double>> replay;
+	std::deque<std::tuple<uint64_t, double, double>> replay;
 
 	while (!exit) {
 
@@ -105,8 +124,10 @@ void Render::controllerLoop(std::atomic<bool>& exit, std::atomic<bool>& toggleDi
 			pendulumLE.reset(0, Learn::LearningMode::VALIDATION);
 			for (auto action = 0; action < params.maxNbActionsPerEval; action++) {
 				auto vertexList = tee.executeFromRoot(**bestRoot);
-				pendulumLE.doAction(((const TPG::TPGAction*)vertexList.back())->getActionID());
-				replay.push_back(std::make_tuple(action, pendulumLE.getAngle()));
+				const auto actionID = ((const TPG::TPGAction*)vertexList.back())->getActionID();
+				replay.push_back(std::make_tuple(action, pendulumLE.getAngle(), pendulumLE.getActionFromID(actionID)));
+				pendulumLE.doAction(actionID);
+
 			}
 
 			doDisplay = false;
@@ -114,11 +135,12 @@ void Render::controllerLoop(std::atomic<bool>& exit, std::atomic<bool>& toggleDi
 
 		if (!replay.empty()) {
 			angleDisplay = (float)std::get<1>(replay.front());
+			torqueDisplay = (float)std::get<2>(replay.front());
 			frame = std::get<0>(replay.front());
 			replay.pop_front();
 		}
 
-		int event = Render::renderEnv(&angleDisplay, frame, generation);
+		int event = Render::renderEnv(&angleDisplay, &torqueDisplay, frame, generation);
 		switch (event) {
 		case 1:
 			std::cout << std::endl << "Display " << ((toggleDisplay) ? "de" : "re") << "activated." << std::endl;
@@ -165,7 +187,7 @@ void Render::displayText(const char* text, int posX, int posY) {
 	SDL_DestroyTexture(texture);
 }
 
-int Render::renderEnv(float* state, uint64_t frame, uint64_t generation) {
+int Render::renderEnv(float* state, float* torque, uint64_t frame, uint64_t generation) {
 	static long int i = 0;
 	static double max_fps = 0.;
 	static double avg_fps = 0.;
@@ -177,18 +199,31 @@ int Render::renderEnv(float* state, uint64_t frame, uint64_t generation) {
 	SDL_RenderClear(display.renderer);
 
 	// Position of the pendulum in the window
-	SDL_Rect dest = { 225, 250, 49, 234 };
-	SDL_Point center = { 25, 15 };
+	SDL_Rect destPendulum = { 225, 250, 49, 234 };
+	SDL_Point centerPendulum = { 25, 15 };
 
 	// Convert the angle to degree with the offset to match the python training
 	float angle = 180.f - state[0] * 180.f / ((float)M_PI);
 
 	// Display the pendulum
-	SDL_RenderCopyEx(display.renderer, display.texture, NULL, &dest, angle, &center, SDL_FLIP_NONE);
+	SDL_RenderCopyEx(display.renderer, display.texturePendulum, NULL, &destPendulum, angle, &centerPendulum, SDL_FLIP_NONE);
+
+	if (fabs(*torque) > 0.0) {
+		float scale = std::sqrt(std::fabs(*torque));
+		// Position of the pendulum in the window
+		const int arrowWidth = 178 * scale;
+		const int arrowHeight = 69 * scale;
+
+		SDL_Rect destArrow = { (DISPLAY_W - arrowWidth) / 2, DISPLAY_H / 2 + 14 + scale * 50.0, arrowWidth , arrowHeight };
+		SDL_Point centerArrow = { arrowWidth / 2, arrowHeight / 2 };
+
+		// Display arrow
+		SDL_RenderCopyEx(display.renderer, display.textureArrow, NULL, &destArrow, NULL, NULL, (*torque > 0.0) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
+	}
 
 	// Print Generation text
 	char generationString[100];
-	sprintf(generationString, "   gen: %4lld", generation);
+	sprintf(generationString, "   gen: %04lld", generation);
 	Render::displayText(generationString, 0, 0);
 
 	// Print FrameNumber text
@@ -225,7 +260,8 @@ int Render::renderEnv(float* state, uint64_t frame, uint64_t generation) {
 
 void Render::renderFinalize()
 {
-	SDL_DestroyTexture(display.texture);
+	SDL_DestroyTexture(display.texturePendulum);
+	SDL_DestroyTexture(display.textureArrow);
 	SDL_DestroyRenderer(display.renderer);
 	SDL_DestroyWindow(display.screen);
 }

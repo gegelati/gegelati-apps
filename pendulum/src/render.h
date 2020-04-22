@@ -12,7 +12,8 @@
 #define DISPLAY_W 500
 #define DISPLAY_H 500
 
-#define PATH PROJECT_ROOT_PATH "/dat/pendulum.png"
+#define PATH_PENDULUM PROJECT_ROOT_PATH "/dat/pendulum.png"
+#define PATH_ARROW PROJECT_ROOT_PATH "/dat/arrow.png"
 #define PATH_TTF PROJECT_ROOT_PATH "/dat/DejaVuSans.ttf"
 /**
 * Namespace for rendering pendulum with the SDL2 lib.
@@ -72,7 +73,7 @@ namespace Render {
 	 * -  0: No event
 	 * -  1: Toggle display of replay after each generation.
 	 */
-	int renderEnv(float* state, uint64_t action, uint64_t generation);
+	int renderEnv(float* state, float* torque, uint64_t action, uint64_t generation);
 
 	/**
 	 * \brief Close SDL and destroy opened textures.

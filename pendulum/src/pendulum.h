@@ -92,6 +92,14 @@ public:
 	/// Inherited via LearningEnvironment
 	virtual void reset(size_t seed = 0, Learn::LearningMode mode = Learn::LearningMode::TRAINING) override;
 
+	/**
+	* \brief Get the action from its associated ID.
+	*
+	* \param[in] actionID the integer representing the selected action.
+	* \return the torque applied to the pendulum.
+	*/
+	double getActionFromID(const uint64_t& actionID);
+
 	/// Inherited via LearningEnvironment
 	virtual void doAction(uint64_t actionID) override;
 
