@@ -91,7 +91,7 @@ int main() {
 
 	const TPG::TPGVertex* bestRoot = NULL;
 
-	std::thread threadDisplay(Render::controlerLoop, std::ref(exitProgram), std::ref(toggleDisplay), std::ref(doDisplay),
+	std::thread threadDisplay(Render::controllerLoop, std::ref(exitProgram), std::ref(toggleDisplay), std::ref(doDisplay),
 		&bestRoot, std::ref(set), std::ref(pendulumLE), std::ref(params), std::ref(generation));
 
 	while (exitProgram); // Wait for other thread to print key info.
@@ -144,9 +144,6 @@ int main() {
 	la.keepBestPolicy();
 	dotExporter.setNewFilePath("out_best.dot");
 	dotExporter.print();
-
-	// Print stats one last time
-	//mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), la.getTPGGraph().getRootVertices().at(0));
 
 	// cleanup
 	for (unsigned int i = 0; i < set.getNbInstructions(); i++) {

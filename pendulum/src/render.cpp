@@ -80,7 +80,7 @@ void Render::renderInit() {
 	}
 }
 
-void Render::controlerLoop(std::atomic<bool>& exit, std::atomic<bool>& toggleDisplay, std::atomic<bool>& doDisplay,
+void Render::controllerLoop(std::atomic<bool>& exit, std::atomic<bool>& toggleDisplay, std::atomic<bool>& doDisplay,
 	const TPG::TPGVertex** bestRoot, const Instructions::Set& set, Pendulum& pendulumLE, const Learn::LearningParameters& params,
 	std::atomic<uint64_t>& generation) {
 
@@ -90,10 +90,10 @@ void Render::controlerLoop(std::atomic<bool>& exit, std::atomic<bool>& toggleDis
 	exit = false;
 
 	// Prepare objects for replays
-	float angleDisplay = M_PI;
+	float angleDisplay = (float)M_PI;
 	Environment env(set, pendulumLE.getDataSources(), 8);
 	TPG::TPGExecutionEngine tee(env);
-	auto frame = 0;
+	uint64_t frame = 0;
 	std::deque<std::tuple<uint64_t, double>> replay;
 
 	while (!exit) {
@@ -114,14 +114,14 @@ void Render::controlerLoop(std::atomic<bool>& exit, std::atomic<bool>& toggleDis
 
 		if (!replay.empty()) {
 			angleDisplay = (float)std::get<1>(replay.front());
-			frame = (float)std::get<0>(replay.front());
+			frame = std::get<0>(replay.front());
 			replay.pop_front();
 		}
 
 		int event = Render::renderEnv(&angleDisplay, frame, generation);
 		switch (event) {
 		case 1:
-			std::cout << "Display " << ((toggleDisplay) ? "de" : "re") << "activated." << std::endl;
+			std::cout << std::endl << "Display " << ((toggleDisplay) ? "de" : "re") << "activated." << std::endl;
 			toggleDisplay = !toggleDisplay;
 			break;
 
