@@ -204,9 +204,7 @@ file(GLOB_RECURSE
 )
 
 if(${TESTING})
-    MESSAGE(INFO ${pendulum_files})
 	list(REMOVE_ITEM pendulum_files "${CMAKE_CURRENT_SOURCE_DIR}/./src/render.cpp")
-	 MESSAGE(INFO ${pendulum_files})
 endif()
 
 include_directories(${GEGELATI_INCLUDE_DIRS}  ${SDL2_INCLUDE_DIR} ${SDL2IMAGE_INCLUDE_DIR} ${SDL2TTF_INCLUDE_DIR})

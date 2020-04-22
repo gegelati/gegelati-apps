@@ -21,7 +21,7 @@ private:
 	static const double MASS;
 	static const double LENGTH;
 	static const size_t REWARD_HISTORY_SIZE = 300;
-	static const double Pendulum::STABILITY_THRESHOLD;
+	static const double STABILITY_THRESHOLD;
 
 	/**
 	* \brief Available actions for the LearningAgent.
@@ -69,8 +69,8 @@ public:
 	*/
 	Pendulum(const std::vector<double>& actions) :
 		LearningEnvironment(actions.size() * 2 + 1), // see availableActions comment.
-		currentState{ 2 },
-		availableActions{ actions }
+		availableActions{ actions },
+		currentState{ 2 }
 	{};
 
 	/**

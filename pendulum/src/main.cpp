@@ -103,7 +103,7 @@ int main() {
 	// Train for NB_GENERATIONS generations
 	printf("\nGen\tNbVert\tMin\tAvg\tMax\tTvalid\tTtrain\n");
 	for (int i = 0; i < NB_GENERATIONS && !exitProgram; i++) {
-		char buff[12];
+		char buff[13];
 		sprintf(buff, "out_%04d.dot", i);
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
