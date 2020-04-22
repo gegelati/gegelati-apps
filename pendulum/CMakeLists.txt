@@ -56,7 +56,7 @@ endif()
 # Add definitions for testing purposes
 if(${TESTING})
 	MESSAGE("Testing mode")
-	add_definitions(-DNO_CONSOLE_CONTROL -DNB_GENERATIONS=10)
+	add_definitions(-DNO_CONSOLE_CONTROL -DNB_GENERATIONS=5)
 endif()
 
 # *******************************************
@@ -87,110 +87,112 @@ if (WIN32)
 	endif()
 endif()
 
-# *******************************************
-# ************** SDL2 LIBRARY ***************
-# *******************************************
-# Set variables before finding SDL Library
-# Helps to find where SDL libraries are saved (win32 only)
-set(LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/lib/cmake_modules/")
-
-if(WIN32)
-    # find the SDL2-x.y.z folder in the lib directory.
-	file(GLOB SDL2DIR "${LIBS_DIR}/SDL2-[\\.|0-9]*")
-	set(ENV{SDL2DIR} ${SDL2DIR})
-endif()
-
-Find_Package (SDL2 REQUIRED )
-
-if(NOT SDL2_FOUND)
-  MESSAGE(FATAL_ERROR "SDL not found !")
-endif()
-
-if (WIN32)
-	file(GLOB
-		SDL2_DLL
-		${SDL2DIR}/bin/*.dll
-		${SDL2DIR}/lib/*.dll
-	)
-
-	MESSAGE("Copy SDL DLLs into ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-	if(NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
-		file(COPY ${SDL2_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-	else()
-		file(COPY ${SDL2_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
-		file(COPY ${SDL2_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release)
+if(NOT ${TESTING})
+	# *******************************************
+	# ************** SDL2 LIBRARY ***************
+	# *******************************************
+	# Set variables before finding SDL Library
+	# Helps to find where SDL libraries are saved (win32 only)
+	set(LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+	set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/lib/cmake_modules/")
+	
+	if(WIN32)
+		# find the SDL2-x.y.z folder in the lib directory.
+		file(GLOB SDL2DIR "${LIBS_DIR}/SDL2-[\\.|0-9]*")
+		set(ENV{SDL2DIR} ${SDL2DIR})
+	endif()
+	
+	Find_Package (SDL2 REQUIRED )
+	
+	if(NOT SDL2_FOUND)
+	MESSAGE(FATAL_ERROR "SDL not found !")
+	endif()
+	
+	if (WIN32)
+		file(GLOB
+			SDL2_DLL
+			${SDL2DIR}/bin/*.dll
+			${SDL2DIR}/lib/*.dll
+		)
+	
+		MESSAGE("Copy SDL DLLs into ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+		if(NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
+			file(COPY ${SDL2_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+		else()
+			file(COPY ${SDL2_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
+			file(COPY ${SDL2_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release)
+		endif()
+	endif()
+	
+	# *******************************************
+	# *********** SDL2_image LIBRARY ************
+	# *******************************************
+	# Set variables before finding SDL_image Library
+	# Helps to find where SDL libraries are saved (win32 only)
+	
+	if(WIN32)
+		# find the SDL2_image-x.y.z folder in the lib directory.
+		file(GLOB SDL2IMAGEDIR "${LIBS_DIR}/SDL2_image-[\\.|0-9]*")
+		set(ENV{SDL2IMAGEDIR} ${SDL2IMAGEDIR})
+	endif()
+	
+	Find_Package (SDL2_image REQUIRED )
+	
+	if(NOT SDL2IMAGE_FOUND)
+	MESSAGE(FATAL_ERROR "SDL Image not found !")
+	endif()
+	
+	if (WIN32)
+		file(GLOB
+			SDL2_IMAGE_DLL
+			${SDL2IMAGEDIR}/bin/*.dll
+			${SDL2IMAGEDIR}/lib/*.dll
+		)
+	
+		MESSAGE("Copy SDL Image DLLs into ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+		if(NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
+			file(COPY ${SDL2_IMAGE_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+		else()
+			file(COPY ${SDL2_IMAGE_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
+			file(COPY ${SDL2_IMAGE_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release)
+		endif()
+	endif()
+	
+	# *******************************************
+	# ************ SDL2TTF LIBRARY **************
+	# ******************************************
+	# Set variables before finding SDL2TTF Library
+	# Helps to find where SDL2TTF libraries are saved (win32 only)
+	if(WIN32)
+		# find the SDL2_ttf-x.y.z folder in the lib directory.
+		file(GLOB SDL2TTFDIR "${LIBS_DIR}/SDL2_ttf-[\\.|0-9]*")
+		set(ENV{SDL2TTFDIR} ${SDL2TTFDIR})
+	endif()
+	
+	
+	Find_Package (SDL2TTF REQUIRED )
+	
+	if(NOT SDL2TTF_FOUND)
+	MESSAGE(FATAL_ERROR "SDL2TTF not found !")
+	endif()
+	
+	if (WIN32)
+		file(GLOB
+			SDL2TTF_DLL
+			${SDL2TTFDIR}/bin/*.dll
+			${SDL2TTFDIR}/lib/*.dll
+		)
+	
+		MESSAGE("Copy SDL2_ttf DLLs into ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+		if(NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
+			file(COPY ${SDL2TTF_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+		else()
+			file(COPY ${SDL2TTF_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
+			file(COPY ${SDL2TTF_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release)
+		endif()
 	endif()
 endif()
-
-# *******************************************
-# *********** SDL2_image LIBRARY ************
-# *******************************************
-# Set variables before finding SDL_image Library
-# Helps to find where SDL libraries are saved (win32 only)
-
-if(WIN32)
-    # find the SDL2_image-x.y.z folder in the lib directory.
-	file(GLOB SDL2IMAGEDIR "${LIBS_DIR}/SDL2_image-[\\.|0-9]*")
-	set(ENV{SDL2IMAGEDIR} ${SDL2IMAGEDIR})
-endif()
-
-Find_Package (SDL2_image REQUIRED )
-
-if(NOT SDL2_FOUND)
-  MESSAGE(FATAL_ERROR "SDL Image not found !")
-endif()
-
-if (WIN32)
-	file(GLOB
-		SDL2_IMAGE_DLL
-		${SDL2IMAGEDIR}/bin/*.dll
-		${SDL2IMAGEDIR}/lib/*.dll
-	)
-
-	MESSAGE("Copy SDL Image DLLs into ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-	if(NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
-		file(COPY ${SDL2_IMAGE_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-	else()
-		file(COPY ${SDL2_IMAGE_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
-		file(COPY ${SDL2_IMAGE_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release)
-	endif()
-endif()
-
-# *******************************************
-# ************ SDL2TTF LIBRARY **************
-# ******************************************
-# Set variables before finding SDL2TTF Library
-# Helps to find where SDL2TTF libraries are saved (win32 only)
-if(WIN32)
-    # find the SDL2_ttf-x.y.z folder in the lib directory.
-	file(GLOB SDL2TTFDIR "${LIBS_DIR}/SDL2_ttf-[\\.|0-9]*")
-	set(ENV{SDL2TTFDIR} ${SDL2TTFDIR})
-endif()
-
-
-Find_Package (SDL2TTF REQUIRED )
-
-if(NOT SDL2TTF_FOUND)
-  MESSAGE(FATAL_ERROR "SDL2TTF not found !")
-endif()
-
-if (WIN32)
-	file(GLOB
-		SDL2TTF_DLL
-		${SDL2TTFDIR}/bin/*.dll
-		${SDL2TTFDIR}/lib/*.dll
-	)
-
-	MESSAGE("Copy SDL2_ttf DLLs into ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-	if(NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
-		file(COPY ${SDL2TTF_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-	else()
-		file(COPY ${SDL2TTF_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
-		file(COPY ${SDL2TTF_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release)
-	endif()
-endif()
-
+	
 # *******************************************
 # ************** Executable  ****************
 # *******************************************
@@ -200,6 +202,12 @@ file(GLOB_RECURSE
 	./src/*.c
 	./src/*.h
 )
+
+if(${TESTING})
+    MESSAGE(INFO ${pendulum_files})
+	list(REMOVE_ITEM pendulum_files "${CMAKE_CURRENT_SOURCE_DIR}/./src/render.cpp")
+	 MESSAGE(INFO ${pendulum_files})
+endif()
 
 include_directories(${GEGELATI_INCLUDE_DIRS}  ${SDL2_INCLUDE_DIR} ${SDL2IMAGE_INCLUDE_DIR} ${SDL2TTF_INCLUDE_DIR})
 add_executable(${PROJECT_NAME} ${pendulum_files})

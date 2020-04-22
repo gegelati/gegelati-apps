@@ -13,17 +13,20 @@
 #include "pendulum.h"
 #include "render.h"
 
+/**
+* \brief Structure holding attributes for a display.
+*/
 typedef struct sdlDisplay {
 	SDL_Renderer* renderer;
 	SDL_Window* screen;
 	SDL_Texture* texture;
 	TTF_Font* font;
-	int stampId;
 }sdlDisplay;
 
+// sdlDisplay instance
 static sdlDisplay display;
 
-void Render::renderInit(void) {
+void Render::renderInit() {
 	display.screen = NULL;
 	display.renderer = NULL;
 
@@ -75,16 +78,6 @@ void Render::renderInit(void) {
 		fprintf(stderr, "SDL: could not create texture - exiting\n");
 		exit(1);
 	}
-
-	/*
-	display.stampId = 0;
-	for (int i = 0; i < FPS_MEAN; ++i) {
-		startTiming(i + 1);
-	}*/
-
-
-	//fprintf(stderr, "register exit callback\n");
-	//SDL_SetEventFilter(exitCallBack, NULL);
 }
 
 void Render::controlerLoop(std::atomic<bool>& exit, std::atomic<bool>& toggleDisplay, std::atomic<bool>& doDisplay,
@@ -147,39 +140,36 @@ void Render::controlerLoop(std::atomic<bool>& exit, std::atomic<bool>& toggleDis
 	std::cout.flush();
 }
 
+void Render::displayText(const char* text, int posX, int posY) {
+	// Color of text
+	SDL_Color colorGreen = { 0, 255, 0, 255 };
+	SDL_Color colorWhite = { 255, 255, 255, 255 };
+
+	SDL_Surface* textSurf = TTF_RenderText_Blended(display.font, text,
+		colorGreen);
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(display.renderer,
+		textSurf);
+
+	int width, height;
+	SDL_QueryTexture(texture, NULL, NULL, &width, &height);
+	SDL_Rect textRect;
+
+	textRect.x = posX;
+	textRect.y = posY;
+	textRect.w = width;
+	textRect.h = height;
+	SDL_RenderCopy(display.renderer, texture, NULL, &textRect);
+
+	/* Free resources */
+	SDL_FreeSurface(textSurf);
+	SDL_DestroyTexture(texture);
+}
+
 int Render::renderEnv(float* state, uint64_t frame, uint64_t generation) {
 	static long int i = 0;
 	static double max_fps = 0.;
 	static double avg_fps = 0.;
 	static double min_fps = DBL_MAX;
-
-	/*
-	// Compute FPS
-	char stringFPS[20];
-	int timeStamp = stopTiming(display.stampId + 1);
-	double fps = 1. / (timeStamp / 1000000. / FPS_MEAN);
-	sprintf(stringFPS, "%.2f fps", fps);
-	startTiming(display.stampId + 1);
-	display.stampId = (display.stampId + 1) % FPS_MEAN;
-
-	if (fps > max_fps) {
-		max_fps = fps;
-	}
-	if (fps < min_fps && fps > 0.) {
-		min_fps = fps;
-	}
-	avg_fps += fps;
-	if (i % 10000 == 0) {
-		avg_fps /= 10000.;
-		//        fprintf(stderr, "Avg FPS: %.2f\n", avg_fps);
-		//        fprintf(stderr, "Min FPS: %.2f\n", min_fps);
-		//        fprintf(stderr, "Max FPS: %.2f\n", max_fps);
-		avg_fps = 0.;
-		min_fps = DBL_MAX;
-		max_fps = 0.;
-	}
-	++i;
-	*/
 
 	// Select the color for drawing. It is set to red here. 
 	SDL_SetRenderDrawColor(display.renderer, 255, 255, 255, 255);
@@ -196,39 +186,15 @@ int Render::renderEnv(float* state, uint64_t frame, uint64_t generation) {
 	// Display the pendulum
 	SDL_RenderCopyEx(display.renderer, display.texture, NULL, &dest, angle, &center, SDL_FLIP_NONE);
 
-	// Color of text
-	SDL_Color colorGreen = { 0, 255, 0, 255 };
-
 	// Print Generation text
 	char generationString[100];
-	sprintf(generationString, "   gen: %04lld", generation);
-	SDL_Surface* surfaceGeneration = TTF_RenderText_Blended(display.font, generationString, colorGreen);
-	SDL_Texture* textureGeneration = SDL_CreateTextureFromSurface(display.renderer, surfaceGeneration);
-
-	int widthGeneration, heightGeneration;
-	SDL_QueryTexture(textureGeneration, NULL, NULL, &widthGeneration, &heightGeneration);
-	SDL_Rect rectGenerationText = { 0, 0, widthGeneration, heightGeneration };
-	SDL_RenderCopy(display.renderer, textureGeneration, NULL, &rectGenerationText);
+	sprintf(generationString, "   gen: %4lld", generation);
+	Render::displayText(generationString, 0, 0);
 
 	// Print FrameNumber text
 	char frameNumber[17];
-	sprintf(frameNumber, "frame: %04lld", frame);
-	SDL_Surface* surfaceFrameNumber = TTF_RenderText_Blended(display.font, frameNumber, colorGreen);
-	SDL_Texture* textureFrameNumber = SDL_CreateTextureFromSurface(display.renderer, surfaceFrameNumber);
-
-	int widthFrameNumber, heightFrameNumber;
-	SDL_QueryTexture(textureFrameNumber, NULL, NULL, &widthFrameNumber, &heightFrameNumber);
-	SDL_Rect rectFPSText = { 0, heightGeneration, widthFrameNumber, heightFrameNumber };
-	SDL_RenderCopy(display.renderer, textureFrameNumber, NULL, &rectFPSText);
-
-	// Free resources
-	SDL_FreeSurface(surfaceFrameNumber);
-	SDL_DestroyTexture(textureFrameNumber);
-
-	// Free resources
-	SDL_FreeSurface(surfaceGeneration);
-	SDL_DestroyTexture(textureGeneration);
-
+	sprintf(frameNumber, "frame: %4lld", frame);
+	Render::displayText(frameNumber, 0, 22);
 
 	// Proceed to the actual display
 	SDL_RenderPresent(display.renderer);
@@ -257,7 +223,7 @@ int Render::renderEnv(float* state, uint64_t frame, uint64_t generation) {
 	return 0;
 }
 
-void Render::renderFinalize(void)
+void Render::renderFinalize()
 {
 	SDL_DestroyTexture(display.texture);
 	SDL_DestroyRenderer(display.renderer);

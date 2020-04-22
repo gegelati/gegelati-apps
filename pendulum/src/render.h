@@ -25,6 +25,8 @@ namespace Render {
 	 */
 	void renderInit(void);
 
+	void displayText(const char* text, int posX, int posY);
+
 	/**
 	 * @brief Display the environment
 	 *
