@@ -11,13 +11,19 @@ jobs:
         - GENERATOR="Visual Studio 16 2019"
         - APPLI=mnist
       compiler: msvc19
-        
+
     - os: windows
       env: 
         - GENERATOR="Visual Studio 16 2019"
         - APPLI=stick-game
       compiler: msvc19
-       
+
+    - os: windows
+      env:
+        - GENERATOR="Visual Studio 16 2019"
+        - APPLI=pendulum
+      compiler: msvc19
+
     - os: linux
       compiler: gcc-7
       addons:
@@ -45,6 +51,20 @@ jobs:
       env:
         - GENERATOR="Unix Makefile"
         - APPLI=stick-game
+
+    - os: linux
+      compiler: gcc-7
+      addons:
+        apt:
+            sources:
+                - ubuntu-toolchain-r-test
+            packages:
+                - g++-7
+                - doxygen
+                - gcovr
+      env:
+        - GENERATOR="Unix Makefile"
+        - APPLI=pendulum
  
 before_install:
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install visualstudio2019buildtools --package-parameters "--includeRecommended --includeOptional"; fi

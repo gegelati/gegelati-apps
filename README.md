@@ -4,6 +4,7 @@ The purpose of this repository is to gather several applications built with the 
 
 ## Available applications
 * [MNIST](./mnist): Classification learning environment based on the eponymous data-set from LeCun et al.
+* [Pendulum](./pendulum): Physical environment with an oscillating pendulum to be stabilize upward.
 * [Stick Game](./stick-game): Learning environment for the Nim strategy game known as the "21 game".
 
 ## Continuous Integration
