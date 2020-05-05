@@ -26,12 +26,12 @@ int main() {
 		if (b != 0.0) { return fmod(a, b); }
 		else { return  DBL_MIN; }	};
 
-	set.add(*(new Instructions::LambdaInstruction<double>(modulo)));
-	set.add(*(new Instructions::LambdaInstruction<int>(minus)));
-	set.add(*(new Instructions::LambdaInstruction<double>(add)));
-	set.add(*(new Instructions::LambdaInstruction<int>(cast)));
-	set.add(*(new Instructions::LambdaInstruction<double>(max)));
-	set.add(*(new Instructions::LambdaInstruction<double>(nulltest)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(modulo)));
+	set.add(*(new Instructions::LambdaInstruction<int, int>(minus)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
+	set.add(*(new Instructions::LambdaInstruction<int, int>(cast)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(nulltest)));
 
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size

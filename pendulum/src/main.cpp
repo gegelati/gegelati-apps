@@ -32,18 +32,18 @@ int main() {
 	auto tan = [](double a, double b)->double {return std::tan(a); };
 	auto pi = [](double a, double b)->double {return M_PI; };
 
-	set.add(*(new Instructions::LambdaInstruction<double>(minus)));
-	set.add(*(new Instructions::LambdaInstruction<double>(add)));
-	set.add(*(new Instructions::LambdaInstruction<double>(mult)));
-	set.add(*(new Instructions::LambdaInstruction<double>(div)));
-	set.add(*(new Instructions::LambdaInstruction<double>(max)));
-	set.add(*(new Instructions::LambdaInstruction<double>(exp)));
-	set.add(*(new Instructions::LambdaInstruction<double>(ln)));
-	set.add(*(new Instructions::LambdaInstruction<double>(cos)));
-	set.add(*(new Instructions::LambdaInstruction<double>(sin)));
-	set.add(*(new Instructions::LambdaInstruction<double>(tan)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(minus)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(mult)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(div)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(exp)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(ln)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(cos)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(sin)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(tan)));
 	set.add(*(new Instructions::MultByConstParam<double, float>()));
-	set.add(*(new Instructions::LambdaInstruction<double>(pi)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(pi)));
 
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size

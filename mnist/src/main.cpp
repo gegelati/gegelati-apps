@@ -57,13 +57,13 @@ int main() {
 	auto ln = [](double a, double b)->double {return std::log(a); };
 	auto exp = [](double a, double b)->double {return std::exp(a); };
 
-	set.add(*(new Instructions::LambdaInstruction<double>(minus)));
-	set.add(*(new Instructions::LambdaInstruction<double>(add)));
-	set.add(*(new Instructions::LambdaInstruction<double>(mult)));
-	set.add(*(new Instructions::LambdaInstruction<double>(div)));
-	set.add(*(new Instructions::LambdaInstruction<double>(max)));
-	set.add(*(new Instructions::LambdaInstruction<double>(exp)));
-	set.add(*(new Instructions::LambdaInstruction<double>(ln)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(minus)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(mult)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(div)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(exp)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(ln)));
 
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
@@ -100,19 +100,19 @@ int main() {
 	// Create an exporter for all graphs
 	File::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
 
-	
+
 	// Start a thread for controlling the loop
-	#ifndef NO_CONSOLE_CONTROL
+#ifndef NO_CONSOLE_CONTROL
 	std::atomic<bool> exitProgram = true; // (set to false by other thread) 
 	std::atomic<bool> printStats = false;
-	
+
 	std::thread threadKeyboard(getKey, std::ref(exitProgram), std::ref(printStats));
 
 	while (exitProgram); // Wait for other thread to print key info.
-	#else 
+#else 
 	std::atomic<bool> exitProgram = false; // (set to false by other thread) 
 	std::atomic<bool> printStats = false;
-	#endif
+#endif
 
 	// Train for NB_GENERATIONS generations
 	printf("\nGen\tNbVert\tMin\tAvg\tMax\tTvalid\tTtrain\n");
@@ -161,11 +161,11 @@ int main() {
 		delete (&set.getInstruction(i));
 	}
 
-	#ifndef NO_CONSOLE_CONTROL
+#ifndef NO_CONSOLE_CONTROL
 	// Exit the thread
 	std::cout << "Exiting program, press a key then [enter] to exit if nothing happens.";
 	threadKeyboard.join();
-	#endif
+#endif
 
 	return 0;
 }
