@@ -54,16 +54,16 @@ int main() {
 	auto mult = [](double a, double b)->double {return a * b; };
 	auto div = [](double a, double b)->double {return a / b; };
 	auto max = [](double a, double b)->double {return std::max(a, b); };
-	auto ln = [](double a, double b)->double {return std::log(a); };
-	auto exp = [](double a, double b)->double {return std::exp(a); };
+	auto ln = [](double a)->double {return std::log(a); };
+	auto exp = [](double a)->double {return std::exp(a); };
 
 	set.add(*(new Instructions::LambdaInstruction<double, double>(minus)));
 	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
 	set.add(*(new Instructions::LambdaInstruction<double, double>(mult)));
 	set.add(*(new Instructions::LambdaInstruction<double, double>(div)));
 	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
-	set.add(*(new Instructions::LambdaInstruction<double, double>(exp)));
-	set.add(*(new Instructions::LambdaInstruction<double, double>(ln)));
+	set.add(*(new Instructions::LambdaInstruction<double>(exp)));
+	set.add(*(new Instructions::LambdaInstruction<double>(ln)));
 
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
