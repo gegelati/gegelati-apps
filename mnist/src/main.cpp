@@ -114,6 +114,11 @@ int main() {
 	std::atomic<bool> printStats = false;
 #endif
 
+	// File for printing best policy stat.
+	std::ofstream stats;
+	stats.open("bestPolicyStats.md");
+	const TPG::TPGVertex* bestRoot = nullptr;
+
 	// Train for NB_GENERATIONS generations
 	printf("\nGen\tNbVert\tMin\tAvg\tMax\tTvalid\tTtrain\n");
 	for (int i = 0; i < NB_GENERATIONS && !exitProgram; i++) {
@@ -135,6 +140,18 @@ int main() {
 		printf("%3d\t%4" PRIu64 "\t%1.2lf\t%1.2lf\t%1.2lf", i, la.getTPGGraph().getNbVertices(), min, avg, max);
 		std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopEval - startEval).count();
 
+		// Print stats in file if a new best root was found
+
+		if (la.getBestRoot().first != bestRoot) {
+			bestRoot = la.getBestRoot().first;
+			stats << "Generation " << i << std::endl << std::endl;
+			TPG::PolicyStats ps;
+			ps.setEnvironment(la.getTPGGraph().getEnvironment());
+			ps.analyzePolicy(bestRoot);
+			stats << ps << std::endl;
+			stats << std::endl << std::endl << "==========" << std::endl << std::endl;
+		}
+
 		if (printStats) {
 			mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), iter->second);
 			printStats = false;
@@ -152,6 +169,15 @@ int main() {
 	la.keepBestPolicy();
 	dotExporter.setNewFilePath("out_best.dot");
 	dotExporter.print();
+
+	TPG::PolicyStats ps;
+	ps.setEnvironment(la.getTPGGraph().getEnvironment());
+	ps.analyzePolicy(la.getBestRoot().first);
+	std::ofstream bestStats;
+	bestStats.open("out_best_stats.md");
+	bestStats << ps;
+	bestStats.close();
+	stats.close();
 
 	// Print stats one last time
 	mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), la.getTPGGraph().getRootVertices().at(0));
