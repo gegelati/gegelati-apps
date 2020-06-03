@@ -54,6 +54,7 @@ int main() {
 	params.maxNbActionsPerEval = 11;
 	params.nbIterationsPerPolicyEvaluation = 100;
 	params.ratioDeletedRoots = 0.5;
+	params.maxNbEvaluationPerPolicy = params.nbIterationsPerPolicyEvaluation * 1; // 2 generation/policy
 
 	// Instantiate the LearningEnvironment
 	StickGameWithOpponent le;

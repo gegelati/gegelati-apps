@@ -87,6 +87,8 @@ int main() {
 	params.ratioDeletedRoots = 0.90;
 	params.archiveSize = 500;
 	params.archivingProbability = 0.01;
+	// Evaluate each root at most for 4 generations
+	params.maxNbEvaluationPerPolicy = params.nbIterationsPerPolicyEvaluation * params.maxNbActionsPerEval * 4;
 
 	// Instantiate the LearningEnvironment
 	MNIST mnistLE;
