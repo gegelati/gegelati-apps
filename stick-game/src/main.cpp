@@ -18,19 +18,19 @@ int main() {
 	// Create the instruction set for programs
 	Instructions::Set set;
 	auto minus = [](int a, int b)->double {return (double)a - (double)b; };
-	auto cast = [](int a, int b)->double {return (double)a; };
+	auto cast = [](int a)->double {return (double)a; };
 	auto add = [](double a, double b)->double {return a + b; };
 	auto max = [](double a, double b)->double {return std::max(a, b); };
-	auto nulltest = [](double a, double b)->double {return (a == 0.0) ? 10.0 : 0.0; };
+	auto nulltest = [](double a)->double {return (a == 0.0) ? 10.0 : 0.0; };
 	auto modulo = [](double a, double b)->double {
 		if (b != 0.0) { return fmod(a, b); }
 		else { return  DBL_MIN; }	};
 
-	set.add(*(new Instructions::LambdaInstruction<double>(modulo)));
-	set.add(*(new Instructions::LambdaInstruction<int>(minus)));
-	set.add(*(new Instructions::LambdaInstruction<double>(add)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(modulo)));
+	set.add(*(new Instructions::LambdaInstruction<int, int>(minus)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
 	set.add(*(new Instructions::LambdaInstruction<int>(cast)));
-	set.add(*(new Instructions::LambdaInstruction<double>(max)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
 	set.add(*(new Instructions::LambdaInstruction<double>(nulltest)));
 
 	// Set the parameters for the learning process.
@@ -54,6 +54,7 @@ int main() {
 	params.maxNbActionsPerEval = 11;
 	params.nbIterationsPerPolicyEvaluation = 100;
 	params.ratioDeletedRoots = 0.5;
+	params.maxNbEvaluationPerPolicy = params.nbIterationsPerPolicyEvaluation * 1; // 2 generation/policy
 
 	// Instantiate the LearningEnvironment
 	StickGameWithOpponent le;

@@ -12,6 +12,8 @@ set (PROJECT_NAME pendulum)
 
 project(${PROJECT_NAME})
 
+option( TESTING "Is the program compiled for tests only (without display)." OFF)
+
 # Add definition for relative path into project
 add_definitions( -DPROJECT_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
 
