@@ -79,17 +79,18 @@ std::vector<std::reference_wrapper<const Data::DataHandler>> TicTacToe::getDataS
 
 double TicTacToe::getScore() const {
     // adds a malus if there has been a forbiden move in the game
-    int malusForbiddenMove = this->forbiddenMove ? 1 : 0;
+    double malusForbiddenMove = this->forbiddenMove ? 1.0 : 0.0;
     // check if the game is null
     if (this->null) {
-        return 0.0 - malusForbiddenMove;
+        return 0.5 - malusForbiddenMove;
     }
     // check if the circle won
     if (this->win) {
         return 1.0 - malusForbiddenMove;
     }
+
     // circle lost
-    return -1.0 - malusForbiddenMove;
+    return 0.0 - malusForbiddenMove;
 }
 
 void TicTacToe::updateGame() {

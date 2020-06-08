@@ -21,7 +21,7 @@ int main() {
 	auto cast = [](int a, int b)->double {return (double)a; };
 	auto add = [](double a, double b)->double {return a + b; };
 	auto max = [](double a, double b)->double {return std::max(a, b); };
-	auto nulltest = [](double a, double b)->double {return (a == 0.0) ? 10.0 : 0.0; };
+	auto nulltest = [](double a, double b)->double {return (a == -1.0) ? 10.0 : 0.0; };
 	auto modulo = [](double a, double b)->double {
 		if (b != 0.0) { return fmod(a, b); }
 		else { return  DBL_MIN; }	};
@@ -51,7 +51,7 @@ int main() {
 	params.mutation.prog.pSwap = 1.0;
 	params.mutation.prog.maxProgramSize = 20;
 	params.archiveSize = 50;
-	params.maxNbActionsPerEval = 11;
+	params.maxNbActionsPerEval = 5;
 	params.nbIterationsPerPolicyEvaluation = 100;
 	params.ratioDeletedRoots = 0.5;
 
