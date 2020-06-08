@@ -54,14 +54,14 @@ int main() {
 	auto mult = [](double a, double b)->double {return a * b; };
 	auto div = [](double a, double b)->double {return a / b; };
 	auto max = [](double a, double b)->double {return std::max(a, b); };
-	auto ln = [](double a, double b)->double {return std::log(a); };
-	auto exp = [](double a, double b)->double {return std::exp(a); };
+	auto ln = [](double a)->double {return std::log(a); };
+	auto exp = [](double a)->double {return std::exp(a); };
 
-	set.add(*(new Instructions::LambdaInstruction<double>(minus)));
-	set.add(*(new Instructions::LambdaInstruction<double>(add)));
-	set.add(*(new Instructions::LambdaInstruction<double>(mult)));
-	set.add(*(new Instructions::LambdaInstruction<double>(div)));
-	set.add(*(new Instructions::LambdaInstruction<double>(max)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(minus)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(mult)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(div)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
 	set.add(*(new Instructions::LambdaInstruction<double>(exp)));
 	set.add(*(new Instructions::LambdaInstruction<double>(ln)));
 
@@ -87,6 +87,8 @@ int main() {
 	params.ratioDeletedRoots = 0.90;
 	params.archiveSize = 500;
 	params.archivingProbability = 0.01;
+	// Evaluate each root at most for 4 generations
+	params.maxNbEvaluationPerPolicy = params.nbIterationsPerPolicyEvaluation * params.maxNbActionsPerEval * 4;
 
 	// Instantiate the LearningEnvironment
 	MNIST mnistLE;
@@ -100,19 +102,24 @@ int main() {
 	// Create an exporter for all graphs
 	File::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
 
-	
+
 	// Start a thread for controlling the loop
-	#ifndef NO_CONSOLE_CONTROL
+#ifndef NO_CONSOLE_CONTROL
 	std::atomic<bool> exitProgram = true; // (set to false by other thread) 
 	std::atomic<bool> printStats = false;
-	
+
 	std::thread threadKeyboard(getKey, std::ref(exitProgram), std::ref(printStats));
 
 	while (exitProgram); // Wait for other thread to print key info.
-	#else 
+#else 
 	std::atomic<bool> exitProgram = false; // (set to false by other thread) 
 	std::atomic<bool> printStats = false;
-	#endif
+#endif
+
+	// File for printing best policy stat.
+	std::ofstream stats;
+	stats.open("bestPolicyStats.md");
+	const TPG::TPGVertex* bestRoot = nullptr;
 
 	// Train for NB_GENERATIONS generations
 	printf("\nGen\tNbVert\tMin\tAvg\tMax\tTvalid\tTtrain\n");
@@ -135,6 +142,18 @@ int main() {
 		printf("%3d\t%4" PRIu64 "\t%1.2lf\t%1.2lf\t%1.2lf", i, la.getTPGGraph().getNbVertices(), min, avg, max);
 		std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopEval - startEval).count();
 
+		// Print stats in file if a new best root was found
+
+		if (la.getBestRoot().first != bestRoot) {
+			bestRoot = la.getBestRoot().first;
+			stats << "Generation " << i << std::endl << std::endl;
+			TPG::PolicyStats ps;
+			ps.setEnvironment(la.getTPGGraph().getEnvironment());
+			ps.analyzePolicy(bestRoot);
+			stats << ps << std::endl;
+			stats << std::endl << std::endl << "==========" << std::endl << std::endl;
+		}
+
 		if (printStats) {
 			mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), iter->second);
 			printStats = false;
@@ -153,6 +172,15 @@ int main() {
 	dotExporter.setNewFilePath("out_best.dot");
 	dotExporter.print();
 
+	TPG::PolicyStats ps;
+	ps.setEnvironment(la.getTPGGraph().getEnvironment());
+	ps.analyzePolicy(la.getBestRoot().first);
+	std::ofstream bestStats;
+	bestStats.open("out_best_stats.md");
+	bestStats << ps;
+	bestStats.close();
+	stats.close();
+
 	// Print stats one last time
 	mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), la.getTPGGraph().getRootVertices().at(0));
 
@@ -161,11 +189,11 @@ int main() {
 		delete (&set.getInstruction(i));
 	}
 
-	#ifndef NO_CONSOLE_CONTROL
+#ifndef NO_CONSOLE_CONTROL
 	// Exit the thread
 	std::cout << "Exiting program, press a key then [enter] to exit if nothing happens.";
 	threadKeyboard.join();
-	#endif
+#endif
 
 	return 0;
 }

@@ -11,5 +11,5 @@ curl -o DejaVuSans.ttf https://preesm.github.io/assets/downloads/DejaVuSans.ttf
 curl -o pendulum.png https://preesm.github.io/assets/downloads/pendulum.png
 
 # download arrow
-curl -o pendulum.png https://preesm.github.io/assets/downloads/arrow.png
+curl -o arrow.png https://preesm.github.io/assets/downloads/arrow.png
 

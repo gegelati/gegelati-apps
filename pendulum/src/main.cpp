@@ -25,18 +25,18 @@ int main() {
 	auto mult = [](double a, double b)->double {return a * b; };
 	auto div = [](double a, double b)->double {return a / b; };
 	auto max = [](double a, double b)->double {return std::max(a, b); };
-	auto ln = [](double a, double b)->double {return std::log(a); };
-	auto exp = [](double a, double b)->double {return std::exp(a); };
-	auto cos = [](double a, double b)->double {return std::cos(a); };
-	auto sin = [](double a, double b)->double {return std::sin(a); };
-	auto tan = [](double a, double b)->double {return std::tan(a); };
-	auto pi = [](double a, double b)->double {return M_PI; };
+	auto ln = [](double a)->double {return std::log(a); };
+	auto exp = [](double a)->double {return std::exp(a); };
+	auto cos = [](double a)->double {return std::cos(a); };
+	auto sin = [](double a)->double {return std::sin(a); };
+	auto tan = [](double a)->double {return std::tan(a); };
+	auto pi = [](double a)->double {return M_PI; };
 
-	set.add(*(new Instructions::LambdaInstruction<double>(minus)));
-	set.add(*(new Instructions::LambdaInstruction<double>(add)));
-	set.add(*(new Instructions::LambdaInstruction<double>(mult)));
-	set.add(*(new Instructions::LambdaInstruction<double>(div)));
-	set.add(*(new Instructions::LambdaInstruction<double>(max)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(minus)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(mult)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(div)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
 	set.add(*(new Instructions::LambdaInstruction<double>(exp)));
 	set.add(*(new Instructions::LambdaInstruction<double>(ln)));
 	set.add(*(new Instructions::LambdaInstruction<double>(cos)));
@@ -67,6 +67,7 @@ int main() {
 	params.ratioDeletedRoots = 0.998;
 	params.archiveSize = 2000;
 	params.archivingProbability = 0.01;
+	params.maxNbEvaluationPerPolicy = params.nbIterationsPerPolicyEvaluation * 2; // 2 generation 
 
 	// Instantiate the LearningEnvironment
 	Pendulum pendulumLE({ 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0 });
@@ -80,6 +81,10 @@ int main() {
 	// Create an exporter for all graphs
 	File::TPGGraphDotExporter dotExporter("out_0000.dot", la.getTPGGraph());
 
+	// File for printing best policy stat.
+	std::ofstream stats;
+	stats.open("bestPolicyStats.md");
+	const TPG::TPGVertex* bestRoot = NULL;
 
 	// Start a thread for controlling the loop
 #ifndef NO_CONSOLE_CONTROL
@@ -88,8 +93,6 @@ int main() {
 	std::atomic<bool> toggleDisplay = true;
 	std::atomic<bool> doDisplay = false;
 	std::atomic<uint64_t> generation = 0;
-
-	const TPG::TPGVertex* bestRoot = NULL;
 
 	std::thread threadDisplay(Render::controllerLoop, std::ref(exitProgram), std::ref(toggleDisplay), std::ref(doDisplay),
 		&bestRoot, std::ref(set), std::ref(pendulumLE), std::ref(params), std::ref(generation));
@@ -121,6 +124,17 @@ int main() {
 		printf("%3d\t%4" PRIu64 "\t%1.2lf\t%1.2lf\t%1.2lf", i, la.getTPGGraph().getNbVertices(), min, avg, max);
 		std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopEval - startEval).count();
 
+		// Print stats in file if a new best root was found
+		if (la.getBestRoot().first != bestRoot) {
+			bestRoot = la.getBestRoot().first;
+			stats << "Generation " << i << std::endl << std::endl;
+			TPG::PolicyStats ps;
+			ps.setEnvironment(la.getTPGGraph().getEnvironment());
+			ps.analyzePolicy(bestRoot);
+			stats << ps << std::endl;
+			stats << std::endl << std::endl << "==========" << std::endl << std::endl;
+		}
+
 #ifndef NO_CONSOLE_CONTROL
 		generation = i;
 		if (toggleDisplay) {
@@ -144,6 +158,15 @@ int main() {
 	la.keepBestPolicy();
 	dotExporter.setNewFilePath("out_best.dot");
 	dotExporter.print();
+
+	TPG::PolicyStats ps;
+	ps.setEnvironment(la.getTPGGraph().getEnvironment());
+	ps.analyzePolicy(la.getBestRoot().first);
+	std::ofstream bestStats;
+	bestStats.open("out_best_stats.md");
+	bestStats << ps;
+	bestStats.close();
+	stats.close();
 
 	// cleanup
 	for (unsigned int i = 0; i < set.getNbInstructions(); i++) {
