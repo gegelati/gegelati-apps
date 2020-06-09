@@ -17,7 +17,7 @@
 class TicTacToe : public Learn::LearningEnvironment {
 protected:
     /// Current board containing -1 as empty, 0 as circles and 1 as crosses, size is 3*3 (row-order) (AI is circle)
-    Data::PrimitiveTypeArray<int> board;
+    Data::PrimitiveTypeArray<double> board;
 
     /// The current turn being played
     int currentTurn;
@@ -38,13 +38,13 @@ protected:
     Mutator::RNG rng;
 
     /// Utility function to quickly read a cell of the board
-    virtual int getSymbolAt(int location) const;
+    virtual double getSymbolAt(int location) const;
 
     /// Updates the current winning state of the game : is it null ? Has smbdy won ?
     virtual void updateGame();
 
     /// Randomly plays on an empty cell for the given player
-    virtual void randomPlay(int symbolOfPlayer);
+    virtual void randomPlay(double symbolOfPlayer);
 
 public:
     /**
@@ -53,6 +53,13 @@ public:
     TicTacToe() : LearningEnvironment(9), board(9) {
         this->reset(0);
     };
+
+    /**
+    * \brief Copy constructor for the TicTacToe.
+    *
+    * Default copy constructor since all attributes are trivially copyable.
+    */
+    TicTacToe(const TicTacToe& other) = default;
 
     /// Destructor
     ~TicTacToe() {};
@@ -77,6 +84,12 @@ public:
 
     /// Inherited via LearningEnvironment
     virtual bool isTerminal() const override;
+
+    /// Inherited via LearningEnvironment
+    virtual bool isCopyable() const override;
+
+    /// Inherited via LearningEnvironment
+    virtual LearningEnvironment* clone() const;
 
 };
 

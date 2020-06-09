@@ -1,7 +1,7 @@
 #include "TicTacToe.h"
 
-int TicTacToe::getSymbolAt(int location) const {
-    return (int) *((this->board.getDataAt(typeid(int), location)).getSharedPointer<const int>());
+double TicTacToe::getSymbolAt(int location) const {
+    return (double) *((this->board.getDataAt(typeid(double), location)).getSharedPointer<const double>());
 }
 
 void TicTacToe::doAction(uint64_t actionID) {
@@ -10,7 +10,7 @@ void TicTacToe::doAction(uint64_t actionID) {
 
     // Random player's turn
     if (!this->isTerminal()) {
-        this->randomPlay(1);
+        this->randomPlay(1.0);
         this->currentTurn++;
         // checking the state of the game to see if it is finished
         this->updateGame();
@@ -20,16 +20,16 @@ void TicTacToe::doAction(uint64_t actionID) {
     if (!this->isTerminal()) {
         // Execute the action
 
-        int cellContent = this->getSymbolAt(actionID);
+        double cellContent = this->getSymbolAt(actionID);
         // Checks the move is possible
-        if (cellContent != -1) {
+        if (cellContent != -1.0) {
             // Illegal move : we play randomly
             this->forbiddenMove = true;
-            this->randomPlay(0);
+            this->randomPlay(0.0);
         } else {
             // update state
-            int symbolToWrite = 0; // 0 for circle, 1 for cross
-            this->board.setDataAt(typeid(int), actionID, symbolToWrite);
+            double symbolToWrite = 0.0; // 0 for circle, 1 for cross
+            this->board.setDataAt(typeid(double), actionID, symbolToWrite);
         }
 
         this->currentTurn++;
@@ -38,7 +38,7 @@ void TicTacToe::doAction(uint64_t actionID) {
     }
 }
 
-void TicTacToe::randomPlay(int symbolOfPlayer) {
+void TicTacToe::randomPlay(double symbolOfPlayer) {
     int nbEmptyCellsRemaining = 9 - this->currentTurn;
     int decision = rng.getUnsignedInt64(0, nbEmptyCellsRemaining - 1);
     int i = -1;
@@ -53,7 +53,7 @@ void TicTacToe::randomPlay(int symbolOfPlayer) {
 
     // i is the position of the n°decision empty slot
     // update state
-    this->board.setDataAt(typeid(int), i, symbolOfPlayer);
+    this->board.setDataAt(typeid(double), i, symbolOfPlayer);
 }
 
 void TicTacToe::reset(size_t seed, Learn::LearningMode mode) {
@@ -62,7 +62,7 @@ void TicTacToe::reset(size_t seed, Learn::LearningMode mode) {
     this->rng.setSeed(hash_seed);
     // sets -1 for each cell to make them empty
     for (int i = 0; i < 9; i++) {
-        this->board.setDataAt(typeid(int), i, -1);
+        this->board.setDataAt(typeid(double), i, -1.0);
     }
     this->currentTurn=0;
     this->win = false;
@@ -96,15 +96,15 @@ double TicTacToe::getScore() const {
 void TicTacToe::updateGame() {
     // we will check if there is a row/col/diag winning combination by looking at every possibility
 
-    int x00 = this->getSymbolAt(0);
-    int x10 = this->getSymbolAt(1);
-    int x20 = this->getSymbolAt(2);
-    int x01 = this->getSymbolAt(3);
-    int x11 = this->getSymbolAt(4);
-    int x21 = this->getSymbolAt(5);
-    int x02 = this->getSymbolAt(6);
-    int x12 = this->getSymbolAt(7);
-    int x22 = this->getSymbolAt(8);
+    double x00 = this->getSymbolAt(0);
+    double x10 = this->getSymbolAt(1);
+    double x20 = this->getSymbolAt(2);
+    double x01 = this->getSymbolAt(3);
+    double x11 = this->getSymbolAt(4);
+    double x21 = this->getSymbolAt(5);
+    double x02 = this->getSymbolAt(6);
+    double x12 = this->getSymbolAt(7);
+    double x22 = this->getSymbolAt(8);
 
     //printf("{%d,%d,%d\n%d,%d,%d\n%d,%d,%d}\n\n",x00,x10,x20,x01,x11,x21,x02,x12,x22);
 
@@ -115,7 +115,7 @@ void TicTacToe::updateGame() {
         || x00 == x11 && x11 == x22
         || x20 == x11 && x11 == x02)) {
         this->end = true;
-        if (x11 == 0) {
+        if (x11 == 0.0) {
             // we have circles : the player won !
             this->win = true;
         }
@@ -123,9 +123,9 @@ void TicTacToe::updateGame() {
     }
 
     // looking for other combinations containing x22
-    if (x22!=-1 && (x02 == x12 && x12 == x22
+    if (x22!=-1.0 && (x02 == x12 && x12 == x22
         || x20 == x21 && x21 == x22)) {
-        if (x22 == 0) {
+        if (x22 == 0.0) {
             // we have circles : the player won !
             this->win = true;
         }
@@ -135,9 +135,9 @@ void TicTacToe::updateGame() {
 
 
     // looking for other combinations containing x00
-    if (x00!=-1 && (x00 == x10 && x10 == x20
+    if (x00!=-1.0 && (x00 == x10 && x10 == x20
         || x00 == x01 && x01 == x02)) {
-        if (x00 == 0) {
+        if (x00 == 0.0) {
             // we have circles : the player won !
             this->win = true;
         }
@@ -154,4 +154,14 @@ void TicTacToe::updateGame() {
 
 bool TicTacToe::isTerminal() const {
     return this->end;
+}
+
+bool TicTacToe::isCopyable() const
+{
+    return true;
+}
+
+Learn::LearningEnvironment* TicTacToe::clone() const
+{
+    return new TicTacToe(*this);
 }

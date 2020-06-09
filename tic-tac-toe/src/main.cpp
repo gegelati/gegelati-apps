@@ -17,21 +17,23 @@
 int main() {
 	// Create the instruction set for programs
 	Instructions::Set set;
-	auto minus = [](int a, int b)->double {return (double)a - (double)b; };
-	auto cast = [](int a, int b)->double {return (double)a; };
+	auto minus = [](double a, double b)->double {return (double)a - (double)b; };
 	auto add = [](double a, double b)->double {return a + b; };
 	auto max = [](double a, double b)->double {return std::max(a, b); };
 	auto nulltest = [](double a, double b)->double {return (a == -1.0) ? 10.0 : 0.0; };
+	auto circletest = [](double a, double b)->double {return (a == 0.0) ? 10.0 : 0.0; };
+	auto crosstest = [](double a, double b)->double {return (a == 1.0) ? 10.0 : 0.0; };
 	auto modulo = [](double a, double b)->double {
 		if (b != 0.0) { return fmod(a, b); }
 		else { return  DBL_MIN; }	};
 
 	set.add(*(new Instructions::LambdaInstruction<double>(modulo)));
-	set.add(*(new Instructions::LambdaInstruction<int>(minus)));
+	set.add(*(new Instructions::LambdaInstruction<double>(minus)));
 	set.add(*(new Instructions::LambdaInstruction<double>(add)));
-	set.add(*(new Instructions::LambdaInstruction<int>(cast)));
 	set.add(*(new Instructions::LambdaInstruction<double>(max)));
 	set.add(*(new Instructions::LambdaInstruction<double>(nulltest)));
+	set.add(*(new Instructions::LambdaInstruction<double>(circletest)));
+	set.add(*(new Instructions::LambdaInstruction<double>(crosstest)));
 
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
@@ -59,7 +61,7 @@ int main() {
 	TicTacToe le;
 
 	// Instantiate and init the learning agent
-	Learn::LearningAgent la(le, set, params);
+	Learn::ParallelLearningAgent la(le, set, params);
 	la.init();
 
 	// Create an exporter for all graphs
