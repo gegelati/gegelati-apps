@@ -8,16 +8,24 @@ void TicTacToe::play(uint64_t actionID, double symbolOfPlayer) {
     if (!this->isTerminal()) {
         double cellContent = this->getSymbolAt(actionID);
         if (cellContent != -1.0) {
-            std::cerr << "Non-empty cell ! Random play is being done" << std::endl;
+            std::cout << "Non-empty cell ! Random play is being done" << std::endl;
             this->randomPlay(symbolOfPlayer);
-            return;
         } else {
             this->board.setDataAt(typeid(double), actionID, symbolOfPlayer);
-            updateGame();
         }
         this->currentTurn++;
+        updateGame();
         if (this->isTerminal()) {
-            std::cout << "End of game, well done !" << std::endl;
+            std::cout << "End of game !" << std::endl;
+            if(null){
+                std::cout << "Null game" << std::endl;
+                return;
+            }
+            if(win){
+                std::cout << "Circle won, well done !" << std::endl;
+                return;
+            }
+            std::cout << "Cross won, well done !" << std::endl;
         }
     }
 }
@@ -96,18 +104,18 @@ std::vector<std::reference_wrapper<const Data::DataHandler>> TicTacToe::getDataS
 
 double TicTacToe::getScore() const {
     // adds a malus if there has been a forbiden move in the game
-    double malusForbiddenMove = this->forbiddenMove ? 2.0 : 0.0;
+    double malusForbiddenMove = this->forbiddenMove ? 1.0 : 0.0;
     // check if the game is null
     if (this->null) {
-        return 1.0 - malusForbiddenMove;
+        return 0.5 - malusForbiddenMove;
     }
     // check if the circle won
     if (this->win) {
-        return 2.0 - malusForbiddenMove;
+        return 1.0 - malusForbiddenMove;
     }
 
     // circle lost
-    return -1.0 - malusForbiddenMove;
+    return 0 - malusForbiddenMove;
 }
 
 void TicTacToe::updateGame() {

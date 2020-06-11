@@ -6,10 +6,11 @@
 #include <inttypes.h>
 
 #include <gegelati.h>
+#include "resultTester.h"
 
 #include "TicTacToe.h"
 
-int test() {
+int agentTest() {
     // Create the instruction set for programs
     Instructions::Set set;
     auto minus = [](double a, double b)->double {return (double)a - (double)b; };
@@ -80,6 +81,7 @@ int test() {
             continue;
         }
         le.play(x,1);
+
 
         // prints the game board
         std::cout<<"Game :\n"<<le.toString()<<std::endl;
