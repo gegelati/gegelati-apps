@@ -4,17 +4,26 @@ double TicTacToe::getSymbolAt(int location) const {
     return (double) *((this->board.getDataAt(typeid(double), location)).getSharedPointer<const double>());
 }
 
+void TicTacToe::play(uint64_t actionID, double symbolOfPlayer) {
+    if (!this->isTerminal()) {
+        double cellContent = this->getSymbolAt(actionID);
+        if (cellContent != -1.0) {
+            std::cerr << "Non-empty cell ! Random play is being done" << std::endl;
+            this->randomPlay(symbolOfPlayer);
+            return;
+        } else {
+            this->board.setDataAt(typeid(double), actionID, symbolOfPlayer);
+            updateGame();
+        }
+        this->currentTurn++;
+        if (this->isTerminal()) {
+            std::cout << "End of game, well done !" << std::endl;
+        }
+    }
+}
+
 void TicTacToe::doAction(uint64_t actionID) {
     LearningEnvironment::doAction(actionID);
-
-
-    // Random player's turn
-    if (!this->isTerminal()) {
-        this->randomPlay(1.0);
-        this->currentTurn++;
-        // checking the state of the game to see if it is finished
-        this->updateGame();
-    }
 
     // if the game is not over
     if (!this->isTerminal()) {
@@ -32,6 +41,14 @@ void TicTacToe::doAction(uint64_t actionID) {
             this->board.setDataAt(typeid(double), actionID, symbolToWrite);
         }
 
+        this->currentTurn++;
+        // checking the state of the game to see if it is finished
+        this->updateGame();
+    }
+
+    // Random player's turn
+    if (!this->isTerminal()) {
+        this->randomPlay(1.0);
         this->currentTurn++;
         // checking the state of the game to see if it is finished
         this->updateGame();
@@ -64,7 +81,7 @@ void TicTacToe::reset(size_t seed, Learn::LearningMode mode) {
     for (int i = 0; i < 9; i++) {
         this->board.setDataAt(typeid(double), i, -1.0);
     }
-    this->currentTurn=0;
+    this->currentTurn = 0;
     this->win = false;
     this->forbiddenMove = false;
     this->null = false;
@@ -79,18 +96,18 @@ std::vector<std::reference_wrapper<const Data::DataHandler>> TicTacToe::getDataS
 
 double TicTacToe::getScore() const {
     // adds a malus if there has been a forbiden move in the game
-    double malusForbiddenMove = this->forbiddenMove ? 1.0 : 0.0;
+    double malusForbiddenMove = this->forbiddenMove ? 2.0 : 0.0;
     // check if the game is null
     if (this->null) {
-        return 0.5 - malusForbiddenMove;
+        return 1.0 - malusForbiddenMove;
     }
     // check if the circle won
     if (this->win) {
-        return 1.0 - malusForbiddenMove;
+        return 2.0 - malusForbiddenMove;
     }
 
     // circle lost
-    return 0.0 - malusForbiddenMove;
+    return -1.0 - malusForbiddenMove;
 }
 
 void TicTacToe::updateGame() {
@@ -110,10 +127,10 @@ void TicTacToe::updateGame() {
 
 
     // looking for combinations containing x11
-    if (x11!=-1 && (x01 == x11 && x11 == x21
-        || x10 == x11 && x11 == x12
-        || x00 == x11 && x11 == x22
-        || x20 == x11 && x11 == x02)) {
+    if (x11 != -1 && (x01 == x11 && x11 == x21
+                      || x10 == x11 && x11 == x12
+                      || x00 == x11 && x11 == x22
+                      || x20 == x11 && x11 == x02)) {
         this->end = true;
         if (x11 == 0.0) {
             // we have circles : the player won !
@@ -123,8 +140,8 @@ void TicTacToe::updateGame() {
     }
 
     // looking for other combinations containing x22
-    if (x22!=-1.0 && (x02 == x12 && x12 == x22
-        || x20 == x21 && x21 == x22)) {
+    if (x22 != -1.0 && (x02 == x12 && x12 == x22
+                        || x20 == x21 && x21 == x22)) {
         if (x22 == 0.0) {
             // we have circles : the player won !
             this->win = true;
@@ -135,8 +152,8 @@ void TicTacToe::updateGame() {
 
 
     // looking for other combinations containing x00
-    if (x00!=-1.0 && (x00 == x10 && x10 == x20
-        || x00 == x01 && x01 == x02)) {
+    if (x00 != -1.0 && (x00 == x10 && x10 == x20
+                        || x00 == x01 && x01 == x02)) {
         if (x00 == 0.0) {
             // we have circles : the player won !
             this->win = true;
@@ -156,12 +173,27 @@ bool TicTacToe::isTerminal() const {
     return this->end;
 }
 
-bool TicTacToe::isCopyable() const
-{
+bool TicTacToe::isCopyable() const {
     return true;
 }
 
-Learn::LearningEnvironment* TicTacToe::clone() const
-{
+Learn::LearningEnvironment *TicTacToe::clone() const {
     return new TicTacToe(*this);
+}
+
+std::string TicTacToe::toString() const {
+    std::stringstream res;
+    res << "-------\n";
+    res << "|" << cellToString(0) << "|" << cellToString(1) << "|" << cellToString(2) << "|\n";
+    res << "-------\n";
+    res << "|" << cellToString(3) << "|" << cellToString(4) << "|" << cellToString(5) << "|\n";
+    res << "-------\n";
+    res << "|" << cellToString(6) << "|" << cellToString(7) << "|" << cellToString(8) << "|\n";
+    res << "-------\n";
+    return res.str();
+}
+
+std::string TicTacToe::cellToString(int pos) const{
+    double symbol = getSymbolAt(pos);
+    return symbol == 0 ? "O" : symbol == 1 ? "X" : " ";
 }

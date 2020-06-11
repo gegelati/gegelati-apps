@@ -64,6 +64,9 @@ public:
     /// Destructor
     ~TicTacToe() {};
 
+    /// Does a given move; used to manually test the game
+    virtual void play(uint64_t actionID, double symbolOfPlayer);
+
     /// Inherited via LearningEnvironment
     virtual void doAction(uint64_t actionID) override;
 
@@ -77,7 +80,7 @@ public:
     * Inherited from LearningEnvironment.
     *
     * In this game, the score is 0 during the Game. At the end of the game
-    * the score is 1 if the agent won, 0 if it is null, -1 if the agent lost, and a malus is given if there was
+    * the score is 1 if the agent won, 0.5 if it is null, 0 if the agent lost, and a malus of -1 is given if there was
     * a forbidden move
     */
     virtual double getScore() const override;
@@ -91,6 +94,11 @@ public:
     /// Inherited via LearningEnvironment
     virtual LearningEnvironment* clone() const;
 
+    /// Used to print the game
+    virtual std::string toString() const;
+
+    /// Used to help printing the board : translates int values to some characters (X,O, )
+    virtual std::string cellToString(int pos) const;
 };
 
 #endif
