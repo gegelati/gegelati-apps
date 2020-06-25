@@ -1,9 +1,6 @@
-#include <iostream>
 #include <unordered_set>
-#include <numeric>
 #include <string>
 #include <cfloat>
-#include <inttypes.h>
 
 #include <gegelati.h>
 
@@ -11,7 +8,7 @@
 #include "resultTester.h"
 
 #ifndef NB_GENERATIONS
-#define NB_GENERATIONS 10
+#define NB_GENERATIONS 200
 #endif
 
 
@@ -43,25 +40,9 @@ int main() {
     // Set the parameters for the learning process.
     // (Controls mutations probability, program lengths, and graph size
     // among other things)
+    // Loads them from "params.json" file
     Learn::LearningParameters params;
-    params.mutation.tpg.maxInitOutgoingEdges = 3;
-    params.mutation.tpg.nbRoots = 200;
-    params.mutation.tpg.pEdgeDeletion = 0.8;
-    params.mutation.tpg.pEdgeAddition = 0.8;
-    params.mutation.tpg.pProgramMutation = 0.8;
-    params.mutation.tpg.pEdgeDestinationChange = 0.3;
-    params.mutation.tpg.pEdgeDestinationIsAction = 0.6;
-    params.mutation.tpg.maxOutgoingEdges = 30;
-    params.mutation.prog.pAdd = 0.7;
-    params.mutation.prog.pDelete = 0.7;
-    params.mutation.prog.pMutate = 1.0;
-    params.mutation.prog.pSwap = 1.0;
-    params.mutation.prog.maxProgramSize = 70;
-    params.archiveSize = 50;
-    params.maxNbActionsPerEval = 5;
-    params.maxNbEvaluationPerPolicy = 200;
-    params.nbIterationsPerPolicyEvaluation = 100;
-    params.ratioDeletedRoots = 0.8;
+    File::ParametersParser::loadParametersFromJson("../../params.json",params);
 
     // Instantiate the LearningEnvironment
     TicTacToe le;
@@ -70,14 +51,21 @@ int main() {
     Learn::ParallelLearningAgent la(le, set, params);
     la.init();
 
+    // Adds a logger to the LA (to get statistics on learning) on std::cout
+    auto logCout = *new Log::LABasicLogger();
+    la.addLogger(logCout);
+
+    // Adds another logger that will log in a file
+    std::ofstream o("log");
+    auto logFile = *new Log::LABasicLogger(o);
+    la.addLogger(logFile);
+
     // Create an exporter for all graphs
     File::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
 
-    auto start = std::chrono::system_clock::now();
 
 
     // Train for NB_GENERATIONS generations
-    printf("Gen\tNbVert\tMin\tAvg\tMax\n");
     for (int i = 0; i < NB_GENERATIONS; i++) {
         char buff[12];
         sprintf(buff, "out_%03d.dot", i);
@@ -85,21 +73,8 @@ int main() {
         dotExporter.print();
         std::multimap<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex *> result;
         result = la.evaluateAllRoots(i, Learn::LearningMode::VALIDATION);
-        auto iter = result.begin();
-        double min = iter->first->getResult();
-        std::advance(iter, result.size() - 1);
-        double max = iter->first->getResult();
-        double avg = std::accumulate(result.begin(), result.end(), 0.0,
-                                     [](double acc,
-                                        std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex *> pair) -> double {
-                                         return acc + pair.first->getResult();
-                                     });
-        avg /= result.size();
-        printf("%3d\t%4" PRIu64 "\t%1.2lf\t%1.2lf\t%1.2lf   -   ", i, la.getTPGGraph().getNbVertices(), min, avg, max);
-        std::cout << "elapsed time : "
-                  << ((std::chrono::duration<double>) (std::chrono::system_clock::now() - start)).count() << std::endl;
-        la.trainOneGeneration(i);
 
+        la.trainOneGeneration(i);
     }
 
     // Keep best policy
