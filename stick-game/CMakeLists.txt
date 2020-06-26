@@ -91,8 +91,10 @@ file(GLOB_RECURSE
 	stick_game_files
 	./src/*.cpp
 	./src/*.h
+	./params.json
 )
 
 include_directories(${GEGELATI_INCLUDE_DIRS})
 add_executable(${PROJECT_NAME} ${stick_game_files})
 target_link_libraries(${PROJECT_NAME} ${GEGELATI_LIBRARIES})
+target_compile_definitions(${PROJECT_NAME} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}")

@@ -70,7 +70,7 @@ int main() {
 	// among other things)
 	// Loads them from the file params.json
 	Learn::LearningParameters params;
-	File::ParametersParser::loadParametersFromJson("../../params.json",params);
+	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json",params);
 
 	// Instantiate the LearningEnvironment
 	MNIST mnistLE;

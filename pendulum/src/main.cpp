@@ -50,7 +50,7 @@ int main() {
 	// among other things)
     // Loads them from the file params.json
     Learn::LearningParameters params;
-	File::ParametersParser::loadParametersFromJson("../../params.json",params);
+	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json",params);
 
 	// Instantiate the LearningEnvironment
 	Pendulum pendulumLE({ 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0 });
