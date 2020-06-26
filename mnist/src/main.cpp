@@ -68,27 +68,9 @@ int main() {
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
 	// among other things)
+	// Loads them from the file params.json
 	Learn::LearningParameters params;
-	params.mutation.tpg.maxInitOutgoingEdges = 3;
-	params.mutation.tpg.nbRoots = 500;
-	params.mutation.tpg.pEdgeDeletion = 0.7;
-	params.mutation.tpg.pEdgeAddition = 0.7;
-	params.mutation.tpg.pProgramMutation = 0.2;
-	params.mutation.tpg.pEdgeDestinationChange = 0.1;
-	params.mutation.tpg.pEdgeDestinationIsAction = 0.5;
-	params.mutation.tpg.maxOutgoingEdges = 5;
-	params.mutation.prog.pAdd = 0.5;
-	params.mutation.prog.pDelete = 0.5;
-	params.mutation.prog.pMutate = 1.0;
-	params.mutation.prog.pSwap = 1.0;
-	params.mutation.prog.maxProgramSize = 20;
-	params.maxNbActionsPerEval = 500;
-	params.nbIterationsPerPolicyEvaluation = 1;
-	params.ratioDeletedRoots = 0.90;
-	params.archiveSize = 500;
-	params.archivingProbability = 0.01;
-	// Evaluate each root at most for 4 generations
-	params.maxNbEvaluationPerPolicy = params.nbIterationsPerPolicyEvaluation * params.maxNbActionsPerEval * 4;
+	File::ParametersParser::loadParametersFromJson("../../params.json",params);
 
 	// Instantiate the LearningEnvironment
 	MNIST mnistLE;
