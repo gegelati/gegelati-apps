@@ -48,26 +48,9 @@ int main() {
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
 	// among other things)
-	Learn::LearningParameters params;
-	params.mutation.tpg.maxInitOutgoingEdges = 3;
-	params.mutation.tpg.nbRoots = 2000;
-	params.mutation.tpg.pEdgeDeletion = 0.7;
-	params.mutation.tpg.pEdgeAddition = 0.7;
-	params.mutation.tpg.pProgramMutation = 0.2;
-	params.mutation.tpg.pEdgeDestinationChange = 0.1;
-	params.mutation.tpg.pEdgeDestinationIsAction = 0.5;
-	params.mutation.tpg.maxOutgoingEdges = 5;
-	params.mutation.prog.pAdd = 0.5;
-	params.mutation.prog.pDelete = 0.5;
-	params.mutation.prog.pMutate = 1.0;
-	params.mutation.prog.pSwap = 1.0;
-	params.mutation.prog.maxProgramSize = 20;
-	params.maxNbActionsPerEval = 1000;
-	params.nbIterationsPerPolicyEvaluation = 5;
-	params.ratioDeletedRoots = 0.998;
-	params.archiveSize = 2000;
-	params.archivingProbability = 0.01;
-	params.maxNbEvaluationPerPolicy = params.nbIterationsPerPolicyEvaluation * 2; // 2 generation 
+    // Loads them from the file params.json
+    Learn::LearningParameters params;
+	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json",params);
 
 	// Instantiate the LearningEnvironment
 	Pendulum pendulumLE({ 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0 });

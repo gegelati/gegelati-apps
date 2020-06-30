@@ -120,9 +120,10 @@ file(GLOB_RECURSE
 	./src/*.cpp
 	./src/*.h
 	./src/mnist_reader/*.hpp
+	./params.json
 )
 
 include_directories(${GEGELATI_INCLUDE_DIRS})
 add_executable(${PROJECT_NAME} ${mnist_files})
 target_link_libraries(${PROJECT_NAME} ${GEGELATI_LIBRARIES})
-target_compile_definitions(${PROJECT_NAME} PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}")
+target_compile_definitions(${PROJECT_NAME} PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")

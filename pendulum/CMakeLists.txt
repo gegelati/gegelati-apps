@@ -203,6 +203,7 @@ file(GLOB_RECURSE
 	./src/*.cpp
 	./src/*.c
 	./src/*.h
+	./params.json
 )
 
 if(${TESTING})
@@ -212,3 +213,5 @@ endif()
 include_directories(${GEGELATI_INCLUDE_DIRS}  ${SDL2_INCLUDE_DIR} ${SDL2IMAGE_INCLUDE_DIR} ${SDL2TTF_INCLUDE_DIR})
 add_executable(${PROJECT_NAME} ${pendulum_files})
 target_link_libraries(${PROJECT_NAME} ${GEGELATI_LIBRARIES}  ${SDL2_LIBRARY} ${SDL2IMAGE_LIBRARY} ${SDL2TTF_LIBRARY})
+target_compile_definitions(${PROJECT_NAME} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}")
+
