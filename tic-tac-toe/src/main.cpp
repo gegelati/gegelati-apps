@@ -90,10 +90,9 @@ int main() {
     }
 
     // if we want to test the best agent
-    if (true) {
+#ifndef NO_CONSOLE_CONTROL
         agentTest();
-        return 0;
-    }
+#endif        
 
     return 0;
 }
