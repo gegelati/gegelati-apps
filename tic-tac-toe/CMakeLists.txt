@@ -96,3 +96,4 @@ file(GLOB_RECURSE
 include_directories(${GEGELATI_INCLUDE_DIRS})
 add_executable(${PROJECT_NAME} ${tic-tac-toe_game_files})
 target_link_libraries(${PROJECT_NAME} ${GEGELATI_LIBRARIES})
+target_compile_definitions(${PROJECT_NAME} PRIVATE ROOT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")

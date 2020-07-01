@@ -6,7 +6,7 @@ double TicTacToe::getSymbolAt(int location) const {
 
 void TicTacToe::play(uint64_t actionID, double symbolOfPlayer) {
     if (!this->isTerminal()) {
-        double cellContent = this->getSymbolAt(actionID);
+        double cellContent = this->getSymbolAt((int)actionID);
         if (cellContent != -1.0) {
             std::cout << "Non-empty cell ! Random play is being done" << std::endl;
             this->randomPlay(symbolOfPlayer);
@@ -37,7 +37,7 @@ void TicTacToe::doAction(uint64_t actionID) {
     if (!this->isTerminal()) {
         // Execute the action
 
-        double cellContent = this->getSymbolAt(actionID);
+        double cellContent = this->getSymbolAt((int)actionID);
         // Checks the move is possible
         if (cellContent != -1.0) {
             // Illegal move : we play randomly
@@ -65,7 +65,7 @@ void TicTacToe::doAction(uint64_t actionID) {
 
 void TicTacToe::randomPlay(double symbolOfPlayer) {
     int nbEmptyCellsRemaining = 9 - this->currentTurn;
-    int decision = rng.getUnsignedInt64(0, nbEmptyCellsRemaining - 1);
+    int decision = (int)rng.getUnsignedInt64(0, nbEmptyCellsRemaining - 1);
     int i = -1;
     // we're now looking for the empty slot n°decision
     while (decision >= 0) {
