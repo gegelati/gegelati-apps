@@ -52,7 +52,7 @@ endif()
 # Add definitions for testing purposes
 if(${TESTING})
 	MESSAGE("Testing mode")
-	add_definitions(-DNB_GENERATIONS=10)
+	add_definitions(-DNB_GENERATIONS=10 -DNO_CONSOLE_CONTROL)
 endif()
 
 # *******************************************
