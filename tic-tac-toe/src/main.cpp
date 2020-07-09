@@ -13,6 +13,7 @@
 
 
 int main() {
+
     // Create the instruction set for programs
     Instructions::Set set;
     auto minus = [](double a, double b) -> double { return (double) a - (double) b; };
@@ -48,7 +49,7 @@ int main() {
     TicTacToe le;
 
     // Instantiate and init the learning agent
-    Learn::ParallelLearningAgent la(le, set, params);
+    Learn::AdversarialLearningAgent la(le, set, params);
     la.init();
 
     // Adds a logger to the LA (to get statistics on learning) on std::cout

@@ -14,7 +14,7 @@
 *
 * In this LearningEnvironment, the trained agent plays against a random algo
 */
-class TicTacToe : public Learn::LearningEnvironment {
+class TicTacToe : public Learn::AdversarialLearningEnvironment {
 protected:
     /// Current board containing -1 as empty, 0 as circles and 1 as crosses, size is 3*3 (row-order) (AI is circle)
     Data::PrimitiveTypeArray<double> board;
@@ -23,10 +23,16 @@ protected:
     int currentTurn;
 
     /// Did the player win or lose at the end of a game.
-    bool win;
+    bool winPlayer1;
+
+    /// Did the player win or lose at the end of a game.
+    bool winPlayer2;
 
     /// Did the player attempt a forbidden move (i.e. put a cross in a cell where there is already a cross)
-    bool forbiddenMove;
+    bool forbiddenMovePlayer1;
+
+    /// Did the player attempt a forbidden move (i.e. put a cross in a cell where there is already a cross)
+    bool forbiddenMovePlayer2;
 
     /// Is the game null
     bool null;
@@ -46,11 +52,14 @@ protected:
     /// Randomly plays on an empty cell for the given player
     virtual void randomPlay(double symbolOfPlayer);
 
+    // changes 0 to 1 and 1 to 0
+    void revertBoard();
+
 public:
     /**
     * Constructor.
     */
-    TicTacToe() : LearningEnvironment(9), board(9) {
+    TicTacToe() : AdversarialLearningEnvironment(9), board(9) {
         this->reset(0);
     };
 
@@ -81,9 +90,9 @@ public:
     *
     * In this game, the score is 0 during the Game. At the end of the game
     * the score is 1 if the agent won, 0.5 if it is null, 0 if the agent lost, and a malus of -1 is given if there was
-    * a forbidden move
+    * a forbidden move. The EvaluationResult contains the score of the 2 players.
     */
-    virtual double getScore() const override;
+    virtual std::shared_ptr<Learn::AdversarialEvaluationResult> getScores() const override;
 
     /// Inherited via LearningEnvironment
     virtual bool isTerminal() const override;
