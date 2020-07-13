@@ -33,7 +33,7 @@ void MNIST::changeCurrentImage()
 
 }
 
-MNIST::MNIST() : ClassificationLearningEnvironment(10), currentImage(28 * 28)
+MNIST::MNIST() : ClassificationLearningEnvironment(10), currentImage(28, 28)
 {
 	// Fill shared dataset dataset(mnist::read_dataset<std::vector, std::vector, double, uint8_t>(MNIST_DATA_LOCATION))
 	if (MNIST::dataset.training_labels.size() != 0) {
