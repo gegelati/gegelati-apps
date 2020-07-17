@@ -56,12 +56,29 @@ int main() {
 	auto max = [](double a, double b)->double {return std::max(a, b); };
 	auto ln = [](double a)->double {return std::log(a); };
 	auto exp = [](double a)->double {return std::exp(a); };
+	auto sobelMagn = [](const double a[3][3])->double {
+		double result = 0.0;
+		double gx =
+			-a[0][0] + a[0][2]
+			- 2.0 * a[1][0] + 2.0 * a[1][2]
+			- a[2][0] + a[2][2];
+		double gy = -a[0][0] - 2.0 * a[0][1] - a[0][2]
+			+ a[2][0] + 2.0 * a[2][1] + a[2][2];
+		result = sqrt(gx * gx + gy * gy);
+		return result;
+	};
 
-	// Add gradient instructions in 4 directions.
-	auto verticalGradient = [](const double a[2])->double {return std::abs(a[1] - a[0]); };
-	auto horizontalGradient = [](const double a[2][1])->double {return std::abs(a[1][0] - a[0][0]); };
-	auto diag1Gradient = [](const double a[2][2])->double {	return std::abs(a[1][1] - a[0][0]);	};
-	auto diag2Gradient = [](const double a[2][2])->double {		return std::abs(a[1][0] - a[0][1]);	};
+	auto sobelDir = [](const double a[3][3])->double {
+		double result = 0.0;
+		double gx =
+			-a[0][0] + a[0][2]
+			- 2.0 * a[1][0] + 2.0 * a[1][2]
+			- a[2][0] + a[2][2];
+		double gy = -a[0][0] - 2.0 * a[0][1] - a[0][2]
+			+ a[2][0] + 2.0 * a[2][1] + a[2][2];
+		result = std::atan(gy / gx);
+		return result;
+	};
 
 	set.add(*(new Instructions::LambdaInstruction<double, double>(minus)));
 	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
@@ -70,11 +87,8 @@ int main() {
 	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
 	set.add(*(new Instructions::LambdaInstruction<double>(exp)));
 	set.add(*(new Instructions::LambdaInstruction<double>(ln)));
-	set.add(*(new Instructions::LambdaInstruction<const double[2]>(verticalGradient)));
-	set.add(*(new Instructions::LambdaInstruction<const double[2][1]>(horizontalGradient)));
-	set.add(*(new Instructions::LambdaInstruction<const double[2][2]>(diag1Gradient)));
-	set.add(*(new Instructions::LambdaInstruction<const double[2][2]>(diag2Gradient)));
-
+	set.add(*(new Instructions::LambdaInstruction<const double[3][3]>(sobelMagn)));
+	set.add(*(new Instructions::LambdaInstruction<const double[3][3]>(sobelDir)));
 
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
@@ -158,7 +172,7 @@ int main() {
 		auto stopTrain = std::chrono::high_resolution_clock::now();
 
 		std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopTrain - startTrain).count() << std::endl;
-}
+	}
 
 	// Keep best policy
 	la.keepBestPolicy();
