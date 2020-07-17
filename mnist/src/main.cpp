@@ -10,7 +10,7 @@
 #include "mnist.h"
 
 #ifndef NB_GENERATIONS
-#define NB_GENERATIONS 300
+#define NB_GENERATIONS 1200
 #endif
 
 
@@ -57,6 +57,12 @@ int main() {
 	auto ln = [](double a)->double {return std::log(a); };
 	auto exp = [](double a)->double {return std::exp(a); };
 
+	// Add gradient instructions in 4 directions.
+	auto verticalGradient = [](const double a[2])->double {return std::abs(a[1] - a[0]); };
+	auto horizontalGradient = [](const double a[2][1])->double {return std::abs(a[1][0] - a[0][0]); };
+	auto diag1Gradient = [](const double a[2][2])->double {	return std::abs(a[1][1] - a[0][0]);	};
+	auto diag2Gradient = [](const double a[2][2])->double {		return std::abs(a[1][0] - a[0][1]);	};
+
 	set.add(*(new Instructions::LambdaInstruction<double, double>(minus)));
 	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
 	set.add(*(new Instructions::LambdaInstruction<double, double>(mult)));
@@ -64,13 +70,18 @@ int main() {
 	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
 	set.add(*(new Instructions::LambdaInstruction<double>(exp)));
 	set.add(*(new Instructions::LambdaInstruction<double>(ln)));
+	set.add(*(new Instructions::LambdaInstruction<const double[2]>(verticalGradient)));
+	set.add(*(new Instructions::LambdaInstruction<const double[2][1]>(horizontalGradient)));
+	set.add(*(new Instructions::LambdaInstruction<const double[2][2]>(diag1Gradient)));
+	set.add(*(new Instructions::LambdaInstruction<const double[2][2]>(diag2Gradient)));
+
 
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
 	// among other things)
 	// Loads them from the file params.json
 	Learn::LearningParameters params;
-	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json",params);
+	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json", params);
 
 	// Instantiate the LearningEnvironment
 	MNIST mnistLE;
@@ -147,7 +158,7 @@ int main() {
 		auto stopTrain = std::chrono::high_resolution_clock::now();
 
 		std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopTrain - startTrain).count() << std::endl;
-	}
+}
 
 	// Keep best policy
 	la.keepBestPolicy();
