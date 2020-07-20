@@ -123,7 +123,7 @@ int main() {
 #endif
 
 	// Adds a logger to the LA (to get statistics on learning) on std::cout
-	auto logCout = *new Log::LABasicLogger();
+	Log::LABasicLogger logCout;
 	la.addLogger(logCout);
 
 	// File for printing best policy stat.
