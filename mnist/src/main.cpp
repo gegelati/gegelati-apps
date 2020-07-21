@@ -123,13 +123,12 @@ int main() {
 #endif
 
 	// Adds a logger to the LA (to get statistics on learning) on std::cout
-	Log::LABasicLogger logCout;
-	la.addLogger(logCout);
+	Log::LABasicLogger logCout(la);
 
 	// File for printing best policy stat.
 	std::ofstream stats;
 	stats.open("bestPolicyStats.md");
-	const TPG::TPGVertex* bestRoot = nullptr;
+	Log::LAPolicyStatsLogger logStats(la, stats);
 
 	// Train for NB_GENERATIONS generations
 	for (int i = 0; i < NB_GENERATIONS && !exitProgram; i++) {
@@ -139,17 +138,6 @@ int main() {
 		dotExporter.print();
 
 		la.trainOneGeneration(i);
-
-		// Print stats in file if a new best root was found
-		if (la.getBestRoot().first != bestRoot) {
-			bestRoot = la.getBestRoot().first;
-			stats << "Generation " << i << std::endl << std::endl;
-			TPG::PolicyStats ps;
-			ps.setEnvironment(la.getTPGGraph().getEnvironment());
-			ps.analyzePolicy(bestRoot);
-			stats << ps << std::endl;
-			stats << std::endl << std::endl << "==========" << std::endl << std::endl;
-		}
 
 		if (printStats) {
 			mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), la.getBestRoot().first);
@@ -169,6 +157,8 @@ int main() {
 	bestStats.open("out_best_stats.md");
 	bestStats << ps;
 	bestStats.close();
+
+	// close log file also
 	stats.close();
 
 	// Print stats one last time
