@@ -138,7 +138,7 @@ std::shared_ptr<Learn::AdversarialEvaluationResult> TicTacToe::getScores() const
 void TicTacToe::updateGame() {
     // we will check if there is a row/col/diag winning combination by looking at every possibility
 
-    bool& win = (currentTurn%2==0 ? winPlayer1 : winPlayer2);
+    bool& win = (currentTurn%2!=0 ? winPlayer1 : winPlayer2);
 
     double x00 = this->getSymbolAt(0);
     double x10 = this->getSymbolAt(1);
