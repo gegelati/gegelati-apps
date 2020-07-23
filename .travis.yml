@@ -97,7 +97,7 @@ install:
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then export LATEST_FOLDER=$(find -maxdepth 1 -regextype posix-egrep -regex "./gegelatilib-[0-9]+\.[0-9]+\.[0-9]+\$" | cut -d'/' -f 2) ; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export CC=gcc-7 ; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export CXX=g++-7 ; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then git clone --branch "adversarial" $() https://github.com/gegelati/gegelati.git ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then git clone --branch $([ "$TRAVIS_BRANCH" = "master" ] && echo "master" || echo "develop") $() https://github.com/gegelati/gegelati.git ; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cd gegelati/bin;  fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cmake .. -DCMAKE_BUILD_TYPE=Release ; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo make install; fi
