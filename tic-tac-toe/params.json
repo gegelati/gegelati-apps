@@ -1,12 +1,13 @@
 {
     "archiveSize" : 50,
     "archivingProbability" : 0.05,
-    "nbIterationsPerPolicyEvaluation" : 50,
+    "nbIterationsPerPolicyEvaluation" : 10,
     "maxNbActionsPerEval" : 5,
-    "ratioDeletedRoots" : 0.85,
-    "maxNbEvaluationPerPolicy" : 100,
+    "ratioDeletedRoots" : 0.97,
+    "maxNbEvaluationPerPolicy" : 100000,
     "nbRegisters" : 8,
     "nbThreads" : 6,
+	"nbIterationsPerJob" : 3,
 
     "mutation":
     {
