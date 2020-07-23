@@ -31,15 +31,13 @@ void TicTacToe::play(uint64_t actionID, double symbolOfPlayer) {
 }
 
 void TicTacToe::doAction(uint64_t actionID) {
-    LearningEnvironment::doAction(actionID);
-
     bool &forbiddenMove =
             (currentTurn % 2 == 0 ? forbiddenMovePlayer1 : forbiddenMovePlayer2);
 
     bool &win =
             (currentTurn % 2 == 0 ? forbiddenMovePlayer1 : forbiddenMovePlayer2);
 
-    int symbOfPlayer = 1; // the board has been modified so that each player is circle
+    int symbOfPlayer = 0; // the board has been modified so that each player is circle
 
     // if the game is not over
     if (!this->isTerminal()) {
@@ -60,7 +58,18 @@ void TicTacToe::doAction(uint64_t actionID) {
         // checking the state of the game to see if it is finished
         this->updateGame();
 
-        this->revertBoard();
+        if(isTerminal()){
+            return;
+        }
+
+        // makes second player play if not adversarial
+        if(isSecondPlayerRandom){
+            randomPlay(1); // always cross
+            this->currentTurn++;
+            updateGame();
+        }else {
+            this->revertBoard();
+        }
     }
 }
 
