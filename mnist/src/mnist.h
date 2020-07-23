@@ -22,7 +22,7 @@ protected:
 	Mutator::RNG rng;
 
 	/// Current image provided to the LearningAgent
-	Data::PrimitiveTypeArray<double> currentImage;
+	Data::PrimitiveTypeArray2D<double> currentImage;
 
 	/// Current index of the image in the dataset.
 	uint64_t currentIndex;

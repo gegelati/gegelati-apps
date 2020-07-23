@@ -10,7 +10,7 @@
 #include "mnist.h"
 
 #ifndef NB_GENERATIONS
-#define NB_GENERATIONS 300
+#define NB_GENERATIONS 1200
 #endif
 
 
@@ -56,6 +56,29 @@ int main() {
 	auto max = [](double a, double b)->double {return std::max(a, b); };
 	auto ln = [](double a)->double {return std::log(a); };
 	auto exp = [](double a)->double {return std::exp(a); };
+	auto sobelMagn = [](const double a[3][3])->double {
+		double result = 0.0;
+		double gx =
+			-a[0][0] + a[0][2]
+			- 2.0 * a[1][0] + 2.0 * a[1][2]
+			- a[2][0] + a[2][2];
+		double gy = -a[0][0] - 2.0 * a[0][1] - a[0][2]
+			+ a[2][0] + 2.0 * a[2][1] + a[2][2];
+		result = sqrt(gx * gx + gy * gy);
+		return result;
+	};
+
+	auto sobelDir = [](const double a[3][3])->double {
+		double result = 0.0;
+		double gx =
+			-a[0][0] + a[0][2]
+			- 2.0 * a[1][0] + 2.0 * a[1][2]
+			- a[2][0] + a[2][2];
+		double gy = -a[0][0] - 2.0 * a[0][1] - a[0][2]
+			+ a[2][0] + 2.0 * a[2][1] + a[2][2];
+		result = std::atan(gy / gx);
+		return result;
+	};
 
 	set.add(*(new Instructions::LambdaInstruction<double, double>(minus)));
 	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
@@ -64,31 +87,15 @@ int main() {
 	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
 	set.add(*(new Instructions::LambdaInstruction<double>(exp)));
 	set.add(*(new Instructions::LambdaInstruction<double>(ln)));
+	set.add(*(new Instructions::LambdaInstruction<const double[3][3]>(sobelMagn)));
+	set.add(*(new Instructions::LambdaInstruction<const double[3][3]>(sobelDir)));
 
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
 	// among other things)
+	// Loads them from the file params.json
 	Learn::LearningParameters params;
-	params.mutation.tpg.maxInitOutgoingEdges = 3;
-	params.mutation.tpg.nbRoots = 500;
-	params.mutation.tpg.pEdgeDeletion = 0.7;
-	params.mutation.tpg.pEdgeAddition = 0.7;
-	params.mutation.tpg.pProgramMutation = 0.2;
-	params.mutation.tpg.pEdgeDestinationChange = 0.1;
-	params.mutation.tpg.pEdgeDestinationIsAction = 0.5;
-	params.mutation.tpg.maxOutgoingEdges = 5;
-	params.mutation.prog.pAdd = 0.5;
-	params.mutation.prog.pDelete = 0.5;
-	params.mutation.prog.pMutate = 1.0;
-	params.mutation.prog.pSwap = 1.0;
-	params.mutation.prog.maxProgramSize = 20;
-	params.maxNbActionsPerEval = 500;
-	params.nbIterationsPerPolicyEvaluation = 1;
-	params.ratioDeletedRoots = 0.90;
-	params.archiveSize = 500;
-	params.archivingProbability = 0.01;
-	// Evaluate each root at most for 4 generations
-	params.maxNbEvaluationPerPolicy = params.nbIterationsPerPolicyEvaluation * params.maxNbActionsPerEval * 4;
+	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json", params);
 
 	// Instantiate the LearningEnvironment
 	MNIST mnistLE;
