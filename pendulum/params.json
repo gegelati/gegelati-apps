@@ -4,7 +4,8 @@
     "nbIterationsPerPolicyEvaluation" : 5,
     "maxNbActionsPerEval" : 1000,
     "ratioDeletedRoots" : 0.998,
-    "maxNbEvaluationPerPolicy" : 10,
+    "maxNbEvaluationPerPolicy": 10,
+    "doValidation" : true,
 
     "mutation":
     {
