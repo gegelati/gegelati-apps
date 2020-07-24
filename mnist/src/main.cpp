@@ -10,7 +10,7 @@
 #include "mnist.h"
 
 #ifndef NB_GENERATIONS
-#define NB_GENERATIONS 300
+#define NB_GENERATIONS 1200
 #endif
 
 
@@ -56,6 +56,29 @@ int main() {
 	auto max = [](double a, double b)->double {return std::max(a, b); };
 	auto ln = [](double a)->double {return std::log(a); };
 	auto exp = [](double a)->double {return std::exp(a); };
+	auto sobelMagn = [](const double a[3][3])->double {
+		double result = 0.0;
+		double gx =
+			-a[0][0] + a[0][2]
+			- 2.0 * a[1][0] + 2.0 * a[1][2]
+			- a[2][0] + a[2][2];
+		double gy = -a[0][0] - 2.0 * a[0][1] - a[0][2]
+			+ a[2][0] + 2.0 * a[2][1] + a[2][2];
+		result = sqrt(gx * gx + gy * gy);
+		return result;
+	};
+
+	auto sobelDir = [](const double a[3][3])->double {
+		double result = 0.0;
+		double gx =
+			-a[0][0] + a[0][2]
+			- 2.0 * a[1][0] + 2.0 * a[1][2]
+			- a[2][0] + a[2][2];
+		double gy = -a[0][0] - 2.0 * a[0][1] - a[0][2]
+			+ a[2][0] + 2.0 * a[2][1] + a[2][2];
+		result = std::atan(gy / gx);
+		return result;
+	};
 
 	set.add(*(new Instructions::LambdaInstruction<double, double>(minus)));
 	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
@@ -64,31 +87,15 @@ int main() {
 	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
 	set.add(*(new Instructions::LambdaInstruction<double>(exp)));
 	set.add(*(new Instructions::LambdaInstruction<double>(ln)));
+	set.add(*(new Instructions::LambdaInstruction<const double[3][3]>(sobelMagn)));
+	set.add(*(new Instructions::LambdaInstruction<const double[3][3]>(sobelDir)));
 
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
 	// among other things)
+	// Loads them from the file params.json
 	Learn::LearningParameters params;
-	params.mutation.tpg.maxInitOutgoingEdges = 3;
-	params.mutation.tpg.nbRoots = 500;
-	params.mutation.tpg.pEdgeDeletion = 0.7;
-	params.mutation.tpg.pEdgeAddition = 0.7;
-	params.mutation.tpg.pProgramMutation = 0.2;
-	params.mutation.tpg.pEdgeDestinationChange = 0.1;
-	params.mutation.tpg.pEdgeDestinationIsAction = 0.5;
-	params.mutation.tpg.maxOutgoingEdges = 5;
-	params.mutation.prog.pAdd = 0.5;
-	params.mutation.prog.pDelete = 0.5;
-	params.mutation.prog.pMutate = 1.0;
-	params.mutation.prog.pSwap = 1.0;
-	params.mutation.prog.maxProgramSize = 20;
-	params.maxNbActionsPerEval = 500;
-	params.nbIterationsPerPolicyEvaluation = 1;
-	params.ratioDeletedRoots = 0.90;
-	params.archiveSize = 500;
-	params.archivingProbability = 0.01;
-	// Evaluate each root at most for 4 generations
-	params.maxNbEvaluationPerPolicy = params.nbIterationsPerPolicyEvaluation * params.maxNbActionsPerEval * 4;
+	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json", params);
 
 	// Instantiate the LearningEnvironment
 	MNIST mnistLE;
@@ -100,8 +107,7 @@ int main() {
 	la.init();
 
 	// Create an exporter for all graphs
-	File::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
-
+	File::TPGGraphDotExporter dotExporter("out_0000.dot", la.getTPGGraph());
 
 	// Start a thread for controlling the loop
 #ifndef NO_CONSOLE_CONTROL
@@ -116,55 +122,27 @@ int main() {
 	std::atomic<bool> printStats = false;
 #endif
 
+	// Adds a logger to the LA (to get statistics on learning) on std::cout
+	Log::LABasicLogger logCout(la);
+
 	// File for printing best policy stat.
 	std::ofstream stats;
 	stats.open("bestPolicyStats.md");
-	const TPG::TPGVertex* bestRoot = nullptr;
+	Log::LAPolicyStatsLogger logStats(la, stats);
 
 	// Train for NB_GENERATIONS generations
-	printf("\nGen\tNbVert\tMin\tAvg\tMax\tTvalid\tTtrain\n");
 	for (int i = 0; i < NB_GENERATIONS && !exitProgram; i++) {
-		char buff[12];
-		sprintf(buff, "out_%03d.dot", i);
+		char buff[13];
+		sprintf(buff, "out_%04d.dot", i);
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
-		std::multimap<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*> result;
-		auto startEval = std::chrono::high_resolution_clock::now();
-		result = la.evaluateAllRoots(i, Learn::LearningMode::VALIDATION);
-		auto stopEval = std::chrono::high_resolution_clock::now();
-		auto iter = result.begin();
-		double min = iter->first->getResult();
-		std::advance(iter, result.size() - 1);
-		double max = iter->first->getResult();
-		double avg = std::accumulate(result.begin(), result.end(), 0.0,
-			[](double acc, std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*> pair)->double {return acc + pair.first->getResult(); });
-		avg /= result.size();
-		printf("%3d\t%4" PRIu64 "\t%1.2lf\t%1.2lf\t%1.2lf", i, la.getTPGGraph().getNbVertices(), min, avg, max);
-		std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopEval - startEval).count();
 
-		// Print stats in file if a new best root was found
-
-		if (la.getBestRoot().first != bestRoot) {
-			bestRoot = la.getBestRoot().first;
-			stats << "Generation " << i << std::endl << std::endl;
-			TPG::PolicyStats ps;
-			ps.setEnvironment(la.getTPGGraph().getEnvironment());
-			ps.analyzePolicy(bestRoot);
-			stats << ps << std::endl;
-			stats << std::endl << std::endl << "==========" << std::endl << std::endl;
-		}
+		la.trainOneGeneration(i);
 
 		if (printStats) {
-			mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), iter->second);
+			mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), la.getBestRoot().first);
 			printStats = false;
 		}
-		std::cout.flush();
-
-		auto startTrain = std::chrono::high_resolution_clock::now();
-		la.trainOneGeneration(i);
-		auto stopTrain = std::chrono::high_resolution_clock::now();
-
-		std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopTrain - startTrain).count() << std::endl;
 	}
 
 	// Keep best policy
@@ -179,6 +157,8 @@ int main() {
 	bestStats.open("out_best_stats.md");
 	bestStats << ps;
 	bestStats.close();
+
+	// close log file also
 	stats.close();
 
 	// Print stats one last time

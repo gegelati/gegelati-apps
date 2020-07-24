@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12.4)
+cmake_minimum_required(VERSION 3.8)
 
 # *******************************************
 # ************* CMake Content ***************
@@ -6,9 +6,9 @@ cmake_minimum_required(VERSION 3.12.4)
 # This CMake create a workspace containing the following projects
 # 
 # Programs
-#  - mnist
+#  - tic-tac-toe
 
-set (PROJECT_NAME mnist)
+set (PROJECT_NAME tic-tac-toe)
 
 project(${PROJECT_NAME})
 
@@ -25,23 +25,22 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
-
-	# Link with pthread
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-
 	# Set to 1 to activate debug compilation (0 for release)
 	set(DEBUG 0)
+	
+	# Link with pthread
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 	if(${DEBUG})
 			MESSAGE("Generate Debug project")
 			set(CMAKE_BUILD_TYPE Debug)
 			set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Debug)
-			set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -pg -Wall")
+			set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -pg -Wall")
 	else()
 			MESSAGE("Generate Release project")
 			set(CMAKE_BUILD_TYPE Release)
 			set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Release)
-			set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
+			set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wall")
 	endif()
 	#add libmath during non visual studio builds
 	set(CMAKE_EXTRA_LIB m)
@@ -53,35 +52,8 @@ endif()
 # Add definitions for testing purposes
 if(${TESTING})
 	MESSAGE("Testing mode")
-	add_definitions(-DNO_CONSOLE_CONTROL -DNB_GENERATIONS=10)
+	add_definitions(-DNB_GENERATIONS=10 -DNO_CONSOLE_CONTROL)
 endif()
-
-
-# *******************************************
-# ************ MNIST database ***************
-# *******************************************
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/dat/train-images-idx3-ubyte.gz")
-	message(STATUS "Download MNIST training database 1/4 (may take a few seconds).")
-	file(DOWNLOAD http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz ${CMAKE_CURRENT_SOURCE_DIR}/dat/train-images-idx3-ubyte.gz)
-	message(STATUS "Download MNIST training database 2/4 (may take a few seconds).")
-	file(DOWNLOAD http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz ${CMAKE_CURRENT_SOURCE_DIR}/dat/train-labels-idx1-ubyte.gz)
-	message(STATUS "Download MNIST training database 3/4 (may take a few seconds).")
-	file(DOWNLOAD http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz ${CMAKE_CURRENT_SOURCE_DIR}/dat/t10k-images-idx3-ubyte.gz)
-	message(STATUS "Download MNIST training database 4/4 (may take a few seconds).")
-	file(DOWNLOAD http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz ${CMAKE_CURRENT_SOURCE_DIR}/dat/t10k-labels-idx1-ubyte.gz)
-else()
-	message(STATUS "MNIST data already downloaded.")
-endif()	
-
-message(STATUS "Extract MNIST database.")
-execute_process(
-	COMMAND gzip -dfk ${CMAKE_SOURCE_DIR}/dat/train-images-idx3-ubyte.gz
-	COMMAND gzip -dfk ${CMAKE_SOURCE_DIR}/dat/train-labels-idx1-ubyte.gz
-	COMMAND gzip -dfk ${CMAKE_SOURCE_DIR}/dat/t10k-images-idx3-ubyte.gz
-	COMMAND gzip -dfk ${CMAKE_SOURCE_DIR}/dat/t10k-labels-idx1-ubyte.gz
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/dat
-)
-set(MNIST_DATA_DIR ${CMAKE_SOURCE_DIR}/dat)
 
 # *******************************************
 # *********** GEGELATI LIBRARY **************
@@ -116,14 +88,12 @@ endif()
 # ************** Executable  ****************
 # *******************************************
 file(GLOB_RECURSE
-	mnist_files
+	tic-tac-toe_game_files
 	./src/*.cpp
 	./src/*.h
-	./src/mnist_reader/*.hpp
-	./params.json
 )
 
 include_directories(${GEGELATI_INCLUDE_DIRS})
-add_executable(${PROJECT_NAME} ${mnist_files})
+add_executable(${PROJECT_NAME} ${tic-tac-toe_game_files})
 target_link_libraries(${PROJECT_NAME} ${GEGELATI_LIBRARIES})
-target_compile_definitions(${PROJECT_NAME} PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_definitions(${PROJECT_NAME} PRIVATE ROOT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")

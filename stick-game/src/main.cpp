@@ -36,25 +36,9 @@ int main() {
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
 	// among other things)
-	Learn::LearningParameters params;
-	params.mutation.tpg.maxInitOutgoingEdges = 3;
-	params.mutation.tpg.nbRoots = 50;
-	params.mutation.tpg.pEdgeDeletion = 0.7;
-	params.mutation.tpg.pEdgeAddition = 0.7;
-	params.mutation.tpg.pProgramMutation = 0.2;
-	params.mutation.tpg.pEdgeDestinationChange = 0.1;
-	params.mutation.tpg.pEdgeDestinationIsAction = 0.5;
-	params.mutation.tpg.maxOutgoingEdges = 5;
-	params.mutation.prog.pAdd = 0.5;
-	params.mutation.prog.pDelete = 0.5;
-	params.mutation.prog.pMutate = 1.0;
-	params.mutation.prog.pSwap = 1.0;
-	params.mutation.prog.maxProgramSize = 20;
-	params.archiveSize = 50;
-	params.maxNbActionsPerEval = 11;
-	params.nbIterationsPerPolicyEvaluation = 100;
-	params.ratioDeletedRoots = 0.5;
-	params.maxNbEvaluationPerPolicy = params.nbIterationsPerPolicyEvaluation * 1; // 2 generation/policy
+    // Loads them from the file params.json
+    Learn::LearningParameters params;
+	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json",params);
 
 	// Instantiate the LearningEnvironment
 	StickGameWithOpponent le;
@@ -63,28 +47,20 @@ int main() {
 	Learn::LearningAgent la(le, set, params);
 	la.init();
 
+	// Use the basic logging
+	Log::LABasicLogger logger(la);
+
 	// Create an exporter for all graphs
 	File::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
 
 	// Train for NB_GENERATIONS generations
-	printf("Gen\tNbVert\tMin\tAvg\tMax\n");
 	for (int i = 0; i < NB_GENERATIONS; i++) {
 		char buff[12];
 		sprintf(buff, "out_%03d.dot", i);
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
-		std::multimap<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*> result;
-		result = la.evaluateAllRoots(i, Learn::LearningMode::VALIDATION);
-		auto iter = result.begin();
-		double min = iter->first->getResult();
-		std::advance(iter, result.size() - 1);
-		double max = iter->first->getResult();
-		double avg = std::accumulate(result.begin(), result.end(), 0.0,
-			[](double acc, std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*> pair)->double {return acc + pair.first->getResult(); });
-		avg /= result.size();
-		printf("%3d\t%4" PRIu64 "\t%1.2lf\t%1.2lf\t%1.2lf\n", i, la.getTPGGraph().getNbVertices(), min, avg, max);
+		
 		la.trainOneGeneration(i);
-
 	}
 
 	// Keep best policy
