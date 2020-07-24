@@ -52,13 +52,11 @@ int main() {
     la.init();
 
     // Adds a logger to the LA (to get statistics on learning) on std::cout
-    auto logCout = *new Log::LABasicLogger();
-    la.addLogger(logCout);
+    auto logCout = *new Log::LABasicLogger(la);
 
     // Adds another logger that will log in a file
     std::ofstream o("log");
-    auto logFile = *new Log::LABasicLogger(o);
-    la.addLogger(logFile);
+    auto logFile = *new Log::LABasicLogger(la, o);
 
     // Create an exporter for all graphs
     File::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
