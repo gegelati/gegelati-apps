@@ -55,7 +55,7 @@ int agentTest() {
     auto root = tpg.getRootVertices().front();
 
 
-    double x;
+    size_t x = 0;
     std::cout<<"Game :\n"<<le.toString()<<std::endl;
     // let's play, the only way to leave this loop is to enter -1
     while(x!=-1){

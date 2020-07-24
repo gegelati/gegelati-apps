@@ -107,8 +107,7 @@ int main() {
 	la.init();
 
 	// Create an exporter for all graphs
-	File::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
-
+	File::TPGGraphDotExporter dotExporter("out_0000.dot", la.getTPGGraph());
 
 	// Start a thread for controlling the loop
 #ifndef NO_CONSOLE_CONTROL
@@ -123,55 +122,27 @@ int main() {
 	std::atomic<bool> printStats = false;
 #endif
 
+	// Adds a logger to the LA (to get statistics on learning) on std::cout
+	Log::LABasicLogger logCout(la);
+
 	// File for printing best policy stat.
 	std::ofstream stats;
 	stats.open("bestPolicyStats.md");
-	const TPG::TPGVertex* bestRoot = nullptr;
+	Log::LAPolicyStatsLogger logStats(la, stats);
 
 	// Train for NB_GENERATIONS generations
-	printf("\nGen\tNbVert\tMin\tAvg\tMax\tTvalid\tTtrain\n");
 	for (int i = 0; i < NB_GENERATIONS && !exitProgram; i++) {
-		char buff[12];
-		sprintf(buff, "out_%03d.dot", i);
+		char buff[13];
+		sprintf(buff, "out_%04d.dot", i);
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
-		std::multimap<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*> result;
-		auto startEval = std::chrono::high_resolution_clock::now();
-		result = la.evaluateAllRoots(i, Learn::LearningMode::VALIDATION);
-		auto stopEval = std::chrono::high_resolution_clock::now();
-		auto iter = result.begin();
-		double min = iter->first->getResult();
-		std::advance(iter, result.size() - 1);
-		double max = iter->first->getResult();
-		double avg = std::accumulate(result.begin(), result.end(), 0.0,
-			[](double acc, std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*> pair)->double {return acc + pair.first->getResult(); });
-		avg /= result.size();
-		printf("%3d\t%4" PRIu64 "\t%1.2lf\t%1.2lf\t%1.2lf", i, la.getTPGGraph().getNbVertices(), min, avg, max);
-		std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopEval - startEval).count();
 
-		// Print stats in file if a new best root was found
-
-		if (la.getBestRoot().first != bestRoot) {
-			bestRoot = la.getBestRoot().first;
-			stats << "Generation " << i << std::endl << std::endl;
-			TPG::PolicyStats ps;
-			ps.setEnvironment(la.getTPGGraph().getEnvironment());
-			ps.analyzePolicy(bestRoot);
-			stats << ps << std::endl;
-			stats << std::endl << std::endl << "==========" << std::endl << std::endl;
-		}
+		la.trainOneGeneration(i);
 
 		if (printStats) {
-			mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), iter->second);
+			mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), la.getBestRoot().first);
 			printStats = false;
 		}
-		std::cout.flush();
-
-		auto startTrain = std::chrono::high_resolution_clock::now();
-		la.trainOneGeneration(i);
-		auto stopTrain = std::chrono::high_resolution_clock::now();
-
-		std::cout << "\t" << std::chrono::duration_cast<std::chrono::milliseconds>(stopTrain - startTrain).count() << std::endl;
 	}
 
 	// Keep best policy
@@ -186,6 +157,8 @@ int main() {
 	bestStats.open("out_best_stats.md");
 	bestStats << ps;
 	bestStats.close();
+
+	// close log file also
 	stats.close();
 
 	// Print stats one last time
