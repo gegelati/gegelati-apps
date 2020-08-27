@@ -2,15 +2,16 @@
     "archiveSize" : 100,
     "nbIterationsPerPolicyEvaluation" : 100,
     "maxNbActionsPerEval" : 11,
-    "ratioDeletedRoots" : 0.5,
+    "ratioDeletedRoots" : 0.95,
     "maxNbEvaluationPerPolicy" : 100,
-    "doValidation" : true,
+    "doValidation" : false,
+	"nbIterationsPerJob" : 1,
 
     "mutation":
     {
 	    "tpg" :
 	    {
-	    	"nbRoots" : 50,
+	    	"nbRoots" : 1000,
 	    	"maxInitOutgoingEdges" : 3,
 	    	"maxOutgoingEdges" : 5,
 	    	"pEdgeDeletion" : 0.7,

@@ -11,3 +11,5 @@ The build process of applications relies on [cmake](https://cmake.org) to config
 3. Enter the following command to create the project for your favorite IDE `cmake ..`.
 4. Open the project created in the `bin` folder, or launch the build with the following command: `cmake --build .`.
 
+### Evaluation
+To evaluate "by hand" a tpg, the main function enables to play against it. The command is `executable -evaluate tpgFile.dot`

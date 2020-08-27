@@ -7,14 +7,19 @@
 
 #include <gegelati.h>
 
-#include "stickGameWithOpponent.h"
+#include "stickGameAdversarial.h"
+#include "resultTester.h"
 
 #ifndef NB_GENERATIONS
-#define NB_GENERATIONS 300
+#define NB_GENERATIONS 30000
 #endif
 
 
-int main() {
+int main(int argc, char *argv[]) {
+    if(argc>2 && (strcmp("-evaluate", argv[1]) == 0)) {
+        agentTest(argv[2]);
+    }
+
 	// Create the instruction set for programs
 	Instructions::Set set;
 	auto minus = [](int a, int b)->double {return (double)a - (double)b; };
@@ -41,10 +46,10 @@ int main() {
 	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json",params);
 
 	// Instantiate the LearningEnvironment
-	StickGameWithOpponent le;
+	StickGameAdversarial le;
 
 	// Instantiate and init the learning agent
-	Learn::LearningAgent la(le, set, params);
+	Learn::ParallelLearningAgent la(le, set, params);
 	la.init();
 
 	// Use the basic logging
@@ -55,7 +60,7 @@ int main() {
 
 	// Train for NB_GENERATIONS generations
 	for (int i = 0; i < NB_GENERATIONS; i++) {
-		char buff[12];
+		char buff[16];
 		sprintf(buff, "out_%03d.dot", i);
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
