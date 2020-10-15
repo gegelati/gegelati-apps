@@ -10,9 +10,6 @@
 #include "stickGameAdversarial.h"
 #include "resultTester.h"
 
-#ifndef NB_GENERATIONS
-#define NB_GENERATIONS 30000
-#endif
 
 
 int main(int argc, char *argv[]) {
@@ -41,9 +38,13 @@ int main(int argc, char *argv[]) {
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
 	// among other things)
-    // Loads them from the file params.json
-    Learn::LearningParameters params;
-	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json",params);
+	// Loads them from the file params.json
+	Learn::LearningParameters params;
+	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json", params);
+#ifdef NB_GENERATIONS
+	params.nbGenerations = NB_GENERATIONS;
+#endif // !NB_GENERATIONS
+
 
 	// Instantiate the LearningEnvironment
 	StickGameAdversarial le;
@@ -59,12 +60,12 @@ int main(int argc, char *argv[]) {
 	File::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
 
 	// Train for NB_GENERATIONS generations
-	for (int i = 0; i < NB_GENERATIONS; i++) {
+	for (int i = 0; i < params.nbGenerations; i++) {
 		char buff[16];
 		sprintf(buff, "out_%03d.dot", i);
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
-		
+
 		la.trainOneGeneration(i);
 	}
 

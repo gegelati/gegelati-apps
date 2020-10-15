@@ -1,34 +1,38 @@
 {
-    "archiveSize" : 500,
-    "archivingProbability" : 0.01,
-    "nbRegisters" :  8,
-    "nbIterationsPerPolicyEvaluation" : 1,
-    "maxNbActionsPerEval" : 500,
-    "ratioDeletedRoots" : 0.90,
-    "maxNbEvaluationPerPolicy" : 2000,
-    "doValidation" : true,
+  "archiveSize": 500,
+  "archivingProbability": 0.01,
+  "doValidation": true,
+  "maxNbActionsPerEval": 500,
+  "maxNbEvaluationPerPolicy": 2000,
+  "nbGenerations": 200,
+  "nbIterationsPerPolicyEvaluation": 1,
+  "nbIterationsPerJob": 1,
+  "nbProgramConstant": 0,
+  "nbRegisters": 8,
+  "ratioDeletedRoots": 0.90,
 
-    "mutation":
-    {
-	    "tpg" :
-	    {
-	    	"nbRoots" : 500,
-	    	"maxInitOutgoingEdges" : 3,
-	    	"maxOutgoingEdges" : 5,
-	    	"pEdgeDeletion" : 0.7,
-	    	"pEdgeAddition" : 0.7,
-	    	"pProgramMutation" : 0.2,
-	    	"pEdgeDestinationChange" : 0.1,
-	    	"pEdgeDestinationIsAction" : 0.5
-	    },
-
-	    "prog" :
-	    {
-	        "maxProgramSize" : 20,
-	        "pDelete" : 0.5,
-	        "pAdd" : 0.5,
-	        "pMutate" : 1.0,
-	        "pSwap" : 1.0
-	    }
+  "mutation": {
+    "tpg": {
+      "forceProgramBehaviorChangeOnMutation": true,
+      "maxInitOutgoingEdges": 3,
+      "maxOutgoingEdges": 5,
+      "nbActions": 10,
+      "nbRoots": 500,
+      "pEdgeAddition": 0.7,
+      "pEdgeDeletion": 0.7,
+      "pEdgeDestinationChange": 0.1,
+      "pEdgeDestinationIsAction": 0.5,
+      "pProgramMutation": 0.2
+    },
+    "prog": {
+      "maxConstValue": 10,
+      "maxProgramSize": 20,
+      "minConstValue": -10,
+      "pAdd": 0.5,
+      "pConstantMutation": 0.5,
+      "pDelete": 0.5,
+      "pMutate": 1.0,
+      "pSwap": 1.0,
     }
+  }
 }

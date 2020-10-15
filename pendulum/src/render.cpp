@@ -110,7 +110,7 @@ void Render::controllerLoop(std::atomic<bool>& exit, std::atomic<bool>& toggleDi
 	// Prepare objects for replays
 	float angleDisplay = (float)M_PI;
 	float torqueDisplay = 0.0;
-	Environment env(set, pendulumLE.getDataSources(), 8);
+	Environment env(set, pendulumLE.getDataSources(), params.nbRegisters, params.nbProgramConstant);
 	TPG::TPGExecutionEngine tee(env);
 	uint64_t frame = 0;
 	std::deque<std::tuple<uint64_t, double, double>> replay;
