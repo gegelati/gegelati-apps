@@ -7,14 +7,16 @@
 
 #include <gegelati.h>
 
-#include "stickGameWithOpponent.h"
-
-#ifndef NB_GENERATIONS
-#define NB_GENERATIONS 300
-#endif
+#include "stickGameAdversarial.h"
+#include "resultTester.h"
 
 
-int main() {
+
+int main(int argc, char *argv[]) {
+    if(argc>2 && (strcmp("-evaluate", argv[1]) == 0)) {
+        agentTest(argv[2]);
+    }
+
 	// Create the instruction set for programs
 	Instructions::Set set;
 	auto minus = [](int a, int b)->double {return (double)a - (double)b; };
@@ -36,15 +38,19 @@ int main() {
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
 	// among other things)
-    // Loads them from the file params.json
-    Learn::LearningParameters params;
-	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json",params);
+	// Loads them from the file params.json
+	Learn::LearningParameters params;
+	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json", params);
+#ifdef NB_GENERATIONS
+	params.nbGenerations = NB_GENERATIONS;
+#endif // !NB_GENERATIONS
+
 
 	// Instantiate the LearningEnvironment
-	StickGameWithOpponent le;
+	StickGameAdversarial le;
 
 	// Instantiate and init the learning agent
-	Learn::LearningAgent la(le, set, params);
+	Learn::ParallelLearningAgent la(le, set, params);
 	la.init();
 
 	// Use the basic logging
@@ -54,12 +60,12 @@ int main() {
 	File::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
 
 	// Train for NB_GENERATIONS generations
-	for (int i = 0; i < NB_GENERATIONS; i++) {
-		char buff[12];
+	for (int i = 0; i < params.nbGenerations; i++) {
+		char buff[16];
 		sprintf(buff, "out_%03d.dot", i);
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
-		
+
 		la.trainOneGeneration(i);
 	}
 

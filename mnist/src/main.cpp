@@ -9,11 +9,6 @@
 
 #include "mnist.h"
 
-#ifndef NB_GENERATIONS
-#define NB_GENERATIONS 1200
-#endif
-
-
 void getKey(std::atomic<bool>& exit, std::atomic<bool>& printStats) {
 	std::cout << std::endl;
 	std::cout << "Press `q` then [Enter] to exit." << std::endl;
@@ -96,11 +91,15 @@ int main() {
 	// Loads them from the file params.json
 	Learn::LearningParameters params;
 	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json", params);
+#ifdef NB_GENERATIONS
+	params.nbGenerations = NB_GENERATIONS;
+#endif // !NB_GENERATIONS
+
 
 	// Instantiate the LearningEnvironment
 	MNIST mnistLE;
 
-	std::cout << "Number of threads: " << std::thread::hardware_concurrency() << std::endl;
+	std::cout << "Number of threads: " << params.nbThreads << std::endl;
 
 	// Instantiate and init the learning agent
 	Learn::ClassificationLearningAgent la(mnistLE, set, params);
@@ -131,7 +130,7 @@ int main() {
 	Log::LAPolicyStatsLogger logStats(la, stats);
 
 	// Train for NB_GENERATIONS generations
-	for (int i = 0; i < NB_GENERATIONS && !exitProgram; i++) {
+	for (int i = 0; i < params.nbGenerations && !exitProgram; i++) {
 		char buff[13];
 		sprintf(buff, "out_%04d.dot", i);
 		dotExporter.setNewFilePath(buff);

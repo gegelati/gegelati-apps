@@ -10,10 +10,6 @@
 #include "pendulum.h"
 #include "render.h"
 
-#ifndef NB_GENERATIONS
-#define NB_GENERATIONS 1200
-#endif
-
 int main() {
 
 	std::cout << "Start Pendulum application." << std::endl;
@@ -31,6 +27,7 @@ int main() {
 	auto sin = [](double a)->double {return std::sin(a); };
 	auto tan = [](double a)->double {return std::tan(a); };
 	auto pi = [](double a)->double {return M_PI; };
+	auto multByConst = [](double a, Data::Constant c)->double {return a * (double)c / 10.0; };
 
 	set.add(*(new Instructions::LambdaInstruction<double, double>(minus)));
 	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
@@ -42,7 +39,7 @@ int main() {
 	set.add(*(new Instructions::LambdaInstruction<double>(cos)));
 	set.add(*(new Instructions::LambdaInstruction<double>(sin)));
 	set.add(*(new Instructions::LambdaInstruction<double>(tan)));
-	set.add(*(new Instructions::MultByConstParam<double, float>()));
+	set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(multByConst)));
 	set.add(*(new Instructions::LambdaInstruction<double>(pi)));
 
 	// Set the parameters for the learning process.
@@ -51,11 +48,14 @@ int main() {
 	// Loads them from the file params.json
 	Learn::LearningParameters params;
 	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json", params);
+#ifdef NB_GENERATIONS
+	params.nbGenerations = NB_GENERATIONS;
+#endif
 
 	// Instantiate the LearningEnvironment
 	Pendulum pendulumLE({ 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0 });
 
-	std::cout << "Number of threads: " << std::thread::hardware_concurrency() << std::endl;
+	std::cout << "Number of threads: " << params.nbThreads << std::endl;
 
 	// Instantiate and init the learning agent
 	Learn::ParallelLearningAgent la(pendulumLE, set, params);
@@ -91,8 +91,8 @@ int main() {
 	stats.open("bestPolicyStats.md");
 	Log::LAPolicyStatsLogger policyStatsLogger(la, stats);
 
-	// Train for NB_GENERATIONS generations
-	for (int i = 0; i < NB_GENERATIONS && !exitProgram; i++) {
+	// Train for params.nbGenerations generations
+	for (int i = 0; i < params.nbGenerations && !exitProgram; i++) {
 		char buff[13];
 		sprintf(buff, "out_%04d.dot", i);
 		dotExporter.setNewFilePath(buff);
