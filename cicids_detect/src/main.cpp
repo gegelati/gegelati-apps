@@ -51,6 +51,11 @@ int main() {
 	auto max = [](double a, double b)->double {return std::max(a, b); };
 	auto ln = [](double a)->double {return std::log(a); };
 	auto exp = [](double a)->double {return std::exp(a); };
+	auto conv1D = [](const double a[3], const Data::Constant b[3])->double{
+		double result = a[0]*(double)b[0]+a[1]*(double)b[1]+a[2]*(double)b[2];
+		return result;
+	};
+	
 	auto sobelMagn = [](const double a[3][3])->double {
 		double result = 0.0;
 		double gx =
@@ -84,6 +89,7 @@ int main() {
 	set.add(*(new Instructions::LambdaInstruction<double>(ln)));
 	set.add(*(new Instructions::LambdaInstruction<const double[3][3]>(sobelMagn)));
 	set.add(*(new Instructions::LambdaInstruction<const double[3][3]>(sobelDir)));
+	set.add(*(new Instructions::LambdaInstruction<const double[3], const Data::Constant[3]>(conv1D)));
 
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
@@ -102,7 +108,7 @@ int main() {
 	std::cout << "Number of threads: " << params.nbThreads << std::endl;
 
 	// Instantiate and init the learning agent
-	Learn::ClassificationLearningAgent la(packetLE, set, params);
+	Learn::ParallelLearningAgent la(packetLE, set, params);
 	la.init();
 
 	// Create an exporter for all graphs
@@ -131,13 +137,14 @@ int main() {
 
 	// Train for NB_GENERATIONS generations
 	for (uint i = 0; i < params.nbGenerations && !exitProgram; i++) {
+		packetLE.incGen();
 		char buff[13];
 		sprintf(buff, "out_%04d.dot", i);
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
 		la.trainOneGeneration(i);
 
-		if (printStats) {
+		if (printStats || i%5 == 0) {
 			packetLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), la.getBestRoot().first);
 			printStats = false;
 		}

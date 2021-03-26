@@ -8,8 +8,18 @@
 /**
 * LearningEnvironment to train an agent to classify the CICIDS database.
 */
-class CICIDS : public Learn::ClassificationLearningEnvironment {
+class CICIDS : public Learn::LearningEnvironment {
 protected:
+	/**
+         * \brief 2D array storing for each class the guesses that were made by
+         * the LearningAgent.
+         *
+         * For example classificationTable.at(x).at(y) represents the number of
+         * times a LearningAgent guessed class y, for a data from class x since
+         * the last reset.
+         */
+        std::vector<std::vector<uint64_t>> classificationTable;
+        
 	/// CICIDS dataset for the training.
 	std::vector<std::string> training_challenges;
 
@@ -31,15 +41,6 @@ protected:
 	/// Randomness control
 	Mutator::RNG rng;
 
-	/// Number of correct guesses since the last reset.
-	uint64_t nbCorrectGuesses;
-
-	/// Number of incorrect guesses since the last reset.
-	uint64_t nbIncorrectGuesses;
-
-	/// Number of no guesses since the last reset.
-	uint64_t nbNoGuesses;
-
 	/// the current log that we are observing
 	Data::PrimitiveTypeArray<double> currentChallenge;
 
@@ -57,6 +58,9 @@ protected:
 
 	/// Size of the challenge
 	uint16_t stimulusSize;
+	
+	/// Number of generations
+	uint16_t nb_gen;
 
 
 	/**
@@ -138,6 +142,11 @@ public:
 	* with their score in ascending order.
 	*/
 	void printClassifStatsTable(const Environment& env, const TPG::TPGVertex* bestRoot);
+	
+	/**
+	* \brief incrments the current number of generations.
+	*/
+	void incGen();
 };
 
 #endif

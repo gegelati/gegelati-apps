@@ -2,35 +2,30 @@
 
 #include <string>
 #include <iostream>
+#include <pcap.h>
 #include "cicids.h"
 #include <fstream>
 
 
-void CICIDS::changeCurrentImage()
+void CICIDS::changeCurrentChallenge()
 {
 	// Get the container for the current mode.
 	std::vector<std::string>& dataSource = (this->currentMode == Learn::LearningMode::TRAINING) ?
 		this->training_challenges : this->eval_challenges;
 
 	// Select a random Challenge index
-	std::uniform_int_distribution<uint64_t> distribution(0, dataSource.size() - 1);
-	uint64_t challengeIndex = distribution(this->engine);
+	uint64_t challengeIndex = rng.getUnsignedInt64(0,dataSource.size()-1);
 
-	// Load the Challenge in the dataSource
-	/*for (uint64_t pxlIndex = 0; pxlIndex < 28 * 28; pxlIndex++) {
-		this->currentChallenge.setDataAt(typeid(PrimitiveType<double>), pxlIndex, dataSource.at(imgIndex).at(pxlIndex));
-	}*/
 	getChallengeAt(challengeIndex);
-
+	
 	// Keep current label too.
 	currentLabel = (this->currentMode == Learn::LearningMode::TRAINING) ?
 		this->training_labels.at(challengeIndex) : this->eval_labels.at(challengeIndex);
-
 }
 
-CICIDS::CICIDS() : LearningEnvironment(11),nbCorrectGuesses{ 0 }, nbIncorrectGuesses{ 0 }, nbNoGuesses{ 0 }, currentChallenge(28 * 28), currentLabel{ 0 }, nbChallenges(100000)
+CICIDS::CICIDS() : ClassificationLearningEnvironment(15),nbCorrectGuesses{ 0 }, nbIncorrectGuesses{ 0 }, nbNoGuesses{ 0 }, currentChallenge(78), currentLabel{ 0 }, nbChallenges(1000000)
 {
-	fname = "/home/nsourbie/Documents/gegelati-apps/cicids/dat/port_scan.csv";
+	fname = "/home/nsourbie/Documents/gegelati-apps/cicids/dat/dataset.csv";
 	extractDatabase();
 	std::cout << "Nbr of training images = " << training_challenges.size() << std::endl;
 	std::cout << "Nbr of training labels = " << training_labels.size() << std::endl;
@@ -38,48 +33,44 @@ CICIDS::CICIDS() : LearningEnvironment(11),nbCorrectGuesses{ 0 }, nbIncorrectGue
 	std::cout << "Nbr of test labels = " << eval_labels.size() << std::endl;
 }
 
+int count_seek = 0;
 void CICIDS::doAction(uint64_t actionID)
 {
-	// If the action is 10 -> no guess was made by the network.
-	if (actionID == 10) {
-		this->nbNoGuesses++;
-	}
-	// An action has been done.
-	// Check if the given action corresponds to the image label.
-	else if (actionID == this->currentLabel) {
-		this->nbCorrectGuesses++;
-	}
-	else {
-		nbIncorrectGuesses++;
-	}
-
-	this->changeCurrentImage();
-
-
+	ClassificationLearningEnvironment::doAction(actionID);
+	this->changeCurrentChallenge();
 }
 
 void CICIDS::reset(size_t seed, Learn::LearningMode mode)
 {
 	this->currentMode = mode;
-	this->engine.seed(seed);
+	this->rng.setSeed(seed);
 	this->nbCorrectGuesses = 0;
 	this->nbIncorrectGuesses = 0;
 	this->nbNoGuesses = 0;
-
-	this->changeCurrentImage();
+	this->changeCurrentChallenge();
+	count_seek = 0;
 }
 
-std::vector<std::reference_wrapper<DataHandlers::DataHandler>> CICIDS::getDataSources()
+std::vector<std::reference_wrapper<const Data::DataHandler>> CICIDS::getDataSources()
 {
-	std::vector<std::reference_wrapper<DataHandlers::DataHandler>> res = { currentChallenge };
+	std::vector<std::reference_wrapper<const Data::DataHandler>> res = {currentChallenge};
 
 	return res;
 }
 
+bool CICIDS::isCopyable() const 
+{
+	return false;
+}
+
+Learn::LearningEnvironment* CICIDS::clone() const
+{
+	return new CICIDS(*this);
+}
+
 double CICIDS::getScore() const
 {
-	uint64_t totalNbGuesses = this->nbCorrectGuesses + this->nbIncorrectGuesses + this->nbNoGuesses;
-	return (double)this->nbCorrectGuesses / (double)totalNbGuesses;
+	return ClassificationLearningEnvironment::getScore();
 }
 
 bool CICIDS::isTerminal() const
@@ -107,7 +98,7 @@ void CICIDS::getClassNames()
 		//add string into className with int
 		if(classNames.find(label) == classNames.end())
 		{
-			classNames.insert({label,++labelIdx});
+			classNames.insert({label,labelIdx++});
 			this->datasetSize++;
 		}
 	}
@@ -115,6 +106,7 @@ void CICIDS::getClassNames()
 	//close file
 	fin.close();
 }
+
 
 void CICIDS::extractDatabase()
 {
@@ -125,40 +117,34 @@ void CICIDS::extractDatabase()
 	std::ifstream fin(fname);
 	std::string line = "";
 	int count = 0;
-	int trainingC = nbChallenges/1.4;
-	int evalC = trainingC * 0.3;
-	int validC = trainingC * 0.1;
 
 	//skip first line;
 	getline(fin, line);
 
-	//get string at end of line
-	while(getline(fin, line) && count++ < trainingC)
+	while(count++ < nbChallenges)
 	{
-		int pos = line.rfind(",");
-		training_labels.push_back(classNames.find(line.substr(pos+1))->second);
-		line.erase(line.begin() + pos, line.end());
-		this->training_challenges.push_back(line);	
+		getline(fin, line);
+		uint64_t prob = rng.getUnsignedInt64(0,100);
+		if(prob < 25) 					//we randomly pick 25 % of the challenges for the evaluation
+		{
+			int pos = line.rfind(",");
+			eval_labels.push_back(classNames.find(line.substr(pos+1))->second);
+			line.erase(line.begin() + pos, line.end());
+			this->eval_challenges.push_back(line);
+		}
+		else
+		{
+			int pos = line.rfind(",");
+			training_labels.push_back(classNames.find(line.substr(pos+1))->second);
+			line.erase(line.begin() + pos, line.end());
+			this->training_challenges.push_back(line);
+		}
 	}
-	count = 0;
-	while(getline(fin, line) && count++ < evalC)
-	{
-		int pos = line.rfind(",");
-		eval_labels.push_back(classNames.find(line.substr(pos+1))->second);
-		line.erase(line.begin() + pos, line.end());
-		this->eval_challenges.push_back(line);		
-	}
-	count = 0;
-	while(getline(fin, line) && count++ < validC)
-	{
-		int pos = line.rfind(",");
-		validation_labels.push_back(classNames.find(line.substr(pos+1))->second);
-		line.erase(line.begin() + pos, line.end());
-		this->validation_challenges.push_back(line);		
-	}
+	
 	//close file
 	fin.close();
 }
+
 
 void CICIDS::getChallengeAt(uint32_t index)
 {
@@ -187,18 +173,69 @@ void CICIDS::getChallengeAt(uint32_t index)
 		temp = line.substr(pos1, pos2-pos1);
 		if(temp.compare("NaN") == 0)
 		{
-			this->currentChallenge.setDataAt(typeid(PrimitiveType<double>), i, std::nan(""));
+			this->currentChallenge.setDataAt(typeid(double), i, std::nan(""));
 		}
 		else if(temp.compare("Infinity") == 0)
 		{
-			this->currentChallenge.setDataAt(typeid(PrimitiveType<double>), i, std::numeric_limits<double>::infinity());
+			this->currentChallenge.setDataAt(typeid(double), i, std::numeric_limits<double>::infinity());
 		}
 		else
 		{
 			tmpd = std::stof(temp);	
-			this->currentChallenge.setDataAt(typeid(PrimitiveType<double>), i, tmpd);
+			this->currentChallenge.setDataAt(typeid(double), i, tmpd);
 		}
 		pos1 = pos2 + 1;
 		pos2 = line.find(",", pos1);
 	}
+}
+
+
+void CICIDS::printClassifStatsTable(const Environment& env, const TPG::TPGVertex* bestRoot) {
+	// Print table of classif of the best
+	TPG::TPGExecutionEngine tee(env, NULL);
+
+	// Change the MODE of mnist
+	this->reset(0, Learn::LearningMode::TESTING);
+
+	// Fill the table
+	uint64_t classifTable[15][15] = { 0 };
+	uint64_t nbPerClass[15] = { 0 };
+
+	const int TOTAL_NB_IMAGE = 2000;
+	for (int nbImage = 0; nbImage < TOTAL_NB_IMAGE; nbImage++) {
+		// Get answer
+		uint8_t currentLabel = this->currentLabel;
+		nbPerClass[currentLabel]++;
+		
+		// Execute
+		auto path = tee.executeFromRoot(*bestRoot);
+		const TPG::TPGAction* action = (const TPG::TPGAction*)path.at(path.size() - 1);
+		uint8_t actionID = (uint8_t)action->getActionID();
+		// Increment table
+		classifTable[currentLabel][actionID]++;
+		// Do action (to trigger image update)
+		this->doAction(action->getActionID());
+	}
+
+	// Print the table
+	printf("\t");
+	for (int i = 0; i < 15; i++) {
+		printf("%d\t", i);
+	}
+	printf("Nb\n");
+	for (int i = 0; i < 15; i++) {
+		printf("%d\t", i);
+		for (int j = 0; j < 15; j++) {
+			if (i == j) {
+				printf("\033[0;32m");
+			}
+			//printf("%2.1f\t", 100.0 * (double)classifTable[i][j] / (double)nbPerClass[i]);
+			printf("%2.1f\t",(double)classifTable[i][j]);
+			if (i == j) {
+				printf("\033[0m");
+			}
+		}
+		printf("%4" PRIu64 "\n", nbPerClass[i]);
+	}
+	std::cout << std::endl;
 }
