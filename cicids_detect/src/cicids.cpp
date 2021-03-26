@@ -29,12 +29,12 @@ void CICIDS::changeCurrentChallenge()
 	
 	currentLabel = (this->currentMode == Learn::LearningMode::TRAINING) ?
 		this->training_labels.at(chall_idx) : this->eval_labels.at(chall_idx);
-	static int first = 1 ;
+	/*static int first = 1 ;
 	if(first && currentLabel == 5)
 	{
 		first = 0;
 		std::cout << std::endl << chall_idx << std::endl << std::endl; 
-	}	
+	}*/	
 	getChallengeAt(chall_idx);
 	chall_idx = (this->currentMode == Learn::LearningMode::TRAINING) ?
 	chall_train_idx++%(training_labels.size()-2) : 
@@ -51,7 +51,7 @@ void CICIDS::changeCurrentChallenge()
 
 CICIDS::CICIDS() : LearningEnvironment(2),classificationTable(15, std::vector<uint64_t>(15, 0)), currentChallenge(78), currentLabel{ 0 }, nbChallenges(1600000), stimulusSize(78), nb_gen(0)
 {
-	fname = "/home/nsourbie/Documents/gegelati-apps/cicids_detect/dat/dataset.csv";
+	fname = "../dat/dataset.csv";
 	extractDatabase();
 	std::cout << "Nbr of training images = " << training_challenges.size() << std::endl;
 	std::cout << "Nbr of training labels = " << training_labels.size() << std::endl;
