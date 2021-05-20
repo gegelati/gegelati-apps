@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12.4)
+cmake_minimum_required(VERSION 3.17)
 
 # *******************************************
 # ************* CMake Content ***************
@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.12.4)
 # This CMake create a workspace containing the following projects
 # 
 # Programs
-#  - mnist
+#  - flappy-bird
 
 set (PROJECT_NAME sfml-flappy-bird)
 
@@ -29,20 +29,6 @@ if(NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
 	# Link with pthread
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
-	# Set to 1 to activate debug compilation (0 for release)
-	set(DEBUG 0)
-
-	if(${DEBUG})
-			MESSAGE("Generate Debug project")
-			set(CMAKE_BUILD_TYPE Debug)
-			set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Debug)
-			set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -pg -Wall")
-	else()
-			MESSAGE("Generate Release project")
-			set(CMAKE_BUILD_TYPE Release)
-			set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Release)
-			set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
-	endif()
 	#add libmath during non visual studio builds
 	set(CMAKE_EXTRA_LIB m)
 else()
@@ -97,6 +83,14 @@ file(GLOB_RECURSE
 )
 message("include dir : " ${GEGELATI_INCLUDE_DIRS})
 include_directories(${GEGELATI_INCLUDE_DIRS})
-add_executable(${PROJECT_NAME} ${flappy-bird_files})
+
+add_executable(${PROJECT_NAME} ${flappy-bird_files} src/render.cpp src/flappy_bird.cpp src/flappy_bird.h src/main.cpp src/render.h)
 target_link_libraries(${PROJECT_NAME} ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
-target_compile_definitions(${PROJECT_NAME} PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_definitions(${PROJECT_NAME} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}")
+
+add_executable(flappy-bird_playable src/FB_base.cpp)
+target_link_libraries(flappy-bird_playable  ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
+
+add_executable(flappy-bird2 src/main.cpp src/flappy_bird.cpp src/render.cpp)
+target_link_libraries(flappy-bird2  ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
+target_compile_definitions(flappy-bird2 PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")
