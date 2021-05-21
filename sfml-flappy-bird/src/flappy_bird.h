@@ -17,6 +17,11 @@
 
 class flappy_bird : public Learn::LearningEnvironment{
 private:
+    static const unsigned int width = 1000;
+    static const unsigned int height = 600;
+    static const unsigned int pixelLayer = 4;
+    static const unsigned int frameRate = 60;
+
     static const size_t REWARD_HISTORY_SIZE = 300;
 
     /// Reward history for score computation
@@ -28,11 +33,10 @@ private:
     /// Number of actions since the last reset
     uint64_t nbActionsExecuted = 0;
 
-    /// Copy of current angles and distances on X axis provided to the LearningAgent
-    /// for each pipe
-    /// angle & distance on X axis for the upper following upper pipe
-    /// angle & distance on X axis for the upper following lower pipe
-    sf::Image currentState;
+    /// Image
+    std::vector<sf::Uint8>* ptrVectImg;
+
+    Data::PrimitiveTypeArray<sf::Uint8> currentState;
 public:
     sf::RenderWindow window;
     struct Sounds {

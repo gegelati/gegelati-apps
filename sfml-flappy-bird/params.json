@@ -14,9 +14,9 @@
   "mutation": {
     "tpg": {
       "forceProgramBehaviorChangeOnMutation": true,
-      "maxInitOutgoingEdges": 3,
-      "maxOutgoingEdges": 5,
-      "nbActions": 10,
+      "maxInitOutgoingEdges": 2,
+      "maxOutgoingEdges": 10,
+      "nbActions": 2,
       "nbRoots": 500,
       "pEdgeAddition": 0.7,
       "pEdgeDeletion": 0.7,
@@ -32,7 +32,7 @@
       "pConstantMutation": 0.5,
       "pDelete": 0.5,
       "pMutate": 1.0,
-      "pSwap": 1.0,
+      "pSwap": 1.0
     }
   }
 }

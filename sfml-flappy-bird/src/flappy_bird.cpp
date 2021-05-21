@@ -25,9 +25,9 @@ bool collides(float x1, float y1, float w1, float h1, float x2, float y2, float 
 
 void flappy_bird::initSound() {
     // load sounds
-    sounds.chingBuffer.loadFromFile("../../dat/audio/score.wav");
-    sounds.hopBuffer.loadFromFile("../../dat/audio/flap.wav");
-    sounds.dishkBuffer.loadFromFile("../../dat/audio/crash.wav");
+    sounds.chingBuffer.loadFromFile(ROOT_DIR "/dat/audio/score.wav");
+    sounds.hopBuffer.loadFromFile(ROOT_DIR "/dat/audio/flap.wav");
+    sounds.dishkBuffer.loadFromFile(ROOT_DIR "/dat/audio/crash.wav");
     sounds.ching.setBuffer(sounds.chingBuffer);
     sounds.hop.setBuffer(sounds.hopBuffer);
     sounds.dishk.setBuffer(sounds.dishkBuffer);
@@ -35,25 +35,17 @@ void flappy_bird::initSound() {
 
 void flappy_bird::initTextures() {
     // load textures
-    textures.background.loadFromFile("../../dat/images/background.png");
-    textures.pipe.loadFromFile("../../dat/images/pipe.png");
-    textures.gameover.loadFromFile("../../dat/images/gameover.png");
-    textures.flappy[0].loadFromFile("../../dat/images/flappy1.png");
-    textures.flappy[1].loadFromFile("../../dat/images/flappy2.png");
-    textures.flappy[2].loadFromFile("../../dat/images/flappy3.png");
+    textures.background.loadFromFile(ROOT_DIR "/dat/images/background.png");
+    textures.pipe.loadFromFile(ROOT_DIR "/dat/images/pipe.png");
+    textures.gameover.loadFromFile(ROOT_DIR "/dat/images/gameover.png");
+    textures.flappy[0].loadFromFile(ROOT_DIR "/dat/images/flappy1.png");
+    textures.flappy[1].loadFromFile(ROOT_DIR "/dat/images/flappy2.png");
+    textures.flappy[2].loadFromFile(ROOT_DIR "/dat/images/flappy3.png");
 }
 
 std::vector<std::reference_wrapper<const Data::DataHandler>> flappy_bird::getDataSources() {
-
-    const sf::Uint8* ptrImg = currentState.getPixelsPtr();
-    Data::PrimitiveTypeArray<sf::Uint8> pixelTab(currentState.getSize().x * currentState.getSize().y * 4);
-    for (unsigned int i = 0; i < (currentState.getSize().x * currentState.getSize().y * 4); ++i) {
-        pixelTab.setDataAt(typeid(sf::Uint8), i, *ptrImg);
-        ptrImg++;
-    }
-    
     auto result = std::vector<std::reference_wrapper<const Data::DataHandler>>();
-    result.push_back(pixelTab);
+    result.push_back(currentState);
     return result;
 }
 
@@ -199,7 +191,7 @@ void flappy_bird::doAction(uint64_t actionID) {
         pipes.erase(startitr, enditr);
     }
 
-
+    ///currentState = window.capture();
     // collision detection
     if (game.gameState == started) {
         for (vector<Sprite>::iterator itr = pipes.begin(); itr != pipes.end(); itr++) {
@@ -243,40 +235,58 @@ double flappy_bird::getScore() const {
     return game.score;
 }
 
-flappy_bird::flappy_bird() : Learn::LearningEnvironment(2){
-        sf::RenderWindow window(sf::VideoMode(1000, 600), "Floppy Bird");
-        window.setFramerateLimit(90);
-        window.setKeyRepeatEnabled(false);
+flappy_bird::flappy_bird() : Learn::LearningEnvironment(2), currentState(width*height*pixelLayer){
+    sf::RenderWindow window(sf::VideoMode(width, height), "Floppy Bird");
+    window.setFramerateLimit(frameRate);
+    window.setKeyRepeatEnabled(false);
 
-        initTextures();
-        initSound();
+    initTextures();
+    initSound();
 
-        game.font.loadFromFile("../../dat/fonts/flappy.ttf");
-        game.background[0].setTexture(textures.background);
-        game.background[1].setTexture(textures.background);
-        game.background[2].setTexture(textures.background);
-        game.background[0].setScale(1.15625, 1.171875);
-        game.background[1].setScale(1.15625, 1.171875);
-        game.background[2].setScale(1.15625, 1.171875);
-        game.background[1].setPosition(333, 0);
-        game.background[2].setPosition(666, 0);
-        game.gameover.setTexture(textures.gameover);
-        game.gameover.setOrigin(192 / 2, 42 / 2);
-        game.gameover.setPosition(500, 125);
-        game.gameover.setScale(2, 2);
-        game.pressC.setString("Press C to continue");
-        game.pressC.setFont(game.font);
-        game.pressC.setFillColor(sf::Color::White);
-        game.pressC.setCharacterSize(50);
-        game.pressC.setOrigin(game.pressC.getLocalBounds().width / 2, 0);
-        game.pressC.setPosition(500, 250);
-        game.scoreText.setFont(game.font);
-        game.scoreText.setFillColor(sf::Color::White);
-        game.scoreText.setCharacterSize(75);
-        game.scoreText.move(30, 0);
-        game.highscoreText.setFont(game.font);
-        game.highscoreText.setFillColor(sf::Color::White);
-        game.highscoreText.move(30, 80);
+    game.font.loadFromFile(ROOT_DIR "/dat/fonts/flappy.ttf");
+    game.background[0].setTexture(textures.background);
+    game.background[1].setTexture(textures.background);
+    game.background[2].setTexture(textures.background);
+    game.background[0].setScale(1.15625, 1.171875);
+    game.background[1].setScale(1.15625, 1.171875);
+    game.background[2].setScale(1.15625, 1.171875);
+    game.background[1].setPosition(333, 0);
+    game.background[2].setPosition(666, 0);
+    game.gameover.setTexture(textures.gameover);
+    game.gameover.setOrigin(192 / 2, 42 / 2);
+    game.gameover.setPosition(500, 125);
+    game.gameover.setScale(2, 2);
+    game.pressC.setString("Press C to continue");
+    game.pressC.setFont(game.font);
+    game.pressC.setFillColor(sf::Color::White);
+    game.pressC.setCharacterSize(50);
+    game.pressC.setOrigin(game.pressC.getLocalBounds().width / 2, 0);
+    game.pressC.setPosition(500, 250);
+    game.scoreText.setFont(game.font);
+    game.scoreText.setFillColor(sf::Color::White);
+    game.scoreText.setCharacterSize(75);
+    game.scoreText.move(30, 0);
+    game.highscoreText.setFont(game.font);
+    game.highscoreText.setFillColor(sf::Color::White);
+    game.highscoreText.move(30, 80);
+
+    // start score
+    flappy.sprite.setTexture(textures.flappy[1]);
+    game.scoreText.setString(to_string(game.score));
+    game.highscoreText.setString("HI " + to_string(game.highscore));
+
+    window.display();
+
+
+    sf::Image img = window.capture();
+    ptrVectImg = new std::vector<sf::Uint8>;
+
+    const sf::Uint8* ptrImg = img.getPixelsPtr();
+    for (unsigned int i = 0; i < (img.getSize().x * img.getSize().y * 4); ++i) {
+        currentState.setDataAt(typeid(sf::Uint8), i, *ptrImg);
+        ptrImg++;
+    }
+
 }
 
 

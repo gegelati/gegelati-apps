@@ -90,6 +90,8 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}
 
 add_executable(flappy-bird_playable src/FB_base.cpp)
 target_link_libraries(flappy-bird_playable  ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
+target_compile_definitions(flappy-bird_playable PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")
+
 
 add_executable(flappy-bird2 src/main.cpp src/flappy_bird.cpp src/render.cpp)
 target_link_libraries(flappy-bird2  ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)

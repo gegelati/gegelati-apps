@@ -54,29 +54,31 @@ int main() {
     std::cout << "Number of threads: " << params.nbThreads << std::endl;
 
     // Instantiate and init the learning agent
-    Learn::ParallelLearningAgent la(flappyBirdLE, set, params);
+    Learn::LearningAgent la(flappyBirdLE, set, params);
+    auto test = la.getRNG();
+    TPG::TPGGraph& tpg = la.getTPGGraph();
     la.init();
-
+    flappyBirdLE.window.display();
     const TPG::TPGVertex* bestRoot = NULL;
 
     // Start a thread for controlling the loop
-#ifndef NO_CONSOLE_CONTROL
-    // Console
-    std::atomic<bool> exitProgram = true; // (set to false by other thread)
-    std::atomic<bool> toggleDisplay = true;
-    std::atomic<bool> doDisplay = false;
-    std::atomic<uint64_t> generation = 0;
-
-    //std::thread threadDisplay(Render::controllerLoop, std::ref(exitProgram), std::ref(toggleDisplay), std::ref(doDisplay),
-    //                          &bestRoot, std::ref(set), std::ref(flappyBirdLE), std::ref(params), std::ref(generation));
-
-    std::cout << "avant le logger" << std::endl;
-    while (exitProgram); // Wait for other thread to print key info.
-#else
-    std::atomic<bool> exitProgram = false; // (set to false by other thread)
-	std::atomic<bool> toggleDisplay = false;
-#endif
-    // Basic logger
+//#ifndef NO_CONSOLE_CONTROL
+//    // Console
+//    std::atomic<bool> exitProgram = true; // (set to false by other thread)
+//    std::atomic<bool> toggleDisplay = true;
+//    std::atomic<bool> doDisplay = false;
+//    std::atomic<uint64_t> generation = 0;
+//
+//    //std::thread threadDisplay(Render::controllerLoop, std::ref(exitProgram), std::ref(toggleDisplay), std::ref(doDisplay),
+//    //                          &bestRoot, std::ref(set), std::ref(flappyBirdLE), std::ref(params), std::ref(generation));
+//
+//    std::cout << "avant le logger" << std::endl;
+//    while (exitProgram); // Wait for other thread to print key info.
+//#else
+//    std::atomic<bool> exitProgram = false; // (set to false by other thread)
+//	std::atomic<bool> toggleDisplay = false;
+//#endif
+    // Basic logger1
     Log::LABasicLogger basicLogger(la);
 
     // Create an exporter for all graphs
@@ -88,7 +90,7 @@ int main() {
     Log::LAPolicyStatsLogger policyStatsLogger(la, stats);
 
     // Train for params.nbGenerations generations
-    for (int i = 0; i < params.nbGenerations && !exitProgram; i++) {
+    for (int i = 0; i < params.nbGenerations && flappyBirdLE.window.isOpen(); i++) {
         char buff[13];
         sprintf(buff, "out_%04d.dot", i);
         dotExporter.setNewFilePath(buff);
@@ -96,14 +98,14 @@ int main() {
 
         la.trainOneGeneration(i);
 
-#ifndef NO_CONSOLE_CONTROL
-        generation = i;
-        if (toggleDisplay && !exitProgram) {
-            bestRoot = la.getBestRoot().first;
-            doDisplay = true;
-            while (doDisplay && !exitProgram);
-        }
-#endif
+//#ifndef NO_CONSOLE_CONTROL
+//        generation = i;
+//        if (toggleDisplay && !exitProgram) {
+//            bestRoot = la.getBestRoot().first;
+//            doDisplay = true;
+//            while (doDisplay && !exitProgram);
+//        }
+//#endif
     }
 
     // Keep best policy
