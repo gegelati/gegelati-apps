@@ -37,9 +37,9 @@ int main() {
 	} sounds;
 
 	// load sounds
-	sounds.chingBuffer.loadFromFile("../../dat/audio/score.wav");
-	sounds.hopBuffer.loadFromFile("../../dat/audio/flap.wav");
-	sounds.dishkBuffer.loadFromFile("../../dat/audio/crash.wav");
+	sounds.chingBuffer.loadFromFile(ROOT_DIR "/dat/audio/score.wav");
+	sounds.hopBuffer.loadFromFile(ROOT_DIR "/dat/audio/flap.wav");
+	sounds.dishkBuffer.loadFromFile(ROOT_DIR "/dat/audio/crash.wav");
 	sounds.ching.setBuffer(sounds.chingBuffer);
 	sounds.hop.setBuffer(sounds.hopBuffer);
 	sounds.dishk.setBuffer(sounds.dishkBuffer);
@@ -53,12 +53,12 @@ int main() {
 	} textures;
 
 	// load textures
-	textures.background.loadFromFile("../../dat/images/background.png");
-	textures.pipe.loadFromFile("../../dat/images/pipe.png");
-	textures.gameover.loadFromFile("../../dat/images/gameover.png");
-	textures.flappy[0].loadFromFile("../../dat/images/flappy1.png");
-	textures.flappy[1].loadFromFile("../../dat/images/flappy2.png");
-	textures.flappy[2].loadFromFile("../../dat/images/flappy3.png");
+	textures.background.loadFromFile(ROOT_DIR "/dat/images/background.png");
+	textures.pipe.loadFromFile(ROOT_DIR "/dat/images/pipe.png");
+	textures.gameover.loadFromFile(ROOT_DIR "/dat/images/gameover.png");
+	textures.flappy[0].loadFromFile(ROOT_DIR "/dat/images/flappy1.png");
+	textures.flappy[1].loadFromFile(ROOT_DIR "/dat/images/flappy2.png");
+	textures.flappy[2].loadFromFile(ROOT_DIR "/dat/images/flappy3.png");
 
 	// flappy singleton struct.
 	// v = vertical speed
@@ -100,7 +100,7 @@ int main() {
 	} game;
 
 	// load font, set positions, scales etc
-	game.font.loadFromFile("../../dat/fonts/flappy.ttf");
+	game.font.loadFromFile(ROOT_DIR "/dat/fonts/flappy.ttf");
 	game.background[0].setTexture(textures.background);
 	game.background[1].setTexture(textures.background);
 	game.background[2].setTexture(textures.background);
