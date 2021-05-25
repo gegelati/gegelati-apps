@@ -14,6 +14,8 @@
 #include "mutator/rng.h"
 #include "learn/adversarialLearningEnvironment.h"
 #include "render.h"
+#include "Flappy.h"
+#include "Game.h"
 
 class flappy_bird : public Learn::LearningEnvironment{
 private:
@@ -21,6 +23,13 @@ private:
     static const unsigned int height = 600;
     static const unsigned int pixelLayer = 1;
     static const unsigned int frameRate = 60;
+
+    static const unsigned int pipeGap = 150;
+    constexpr static const float pipeScaleX = 2.0;
+    constexpr static const float pipeScaleY = 2.0;
+
+    static const int initFlappyX = 250;
+    static const int initFlappyY = 300;
 
     static const size_t REWARD_HISTORY_SIZE = 300;
 
@@ -42,45 +51,51 @@ private:
     bool collides(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
 
     void updateCurrentState();
-public:
-    sf::RenderWindow window;
-    struct Sounds {
-        sf::SoundBuffer chingBuffer;
-        sf::SoundBuffer hopBuffer;
-        sf::SoundBuffer dishkBuffer;
-        sf::Sound ching;
-        sf::Sound hop;
-        sf::Sound dishk;
-    } sounds;
+//    struct Flappy {
+//        double v = 0;
+//        int frame = 0;
+//        sf::Sprite sprite;
+//    } flappy;
+    Flappy flappy;
+
+//    struct Sounds {
+//        sf::SoundBuffer chingBuffer;
+//        sf::SoundBuffer hopBuffer;
+//        sf::SoundBuffer dishkBuffer;
+//        sf::Sound ching;
+//        sf::Sound hop;
+//        sf::Sound dishk;
+//    } sounds;
 
 // all textures remain in here. Flappy has 3 textures, which will repeadetly draw, creating the illusion of flying.
-    struct Textures {
-        sf::Texture flappy[3];
-        sf::Texture pipe;
-        sf::Texture background;
-        sf::Texture gameover;
-    } textures;
+//    struct Textures {
+//        sf::Texture flappy[3];
+//        sf::Texture pipe;
+//        sf::Texture background;
+//        sf::Texture gameover;
+//    } textures;
 
-    struct Flappy {
-        double v = 0;
-        int frame = 0;
-        sf::Sprite sprite;
-    } flappy;
 
-    enum GameState { waiting, started, gameover };
+//    enum GameState { waiting, started, gameover };
+//
+//    struct Game {
+//        int score = 0;
+//        int highscore = 0;
+//        int frames = 0;
+//        GameState gameState = waiting;
+//        sf::Sprite background[3];
+//        sf::Sprite gameover;
+//        sf::Text pressC;
+//        sf::Text scoreText;
+//        sf::Text highscoreText;
+//        sf::Font font;
+//    } game;
 
-    struct Game {
-        int score = 0;
-        int highscore = 0;
-        int frames = 0;
-        GameState gameState = waiting;
-        sf::Sprite background[3];
-        sf::Sprite gameover;
-        sf::Text pressC;
-        sf::Text scoreText;
-        sf::Text highscoreText;
-        sf::Font font;
-    } game;
+    Game game;
+
+public:
+
+    sf::RenderWindow window;
 
     std::vector<sf::Sprite> pipes;
 
