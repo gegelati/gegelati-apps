@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.12.4)
 
 # *******************************************
 # ************* CMake Content ***************
@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.17)
 # Programs
 #  - flappy-bird
 
-set (PROJECT_NAME sfml-flappy-bird)
+set (PROJECT_NAME flappy-bird)
 
 project(${PROJECT_NAME})
 
@@ -84,15 +84,15 @@ file(GLOB_RECURSE
 message("include dir : " ${GEGELATI_INCLUDE_DIRS})
 include_directories(${GEGELATI_INCLUDE_DIRS})
 
-add_executable(${PROJECT_NAME} ${flappy-bird_files} src/render.cpp src/flappy_bird.cpp src/flappy_bird.h src/main.cpp src/render.h)
+add_executable(${PROJECT_NAME} ${flappy-bird_files})
 target_link_libraries(${PROJECT_NAME} ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
 target_compile_definitions(${PROJECT_NAME} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}")
 
-add_executable(flappy-bird_playable src/FB_base.cpp src/Sound.cpp)
+add_executable(flappy-bird_playable src/FB_base.cpp)
 target_link_libraries(flappy-bird_playable  ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
 target_compile_definitions(flappy-bird_playable PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")
 
 
-add_executable(flappy-bird2 src/main.cpp src/flappy_bird.cpp src/render.cpp src/Game.cpp src/Flappy.cpp src/Texture.cpp src/Sound.cpp)
-target_link_libraries(flappy-bird2  ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
-target_compile_definitions(flappy-bird2 PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")
+add_executable(flappy-bird_TPG src/main.cpp src/flappy_bird.cpp src/render.cpp src/Game.cpp src/Flappy.cpp src/Texture.cpp src/Sound.cpp ./params.json)
+target_link_libraries(flappy-bird_TPG  ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
+target_compile_definitions(flappy-bird_TPG PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")

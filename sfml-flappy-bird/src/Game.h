@@ -36,9 +36,9 @@ public:
     GameState gameState;
     sf::Text scoreText;
     sf::Text highscoreText;
-    int highscore;
     int frames;
-    int score;
+    int highscore;
+//    int score;
 
 private:
     static const sf::String pathImage;

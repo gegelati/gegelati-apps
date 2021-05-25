@@ -19,6 +19,8 @@
 
 class flappy_bird : public Learn::LearningEnvironment{
 private:
+    static const unsigned int multiplierRewardPipe = 50;
+
     static const unsigned int width = 1000;
     static const unsigned int height = 600;
     static const unsigned int pixelLayer = 1;
@@ -28,7 +30,7 @@ private:
     constexpr static const float pipeScaleX = 2.0;
     constexpr static const float pipeScaleY = 2.0;
 
-    static const int initFlappyX = 250;
+    static const int FlappyX = 250;
     static const int initFlappyY = 300;
 
     static const size_t REWARD_HISTORY_SIZE = 300;
@@ -37,7 +39,7 @@ private:
     double rewardHistory[REWARD_HISTORY_SIZE];
 
     /// Total reward accumulated since the last reset
-    double totalReward = 0.0;
+    int totalReward = 0;
 
     /// Number of actions since the last reset
     uint64_t nbActionsExecuted = 0;

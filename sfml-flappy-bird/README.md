@@ -6,13 +6,18 @@ Flappy bird clone in C++ using the graphics library SFML
 
 ## How to install on Linux
 
-First make sure that you have SFML 2+ installed. Then execute the following commands:
+First make sure that you have SFML 2+ installed. Then in the root folder of your git directory execute the following commands:
 
-- `g++ main.cpp -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio`
-- `./a.out`
+- `mkdir build`
+- `cmake -S . -B build/`
+- `cmake --build . --target <target>`
+- `./<target>`
 
-or simply use cmake and build the target 
-S
+There is 2 possible targets :
+- `flappy-bird_TPG` : Binary used to train a TPG to play flappy-bird.
+- `flappy-bird_playable` : flappy is played by the user.
+
+
 ## How to install on Other Systems
 
 First get rid of your Windows or whatever and obtain a modern GNU+Linux system image from [here](https://manjaro.org/). Then go to "How to install on Linux". If you insist to keep your non-Linux system, then watch the following tutorials:

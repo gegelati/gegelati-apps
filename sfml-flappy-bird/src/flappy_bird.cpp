@@ -56,23 +56,17 @@ void flappy_bird::reset(size_t seed, Learn::LearningMode mode) {
 
     // Reset the RNG
     rng.setSeed(hash_seed);
-    cout << endl << "--- Reset previous score : " << game.score << endl;
+    cout << endl << "--- Reset previous score : " << totalReward << endl;
 
     this->nbActionsExecuted = 0;
     this->totalReward = 0.0;
 
-    // update score
-//    game.score = 0;
-//    game.frames = 0;
-//    game.scoreText.setString(to_string(game.score));
-//    game.gameState = Game::GameState::started;
     game.reset();
-
-//    flappy.sprite.setPosition(250, 300);
-//    flappy.v = 0;
     flappy.reset();
     pipes.clear();
+    game.scoreText.setString(to_string(totalReward));
 
+    window.display();
 }
 
 void flappy_bird::doAction(uint64_t actionID) {
@@ -93,7 +87,7 @@ void flappy_bird::doAction(uint64_t actionID) {
     }
     
     // update score
-    game.scoreText.setString(to_string(game.score));
+    game.scoreText.setString(to_string(totalReward));
     game.highscoreText.setString("HI " + to_string(game.highscore));
 
     // update flappy
@@ -125,7 +119,7 @@ void flappy_bird::doAction(uint64_t actionID) {
     // if out of screen, game over
     if (game.gameState == Game::started) {
         if (fy < 0) {
-            flappy.sprite.setPosition(250, 0);
+            flappy.sprite.setPosition(FlappyX, 0);
             flappy.v = 0;
         } else if (fy > 600) {
             flappy.v = 0;
@@ -135,16 +129,20 @@ void flappy_bird::doAction(uint64_t actionID) {
     }
 
     // count the score
-    for (vector<Sprite>::iterator itr = pipes.begin(); itr != pipes.end(); itr++) {
-        if (game.gameState == Game::started && (*itr).getPosition().x == 250) {
-            game.score++;
+/// total_reward = distance + 5 * pipes = game.score+5*game.pipe
+    if (game.gameState == Game::started) {
+        totalReward++;
+        for (vector<Sprite>::iterator itr = pipes.begin(); itr != pipes.end(); itr++) {
+            if ((*itr).getPosition().x == 250) {
+                totalReward += multiplierRewardPipe;
 //				game.getSound().playChing();
 
-            if (game.score > game.highscore) {
-                game.highscore = game.score;
-            }
+                if (totalReward > game.highscore) {
+                    game.highscore = totalReward;
+                }
 
-            break;
+                break;
+            }
         }
     }
 
@@ -195,7 +193,7 @@ void flappy_bird::doAction(uint64_t actionID) {
         for (vector<Sprite>::iterator itr = pipes.begin(); itr != pipes.end(); itr++) {
 
             float px, py, pw, ph;
-// l'origine est en haut à gauche avec x abscisse et y l'ordonée
+// The origin is on the top left corner with x horizontal et y vertical
             if ((*itr).getScale().y > 0) {
                 px = (*itr).getPosition().x;
                 py = (*itr).getPosition().y;
@@ -260,27 +258,16 @@ bool flappy_bird::isTerminal() const {
 }
 
 double flappy_bird::getScore() const {
-    return game.frames;
+    return totalReward;
 }
 
 flappy_bird::flappy_bird() :game(), Learn::LearningEnvironment(2), currentState(width*height*pixelLayer),
-window(sf::VideoMode(width, height), "Floppy Bird"), rng(), flappy(initFlappyX, initFlappyY){
+window(sf::VideoMode(width, height), "Floppy Bird"), rng(), flappy(FlappyX, initFlappyY){
+    flappy.sprite.setTexture(game.getTextures().getFlappy(1));
+
     window.setFramerateLimit(frameRate);
     window.setKeyRepeatEnabled(false);
 
-//    initTextures();
-//    initSound();
-
-    // initial position, scale
-//    flappy.sprite.setPosition(250, 300);
-//    flappy.sprite.setScale(2, 2);
-
-
-
-    // start score
-//    game.scoreText.setString(to_string(game.frames));
-//    game.highscoreText.setString("HI " + to_string(game.highscore));
-    flappy.sprite.setTexture(game.getTextures().getFlappy(1));
 
     // clear, draw
     window.clear();
@@ -294,7 +281,6 @@ window(sf::VideoMode(width, height), "Floppy Bird"), rng(), flappy(initFlappyX, 
     window.draw(game.highscoreText);
 
     // display
-
     window.display();
 
     updateCurrentState();

@@ -14,7 +14,6 @@ Game::Game(): textures(pathImage), sound(pathSound){
 
     highscore = 0;
     frames = 0;
-    score = 0;
     gameState = GameState::waiting;
 
 
@@ -76,8 +75,6 @@ const sf::Text &Game::getPressC() const {
 
 void Game::reset() {
     frames = 0;
-    score = 0;
-    scoreText.setString(to_string(score));
-    gameState = Game::GameState::started;
+    gameState = Game::GameState::waiting;
 
 }
