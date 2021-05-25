@@ -19,7 +19,7 @@ class flappy_bird : public Learn::LearningEnvironment{
 private:
     static const unsigned int width = 1000;
     static const unsigned int height = 600;
-    static const unsigned int pixelLayer = 4;
+    static const unsigned int pixelLayer = 1;
     static const unsigned int frameRate = 60;
 
     static const size_t REWARD_HISTORY_SIZE = 300;
@@ -34,9 +34,14 @@ private:
     uint64_t nbActionsExecuted = 0;
 
     /// Image
-    std::vector<sf::Uint8>* ptrVectImg;
-
     Data::PrimitiveTypeArray<sf::Uint8> currentState;
+
+    /// Randomness control
+    Mutator::RNG rng;
+
+    bool collides(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
+
+    void updateCurrentState();
 public:
     sf::RenderWindow window;
     struct Sounds {
@@ -77,11 +82,7 @@ public:
         sf::Font font;
     } game;
 
-    /// Randomness control
-    Mutator::RNG rng;
-
     std::vector<sf::Sprite> pipes;
-
 
     void initSound();
 

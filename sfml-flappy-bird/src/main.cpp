@@ -6,6 +6,7 @@
 #include <inttypes.h>
 #include "flappy_bird.h"
 
+
 int main() {
 
     std::cout << "Start flappy Bird application." << std::endl;
@@ -55,10 +56,8 @@ int main() {
 
     // Instantiate and init the learning agent
     Learn::LearningAgent la(flappyBirdLE, set, params);
-    auto test = la.getRNG();
-    TPG::TPGGraph& tpg = la.getTPGGraph();
     la.init();
-    flappyBirdLE.window.display();
+
     const TPG::TPGVertex* bestRoot = NULL;
 
     // Start a thread for controlling the loop
@@ -90,7 +89,7 @@ int main() {
     Log::LAPolicyStatsLogger policyStatsLogger(la, stats);
 
     // Train for params.nbGenerations generations
-    for (int i = 0; i < params.nbGenerations && flappyBirdLE.window.isOpen(); i++) {
+    for (int i = 0; i < params.nbGenerations; i++) {
         char buff[13];
         sprintf(buff, "out_%04d.dot", i);
         dotExporter.setNewFilePath(buff);
@@ -113,25 +112,25 @@ int main() {
     dotExporter.setNewFilePath("out_best.dot");
     dotExporter.print();
 
-    TPG::PolicyStats ps;
-    ps.setEnvironment(la.getTPGGraph().getEnvironment());
-    ps.analyzePolicy(la.getBestRoot().first);
-    std::ofstream bestStats;
-    bestStats.open("out_best_stats.md");
-    bestStats << ps;
-    bestStats.close();
-    stats.close();
+//    TPG::PolicyStats ps;
+//    ps.setEnvironment(la.getTPGGraph().getEnvironment());
+//    ps.analyzePolicy(la.getBestRoot().first);
+//    std::ofstream bestStats;
+//    bestStats.open("out_best_stats.md");
+//    bestStats << ps;
+//    bestStats.close();
+//    stats.close();
 
     // cleanup
     for (unsigned int i = 0; i < set.getNbInstructions(); i++) {
         delete (&set.getInstruction(i));
     }
 
-#ifndef NO_CONSOLE_CONTROL
-    // Exit the thread
-    std::cout << "Exiting program, press a key then [enter] to exit if nothing happens.";
-    //threadDisplay.join();
-#endif
+//#ifndef NO_CONSOLE_CONTROL
+//    // Exit the thread
+//    std::cout << "Exiting program, press a key then [enter] to exit if nothing happens.";
+//    //threadDisplay.join();
+//#endif
 
     return 0;
 }

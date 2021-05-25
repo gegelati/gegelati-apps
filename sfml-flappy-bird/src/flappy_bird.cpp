@@ -16,7 +16,7 @@ using namespace sf;
 using namespace std;
 
 // rect rect collision detection helper function
-bool collides(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2) {
+bool flappy_bird::collides(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2) {
     if (x1 + w1 >= x2 && x1 <= x2 + w2 && y1 + h1 >= y2 && y1 <= y2 + h2) {
         return true;
     }
@@ -55,30 +55,27 @@ void flappy_bird::reset(size_t seed, Learn::LearningMode mode) {
 
     // Reset the RNG
     rng.setSeed(hash_seed);
-
-    // initial position, scale
-    flappy.sprite.setPosition(250, 300);
-    flappy.sprite.setScale(2, 2);
+    cout << endl << "--- Reset previous score : " << game.score << endl;
 
     this->nbActionsExecuted = 0;
     this->totalReward = 0.0;
-    game.gameState = waiting;
 
     // update score
-    flappy.sprite.setTexture(textures.flappy[1]);
     game.scoreText.setString(to_string(game.score));
-    game.highscoreText.setString("HI " + to_string(game.highscore));
+    game.gameState = started;
+    flappy.sprite.setPosition(250, 300);
+    flappy.v = 0;
+    game.score = 0;
+    game.frames = 0;
+    pipes.clear();
 
-    // update flappy
-    float fx = flappy.sprite.getPosition().x;
-    float fy = flappy.sprite.getPosition().y;
-    float fw = 34 * flappy.sprite.getScale().x;
-    float fh = 24 * flappy.sprite.getScale().y;
 }
 
 void flappy_bird::doAction(uint64_t actionID) {
     LearningEnvironment::doAction(actionID);
+    nbActionsExecuted++;
 
+    cout << actionID ;
     if(actionID == 1){
         if (game.gameState == waiting) {
             game.gameState = started;
@@ -92,7 +89,6 @@ void flappy_bird::doAction(uint64_t actionID) {
     }
     
     // update score
-    flappy.sprite.setTexture(textures.flappy[1]);
     game.scoreText.setString(to_string(game.score));
     game.highscoreText.setString("HI " + to_string(game.highscore));
 
@@ -125,6 +121,8 @@ void flappy_bird::doAction(uint64_t actionID) {
     // if out of screen, game over
     if (game.gameState == started) {
         if (fy < 0) {
+//            flappy.v = 0;
+//            game.gameState = gameover;
             flappy.sprite.setPosition(250, 0);
             flappy.v = 0;
         } else if (fy > 600) {
@@ -191,7 +189,6 @@ void flappy_bird::doAction(uint64_t actionID) {
         pipes.erase(startitr, enditr);
     }
 
-    ///currentState = window.capture();
     // collision detection
     if (game.gameState == started) {
         for (vector<Sprite>::iterator itr = pipes.begin(); itr != pipes.end(); itr++) {
@@ -217,6 +214,36 @@ void flappy_bird::doAction(uint64_t actionID) {
         }
     }
 
+    // clear, draw, display
+    window.clear();
+    window.draw(game.background[0]);
+    window.draw(game.background[1]);
+    window.draw(game.background[2]);
+    window.draw(flappy.sprite);
+
+    // draw pipes
+    for (vector<Sprite>::iterator itr = pipes.begin(); itr != pipes.end(); itr++) {
+        window.draw(*itr);
+    }
+
+    // draw scores
+    window.draw(game.scoreText);
+    window.draw(game.highscoreText);
+
+    // gameover. press c to continue
+    if (game.gameState == gameover) {
+        window.draw(game.gameover);
+
+        if (game.frames % 60 < 30) {
+            window.draw(game.pressC);
+        }
+    }
+    window.display();
+
+    updateCurrentState();
+
+    // dont forget to update total frames
+    game.frames++;
 }
 
 bool flappy_bird::isCopyable() const {
@@ -232,16 +259,19 @@ bool flappy_bird::isTerminal() const {
 }
 
 double flappy_bird::getScore() const {
-    return game.score;
+    return game.frames;
 }
 
-flappy_bird::flappy_bird() : Learn::LearningEnvironment(2), currentState(width*height*pixelLayer){
-    sf::RenderWindow window(sf::VideoMode(width, height), "Floppy Bird");
+flappy_bird::flappy_bird() : Learn::LearningEnvironment(2), currentState(width*height*pixelLayer), window(sf::VideoMode(width, height), "Floppy Bird"), rng(){
     window.setFramerateLimit(frameRate);
     window.setKeyRepeatEnabled(false);
 
     initTextures();
     initSound();
+
+    // initial position, scale
+    flappy.sprite.setPosition(250, 300);
+    flappy.sprite.setScale(2, 2);
 
     game.font.loadFromFile(ROOT_DIR "/dat/fonts/flappy.ttf");
     game.background[0].setTexture(textures.background);
@@ -274,19 +304,38 @@ flappy_bird::flappy_bird() : Learn::LearningEnvironment(2), currentState(width*h
     flappy.sprite.setTexture(textures.flappy[1]);
     game.scoreText.setString(to_string(game.score));
     game.highscoreText.setString("HI " + to_string(game.highscore));
+    flappy.sprite.setPosition(250, 300);
+
+    // clear, draw, display
+    window.clear();
+    window.draw(game.background[0]);
+    window.draw(game.background[1]);
+    window.draw(game.background[2]);
+    window.draw(flappy.sprite);
+
+
+    // draw scores
+    window.draw(game.scoreText);
+    window.draw(game.highscoreText);
 
     window.display();
 
 
+    updateCurrentState();
+
+}
+
+void flappy_bird::updateCurrentState() {
+    int luminance;
     sf::Image img = window.capture();
-    ptrVectImg = new std::vector<sf::Uint8>;
 
     const sf::Uint8* ptrImg = img.getPixelsPtr();
-    for (unsigned int i = 0; i < (img.getSize().x * img.getSize().y * 4); ++i) {
-        currentState.setDataAt(typeid(sf::Uint8), i, *ptrImg);
-        ptrImg++;
+    for (unsigned int i = 0; i < (img.getSize().x * img.getSize().y * 4); i+=4) {
+        /// Y = 0.299*R + 0.587*G + 0.114*B
+        luminance = 0.299*(*ptrImg) + 0.587*(*(ptrImg+1)) + 0.114*(*(ptrImg+2));
+        currentState.setDataAt(typeid(sf::Uint8), (int)(i/4), luminance);
+        ptrImg+=4;
     }
-
 }
 
 
