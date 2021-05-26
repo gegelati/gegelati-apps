@@ -7,26 +7,29 @@
 
 #include <SFML/Graphics.hpp>
 
-class Texture {
-private:
-    sf::Texture flappy[3];
-    sf::Texture pipe;
-    sf::Texture background;
-    sf::Texture gameover;
+namespace fb {
+    class Texture {
+    private:
+        sf::Texture flappy[3];
+        sf::Texture pipe;
+        sf::Texture background;
+        sf::Texture gameover;
 
-public:
-    const sf::Texture &getFlappy(int i) const;
+    public:
+        const sf::Texture &getFlappy(int i) const;
 
-    const sf::Texture* getFlappy() const;
+        const sf::Texture *getFlappy() const;
 
-    const sf::Texture &getPipe() const;
+        const sf::Texture &getPipe() const;
 
-    const sf::Texture &getBackground() const;
+        const sf::Texture &getBackground() const;
 
-    const sf::Texture &getGameover() const;
+        const sf::Texture &getGameover() const;
 
-    Texture(sf::String path);
-};
+        Texture(sf::String path);
 
+        Texture(const Texture&);
+    };
+}
 
 #endif //SFML_FLAPPY_BIRD_TEXTURE_H

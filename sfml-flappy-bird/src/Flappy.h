@@ -7,20 +7,24 @@
 
 #include <SFML/Graphics.hpp>
 
-class Flappy {
-private:
-    constexpr static const float flappyScale = 2.0;
-    int initX, initY;
+namespace fb {
+    class Flappy {
+    private:
+        constexpr static const float flappyScale = 2.0;
+        int initX, initY;
 
-public:
-    double v;
-    int frame;
-    sf::Sprite sprite;
+    public:
+        double v;
+        int frame;
+        sf::Sprite sprite;
 
-    Flappy(int x, int y);
+        Flappy(int x, int y);
 
-    void reset();
-};
+        Flappy(const Flappy& );
+
+        void reset();
+    };
+}
 
 
 #endif //SFML_FLAPPY_BIRD_FLAPPY_H

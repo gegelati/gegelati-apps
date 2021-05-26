@@ -4,7 +4,8 @@
 
 #include "Texture.h"
 
-Texture::Texture(sf::String path) {
+
+fb::Texture::Texture(sf::String path) {
     this->background.loadFromFile(path+"/background.png");
     this->pipe.loadFromFile(path+"/pipe.png");
     this->gameover.loadFromFile(path+"/gameover.png");
@@ -13,23 +14,33 @@ Texture::Texture(sf::String path) {
     this->flappy[2].loadFromFile(path+"/flappy3.png");
 }
 
-const sf::Texture &Texture::getFlappy(int i) const {
+const sf::Texture &fb::Texture::getFlappy(int i) const {
     return flappy[i];
 }
 
-const sf::Texture *Texture::getFlappy() const {
+const sf::Texture *fb::Texture::getFlappy() const {
     return flappy;
 }
 
-const sf::Texture &Texture::getPipe() const {
+const sf::Texture &fb::Texture::getPipe() const {
     return pipe;
 }
 
-const sf::Texture &Texture::getBackground() const {
+const sf::Texture &fb::Texture::getBackground() const {
     return background;
 }
 
-const sf::Texture &Texture::getGameover() const {
+const sf::Texture &fb::Texture::getGameover() const {
     return gameover;
+}
+
+fb::Texture::Texture(const fb::Texture &t) {
+    this->flappy[0] = t.flappy[0];
+    this->flappy[1] = t.flappy[3];
+    this->flappy[2] = t.flappy[2];
+
+    this->gameover = t.gameover;
+    this->background = t.background;
+    this->pipe = t.pipe;
 }
 

@@ -4,21 +4,19 @@
 
 #include "Game.h"
 
-using namespace std;
+const sf::String fb::Game::pathImage = ROOT_DIR "/dat/images";
+const sf::String fb::Game::pathSound = ROOT_DIR "/dat/audio";
+const sf::String fb::Game::FontFile = ROOT_DIR "/dat/fonts";
 
-const sf::String Game::pathImage = ROOT_DIR "/dat/images";
-const sf::String Game::pathSound = ROOT_DIR "/dat/audio";
-const sf::String Game::FontFile = ROOT_DIR "/dat/fonts";
-
-Game::Game(): textures(pathImage), sound(pathSound){
+fb::Game::Game(): textures(pathImage), sound(pathSound){
 
     highscore = 0;
     frames = 0;
-    gameState = GameState::waiting;
+    gameState = GameState::started;
 
 
-    scoreText.setString(to_string(frames));
-    highscoreText.setString("HI " + to_string(highscore));
+    scoreText.setString(std::to_string(frames));
+    highscoreText.setString("HI " + std::to_string(highscore));
 
     font.loadFromFile(FontFile+"/flappy.ttf");
     background[0].setTexture(textures.getBackground());
@@ -53,28 +51,36 @@ Game::Game(): textures(pathImage), sound(pathSound){
 
 }
 
-const Texture &Game::getTextures() const {
+const fb::Texture &fb::Game::getTextures() const {
     return textures;
 }
 
-Sound Game::getSound() const{
+fb::Sound fb::Game::getSound() const{
     return sound;
 }
 
-const sf::Sprite *Game::getBackground() const {
+const sf::Sprite *fb::Game::getBackground() const {
     return background;
 }
 
-const sf::Sprite &Game::getGameoverSprite() const {
+const sf::Sprite &fb::Game::getGameoverSprite() const {
     return gameoverSprite;
 }
 
-const sf::Text &Game::getPressC() const {
+const sf::Text &fb::Game::getPressC() const {
     return pressC;
 }
 
-void Game::reset() {
+void fb::Game::reset() {
     frames = 0;
-    gameState = Game::GameState::waiting;
+    gameState = Game::GameState::started;
 
+}
+
+fb::Game::Game(const Game &g):gameState(g.gameState), scoreText(g.scoreText), highscoreText(g.highscoreText),
+frames(g.frames), highscore(g.highscore), textures(g.textures), sound(g.sound), gameoverSprite(g.gameoverSprite),
+pressC(g.pressC), font(g.font) {
+    this->background[0] = g.background[0];
+    this->background[1] = g.background[1];
+    this->background[2] = g.background[2];
 }

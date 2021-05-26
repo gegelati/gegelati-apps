@@ -3,7 +3,8 @@
 //
 #include "Sound.h"
 
-Sound::Sound(sf::String path) {
+
+fb::Sound::Sound(sf::String path) {
     chingBuffer.loadFromFile(path+"/score.wav");
     hopBuffer.loadFromFile(path+"/flap.wav");
     dishkBuffer.loadFromFile(path+"/crash.wav");
@@ -12,14 +13,14 @@ Sound::Sound(sf::String path) {
     dishk.setBuffer(dishkBuffer);
 }
 
-void Sound::playChing() {
+void fb::Sound::playChing() {
     ching.play();
 }
 
-void Sound::playHop()  {
+void fb::Sound::playHop()  {
     hop.play();
 }
 
-void Sound::playDishk()  {
+void fb::Sound::playDishk()  {
     dishk.play();
 }
