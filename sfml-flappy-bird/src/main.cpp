@@ -1,10 +1,10 @@
 #include <iostream>
-#include <numeric>
 #include <thread>
 #include <atomic>
-#include <chrono>
-#include <inttypes.h>
-#include "flappy_bird.h"
+//#include <chrono>
+#include <cinttypes>
+#include "Flappy_bird.h"
+#include "Render.h"
 
 
 int main() {
@@ -50,33 +50,34 @@ int main() {
 #endif
 
     // Instantiate the LearningEnvironment
-    flappy_bird flappyBirdLE = flappy_bird();
+    Flappy_bird flappyBirdLE = Flappy_bird();
 
     std::cout << "Number of threads: " << params.nbThreads << std::endl;
 
     // Instantiate and init the learning agent
-    Learn::LearningAgent la(flappyBirdLE, set, params);
+    Learn::ParallelLearningAgent la(flappyBirdLE, set, params);
+//    Learn::LearningAgent la(flappyBirdLE, set, params);
     la.init();
 
-    const TPG::TPGVertex* bestRoot = NULL;
+    const TPG::TPGVertex* bestRoot = nullptr;
 
     // Start a thread for controlling the loop
-//#ifndef NO_CONSOLE_CONTROL
-//    // Console
-//    std::atomic<bool> exitProgram = true; // (set to false by other thread)
-//    std::atomic<bool> toggleDisplay = true;
-//    std::atomic<bool> doDisplay = false;
-//    std::atomic<uint64_t> generation = 0;
-//
-//    //std::thread threadDisplay(Render::controllerLoop, std::ref(exitProgram), std::ref(toggleDisplay), std::ref(doDisplay),
-//    //                          &bestRoot, std::ref(set), std::ref(flappyBirdLE), std::ref(params), std::ref(generation));
-//
-//    std::cout << "avant le logger" << std::endl;
-//    while (exitProgram); // Wait for other thread to print key info.
-//#else
-//    std::atomic<bool> exitProgram = false; // (set to false by other thread)
-//	std::atomic<bool> toggleDisplay = false;
-//#endif
+#ifndef NO_CONSOLE_CONTROL
+    // Console
+    std::atomic<bool> exitProgram = true; // (set to false by other thread)
+    std::atomic<bool> toggleDisplay = true;
+    std::atomic<bool> doDisplay = false;
+    std::atomic<uint64_t> generation = 0;
+
+    std::thread threadDisplay(Render::controllerLoop, std::ref(exitProgram), std::ref(toggleDisplay), std::ref(doDisplay),
+                              &bestRoot, std::ref(set), std::ref(flappyBirdLE), std::ref(params), std::ref(generation));
+
+    //std::cout << "avant le logger" << std::endl;
+    while (exitProgram); // Wait for other thread to print key info.
+#else
+    std::atomic<bool> exitProgram = false; // (set to false by other thread)
+	std::atomic<bool> toggleDisplay = false;
+#endif
     // Basic logger1
     Log::LABasicLogger basicLogger(la);
 
@@ -90,6 +91,7 @@ int main() {
 
     // Train for params.nbGenerations generations
     for (int i = 0; i < params.nbGenerations; i++) {
+        std::cout<<"Generation n°"<<i<<std::endl;
         char buff[13];
         sprintf(buff, "out_%04d.dot", i);
         dotExporter.setNewFilePath(buff);
@@ -97,14 +99,14 @@ int main() {
 
         la.trainOneGeneration(i);
 
-//#ifndef NO_CONSOLE_CONTROL
-//        generation = i;
-//        if (toggleDisplay && !exitProgram) {
-//            bestRoot = la.getBestRoot().first;
-//            doDisplay = true;
-//            while (doDisplay && !exitProgram);
-//        }
-//#endif
+#ifndef NO_CONSOLE_CONTROL
+        generation = i;
+        if (toggleDisplay && !exitProgram) {
+            bestRoot = la.getBestRoot().first;
+            doDisplay = true;
+            while (doDisplay && !exitProgram);
+        }
+#endif
     }
 
     // Keep best policy
@@ -126,11 +128,11 @@ int main() {
         delete (&set.getInstruction(i));
     }
 
-//#ifndef NO_CONSOLE_CONTROL
-//    // Exit the thread
-//    std::cout << "Exiting program, press a key then [enter] to exit if nothing happens.";
-//    //threadDisplay.join();
-//#endif
+#ifndef NO_CONSOLE_CONTROL
+    // Exit the thread
+    std::cout << "Exiting program, press a key then [enter] to exit if nothing happens.";
+    threadDisplay.join();
+#endif
 
     return 0;
 }

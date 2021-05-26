@@ -1,11 +1,11 @@
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <iostream>
 #include <stdlib.h>
 #include <time.h>
 #include <vector>
 
-#include "render.h"
 
 using namespace sf;
 using namespace std;
@@ -322,3 +322,4 @@ int main() {
 
 	return 0;
 }
+
