@@ -89,7 +89,7 @@ int main() {
     Log::LAPolicyStatsLogger policyStatsLogger(la, stats);
 
     // Train for params.nbGenerations generations
-    for (int i = 0; i < params.nbGenerations; i++) {
+    for (int i = 0; i < params.nbGenerations && !exitProgram; i++) {
         char buff[13];
         sprintf(buff, "out_%04d.dot", i);
         dotExporter.setNewFilePath(buff);
@@ -102,9 +102,6 @@ int main() {
         if (toggleDisplay && !exitProgram) {
             bestRoot = la.getBestRoot().first;
             doDisplay = true;
-//            Render::controllerLoop(exitProgram, toggleDisplay, doDisplay,
-//            &bestRoot, set, flappyBirdLE, params, generation);
-
             while (doDisplay && !exitProgram);
         }
 #endif

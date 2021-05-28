@@ -7,11 +7,11 @@
     "ratioDeletedRoots" : 0.97,
     "maxNbEvaluationPerPolicy" : 1,
 	"doValidation" : true,
-    "nbThreads" : 1,
+    "nbThreads" : 2,
 
   "mutation": {
     "tpg": {
-      "nbRoots": 3,
+      "nbRoots": 50,
       "forceProgramBehaviorChangeOnMutation": true,
       "maxInitOutgoingEdges": 2,
       "maxOutgoingEdges": 999,

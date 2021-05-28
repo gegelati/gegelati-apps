@@ -234,6 +234,7 @@ bool Flappy_bird::isCopyable() const {
 Flappy_bird::Flappy_bird(const Flappy_bird &f): Learn::LearningEnvironment(f.nbActions), img(),
 game(f.game), currentState(f.currentState), picture(f.picture), rng(f.rng), flappy(FlappyX, initFlappyY),
 pipes(f.pipes), vectActions(f.vectActions), spr(f.spr){
+    this->img.create(width, height);
     this->img.draw(spr);
     this->img.display();
 }

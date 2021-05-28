@@ -17,7 +17,7 @@ Render::Display::Display(): window(sf::VideoMode(width, height), title), clk(), 
 	frameText.setFont(gameInit.getFont());
     frameText.setFillColor(sf::Color::White);
     frameText.move(textFrameX, textFrameY);
-    frameText.setString("GEN "+std::to_string(0));
+    frameText.setString("LEARNING");
 
     window.setFramerateLimit(frameRate);
 	window.setKeyRepeatEnabled(false);
