@@ -24,7 +24,7 @@ int main() {
     auto sin = [](double a)->double {return std::sin(a); };
     auto tan = [](double a)->double {return std::tan(a); };
     auto pi = [](double a)->double {return M_PI; };
-    auto multByConst = [](double a, Data::Constant c)->double {return a * (double)c / 10.0; };
+//    auto multByConst = [](double a, Data::Constant c)->double {return a * (double)c / 10.0; };
 
     set.add(*(new Instructions::LambdaInstruction<double, double>(minus)));
     set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
@@ -36,7 +36,7 @@ int main() {
     set.add(*(new Instructions::LambdaInstruction<double>(cos)));
     set.add(*(new Instructions::LambdaInstruction<double>(sin)));
     set.add(*(new Instructions::LambdaInstruction<double>(tan)));
-    set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(multByConst)));
+//    set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(multByConst)));
     set.add(*(new Instructions::LambdaInstruction<double>(pi)));
 
     // Set the parameters for the learning process.
@@ -62,17 +62,16 @@ int main() {
     const TPG::TPGVertex* bestRoot = nullptr;
 
     // Start a thread for controlling the loop
+    std::atomic<bool> doDisplay = false;
 #ifndef NO_CONSOLE_CONTROL
     // Console
     std::atomic<bool> exitProgram = true; // (set to false by other thread)
     std::atomic<bool> toggleDisplay = true;
-    std::atomic<bool> doDisplay = false;
     std::atomic<uint64_t> generation = 0;
 
     std::thread threadDisplay(Render::controllerLoop, std::ref(exitProgram), std::ref(toggleDisplay), std::ref(doDisplay),
                               &bestRoot, std::ref(set), std::ref(flappyBirdLE), std::ref(params), std::ref(generation));
 
-    //std::cout << "avant le logger" << std::endl;
     while (exitProgram); // Wait for other thread to print key info.
 #else
     std::atomic<bool> exitProgram = false; // (set to false by other thread)
@@ -91,12 +90,11 @@ int main() {
 
     // Train for params.nbGenerations generations
     for (int i = 0; i < params.nbGenerations; i++) {
-        std::cout<<"Generation n°"<<i<<std::endl;
         char buff[13];
         sprintf(buff, "out_%04d.dot", i);
         dotExporter.setNewFilePath(buff);
         dotExporter.print();
-
+        while (doDisplay){} // waiting for the end of the computation of the replay
         la.trainOneGeneration(i);
 
 #ifndef NO_CONSOLE_CONTROL
@@ -104,6 +102,9 @@ int main() {
         if (toggleDisplay && !exitProgram) {
             bestRoot = la.getBestRoot().first;
             doDisplay = true;
+//            Render::controllerLoop(exitProgram, toggleDisplay, doDisplay,
+//            &bestRoot, set, flappyBirdLE, params, generation);
+
             while (doDisplay && !exitProgram);
         }
 #endif
@@ -114,14 +115,14 @@ int main() {
     dotExporter.setNewFilePath("out_best.dot");
     dotExporter.print();
 
-//    TPG::PolicyStats ps;
-//    ps.setEnvironment(la.getTPGGraph().getEnvironment());
-//    ps.analyzePolicy(la.getBestRoot().first);
-//    std::ofstream bestStats;
-//    bestStats.open("out_best_stats.md");
-//    bestStats << ps;
-//    bestStats.close();
-//    stats.close();
+    TPG::PolicyStats ps;
+    ps.setEnvironment(la.getTPGGraph().getEnvironment());
+    ps.analyzePolicy(la.getBestRoot().first);
+    std::ofstream bestStats;
+    bestStats.open("out_best_stats.md");
+    bestStats << ps;
+    bestStats.close();
+    stats.close();
 
     // cleanup
     for (unsigned int i = 0; i < set.getNbInstructions(); i++) {

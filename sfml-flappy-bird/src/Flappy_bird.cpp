@@ -26,22 +26,40 @@ void Flappy_bird::reset(size_t seed, Learn::LearningMode mode) {
 
     // Reset the RNG
     rng.setSeed(hash_seed);
-    std::cout << std::endl << "--- Reset previous score : " << totalReward << std::endl;
-
+    /*if (!vectActions.empty()) {
+        std::cout << "Action executees : ";
+        for (auto elmt : vectActions){
+            std::cout << elmt;
+        }
+        std::cout << std::endl;
+        std::cout << "--- Reset previous score : " << totalReward << std::endl;
+    }*/
     this->totalReward = 0;
+    vectActions.clear();
 
     game.reset();
     flappy.reset();
     pipes.clear();
     game.scoreText.setString(std::to_string(totalReward));
+    img.clear();
+    img.draw(game.getBackground()[0]);
+    img.draw(game.getBackground()[1]);
+    img.draw(game.getBackground()[2]);
+    img.draw(flappy.sprite);
+
+    // draw scores
+    img.draw(game.scoreText);
+    img.draw(game.highscoreText);
     img.display();
+//    print(img.getTexture());
     updateCurrentState();
+//    print(spr);
 }
 
 void Flappy_bird::doAction(uint64_t actionID) {
     LearningEnvironment::doAction(actionID);
 
-    std::cout << actionID ;
+    vectActions.push_back(actionID);
     if(actionID == 1){
         if (game.gameState == fb::Game::started) {
             flappy.v = -8;
@@ -215,8 +233,8 @@ bool Flappy_bird::isCopyable() const {
 
 Flappy_bird::Flappy_bird(const Flappy_bird &f): Learn::LearningEnvironment(f.nbActions), img(),
 game(f.game), currentState(f.currentState), picture(f.picture), rng(f.rng), flappy(FlappyX, initFlappyY),
-pipes(f.pipes){
-    this->img.draw(sf::Sprite(f.img.getTexture()));
+pipes(f.pipes), vectActions(f.vectActions), spr(f.spr){
+    this->img.draw(spr);
     this->img.display();
 }
 
@@ -234,7 +252,8 @@ double Flappy_bird::getScore() const {
 }
 
 Flappy_bird::Flappy_bird() :game(), Learn::LearningEnvironment(2), currentState(width*height*pixelLayer),
-img(), rng(), flappy(FlappyX, initFlappyY), pipes(){
+img(), rng(), flappy(FlappyX, initFlappyY), pipes(), vectActions(),spr(){
+    vectActions.clear();
     flappy.sprite.setTexture(game.getTextures().getFlappy(1));
     img.create(width, height);
 //    window.setFramerateLimit(frameRate);
@@ -262,7 +281,6 @@ img(), rng(), flappy(FlappyX, initFlappyY), pipes(){
 void Flappy_bird::updateCurrentState() {
     int luminance;
     picture =  img.getTexture().copyToImage();
-
     const sf::Uint8* ptrImg = picture.getPixelsPtr();
     for (unsigned int i = 0; i < (picture.getSize().x * picture.getSize().y * 4); i+=4) {
         /// Y = 0.299*R + 0.587*G + 0.114*B
@@ -270,7 +288,44 @@ void Flappy_bird::updateCurrentState() {
         currentState.setDataAt(typeid(sf::Uint8), (int)(i/4), luminance);
         ptrImg+=4;
     }
-    //TODO zqd
+    spr.setTexture(img.getTexture());
+}
+
+sf::Sprite Flappy_bird::getSprite() const{
+    return spr;
+}
+
+sf::Image Flappy_bird::getPicture() const {
+    return picture;
 }
 
 
+void print(sf::Image pic) {
+    sf::RenderWindow window(sf::VideoMode(1000, 600), "test window image");
+    sf::Texture texture;
+    texture.loadFromImage(pic);
+    sf::Sprite spr = sf::Sprite(texture);
+
+    window.clear();
+    window.draw(spr);
+    window.display();
+    std::cout << "test window picture" << std::endl;
+}
+
+void print(sf::Sprite spr) {
+    sf::RenderWindow window(sf::VideoMode(1000, 600), "test window sprite");
+    window.clear();
+    window.draw(spr);
+    window.display();
+    std::cout << "test window sprite" << std::endl;
+}
+
+void print(sf::Texture tex) {
+    sf::RenderWindow window(sf::VideoMode(1000, 600), "test window texture");
+    sf::Sprite spr = sf::Sprite(tex);
+
+    window.clear();
+    window.draw(spr);
+    window.display();
+    std::cout << "test window texture" << std::endl;
+}

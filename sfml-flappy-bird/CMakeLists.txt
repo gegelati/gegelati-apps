@@ -77,22 +77,28 @@ endif()
 # *******************************************
 file(GLOB_RECURSE
 	flappy-bird_files
-	./src/*.cpp
+	#./src/*.cpp
 	./src/*.h
 	./params.json
 )
 message("include dir : " ${GEGELATI_INCLUDE_DIRS})
 include_directories(${GEGELATI_INCLUDE_DIRS})
+#SET(CMAKE_CXX_FLAGS "-g -O0 -Wall -fprofile-arcs -coverage")
+add_compile_options(-fno-elide-constructors)
 
-add_executable(${PROJECT_NAME} ${flappy-bird_files})
-target_link_libraries(${PROJECT_NAME} ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
-target_compile_definitions(${PROJECT_NAME} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}")
+#add_executable(${PROJECT_NAME} ${flappy-bird_files})
+#target_link_libraries(${PROJECT_NAME} ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
+#target_compile_definitions(${PROJECT_NAME} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}")
 
 add_executable(flappy-bird_playable src/FB_base.cpp)
 target_link_libraries(flappy-bird_playable  ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
 target_compile_definitions(flappy-bird_playable PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")
 
 
-add_executable(flappy-bird_TPG src/main.cpp src/flappy_bird.cpp src/render.cpp src/Game.cpp src/Flappy.cpp src/Texture.cpp src/Sound.cpp ./params.json)
+add_executable(flappy-bird_TPG src/main.cpp src/Flappy_bird.cpp src/Render.cpp src/Game.cpp src/Flappy.cpp src/Texture.cpp src/Sound.cpp ${flappy-bird_files} ./params.json)
 target_link_libraries(flappy-bird_TPG  ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
 target_compile_definitions(flappy-bird_TPG PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")
+
+add_executable(affichage_TPG src/replay.cpp src/Flappy_bird.cpp src/Render.cpp src/Game.cpp src/Flappy.cpp src/Texture.cpp src/Sound.cpp ${flappy-bird_files} ./params.json)
+target_link_libraries(affichage_TPG  ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
+target_compile_definitions(affichage_TPG PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")

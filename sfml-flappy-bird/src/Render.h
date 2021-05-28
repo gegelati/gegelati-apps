@@ -18,15 +18,32 @@ namespace Render {
         static const sf::String title;
         static const unsigned int frameRate = 60;
 
+        static const int textGenerationX = 30;
+        static const int textGenerationY = 115;
+
+        static const int textFrameX = 30;
+        static const int textFrameY = 150;
+
+        static const int FlappyX = 250;
+        static const int initFlappyY = 300;
+
+        constexpr static const float flappyScale = 2.0;
+
+        static const sf::Time deltaTime;
+
         sf::RenderWindow window;
+        sf::Clock clk;
+        sf::Text generationText;
+        sf::Text frameText;
+        sf::Sprite flappySprite;
+        fb::Game gameInit;
     public:
 
         sf::RenderWindow &getWindow() ;
 
-    public:
-
         Display();
 
+        int renderEnv(const sf::Image &image, uint64_t generation, uint64_t frame);
     };
 
     void controllerLoop(std::atomic<bool>& exit, std::atomic<bool>& toggleDisplay,
@@ -34,6 +51,11 @@ namespace Render {
                         const Instructions::Set& set, Flappy_bird&,
                         const Learn::LearningParameters& params,
                         std::atomic<uint64_t>& generation);
+    /**
+	 * \brief Display the environment.
+	 *
+	 */
+
 
 }
 #endif //SFML_FLAPPY_BIRD_RENDER_H

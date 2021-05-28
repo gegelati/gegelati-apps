@@ -3,14 +3,15 @@
     "archiveSize" : 50,
     "archivingProbability" : 0.05,
     "nbIterationsPerPolicyEvaluation" : 1,
-    "maxNbActionsPerEval" : 1000,
+    "maxNbActionsPerEval" : 250,
     "ratioDeletedRoots" : 0.97,
     "maxNbEvaluationPerPolicy" : 1,
 	"doValidation" : true,
+    "nbThreads" : 1,
 
   "mutation": {
     "tpg": {
-      "nbRoots": 2000,
+      "nbRoots": 3,
       "forceProgramBehaviorChangeOnMutation": true,
       "maxInitOutgoingEdges": 2,
       "maxOutgoingEdges": 999,

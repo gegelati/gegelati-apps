@@ -84,3 +84,7 @@ pressC(g.pressC), font(g.font) {
     this->background[1] = g.background[1];
     this->background[2] = g.background[2];
 }
+
+const sf::Font &fb::Game::getFont() const {
+    return font;
+}

@@ -13,6 +13,8 @@
 #include "learn/adversarialLearningEnvironment.h"
 #include "Flappy.h"
 #include "Game.h"
+#include <iostream>
+#include <search.h>
 
 
 class Flappy_bird : public Learn::LearningEnvironment{
@@ -36,6 +38,7 @@ private:
     /// Image
     Data::PrimitiveTypeArray<sf::Uint8> currentState;
     sf::Image picture;
+    sf::Sprite spr;
 
     /// Randomness control
     Mutator::RNG rng;
@@ -48,12 +51,16 @@ private:
 
     std::vector<sf::Sprite> pipes;
 
+    std::vector<int> vectActions;
+
     bool collides(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
 
     void updateCurrentState();
 public:
 
-    sf::Sprite getSprite(){ return sf::Sprite(img.getTexture());}
+    sf::Sprite getSprite() const;
+
+    sf::Image getPicture() const;
 
     Flappy_bird();
 
@@ -79,8 +86,10 @@ public:
     /// Inherited via LearningEnvironment
     virtual bool isTerminal() const override;
 
-
 };
 
+void print(sf::Image pic);
+void print(sf::Sprite spr);
+void print(sf::Texture tex);
 
 #endif //SFML_FLAPPY_BIRD_FLAPPY_BIRD_H

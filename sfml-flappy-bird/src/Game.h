@@ -54,6 +54,8 @@ namespace fb {
         sf::Sprite gameoverSprite;
         sf::Text pressC;
         sf::Font font;
+    public:
+        const sf::Font &getFont() const;
 
     public:
 
