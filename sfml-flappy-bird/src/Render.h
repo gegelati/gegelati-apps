@@ -9,6 +9,7 @@
 #include <atomic>
 #include <thread>
 #include <cinttypes>
+#include <chrono>
 
 namespace Render {
     class Display {
@@ -29,19 +30,18 @@ namespace Render {
 
         constexpr static const float flappyScale = 2.0;
 
-        static const sf::Time deltaTime;
+        static const std::chrono::duration<int,std::milli> deltaTime;
 
         sf::RenderWindow window;
-        sf::Clock clk;
         sf::Text generationText;
         sf::Text frameText;
         sf::Sprite flappySprite;
         fb::Game gameInit;
     public:
 
-        sf::RenderWindow &getWindow() ;
-
         Display();
+
+        sf::Image getImage()const;
 
         int renderEnv(const sf::Image &image, uint64_t generation, uint64_t frame);
     };

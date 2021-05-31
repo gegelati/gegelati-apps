@@ -68,9 +68,6 @@ void Flappy_bird::doAction(uint64_t actionID) {
 
     }
     
-    // update score
-    game.scoreText.setString(std::to_string(totalReward));
-    game.highscoreText.setString("HI " + std::to_string(game.highscore));
 
     // update flappy
     float fx = flappy.sprite.getPosition().x;
@@ -127,6 +124,10 @@ void Flappy_bird::doAction(uint64_t actionID) {
             }
         }
     }
+
+    // update score
+    game.scoreText.setString(std::to_string(totalReward));
+    game.highscoreText.setString("HI " + std::to_string(game.highscore));
 
     // generate pipes
     if (game.gameState == fb::Game::started && game.frames % 150 == 0) {

@@ -4,10 +4,11 @@
 #include "Render.h"
 
 
-const sf::String Render::Display::title = "Floppy Bird";
-const sf::Time Render::Display::deltaTime = sf::milliseconds(30);
 
-Render::Display::Display(): window(sf::VideoMode(width, height), title), clk(), gameInit(), generationText(){
+const sf::String Render::Display::title = "Floppy Bird";
+const std::chrono::duration<int,std::milli> Render::Display::deltaTime = std::chrono::milliseconds(30);
+
+Render::Display::Display(): window(sf::VideoMode(width, height), title), gameInit(), generationText(){
     // set general settings of the window.
 	generationText.setFont(gameInit.getFont());
     generationText.setFillColor(sf::Color::White);
@@ -17,7 +18,8 @@ Render::Display::Display(): window(sf::VideoMode(width, height), title), clk(), 
 	frameText.setFont(gameInit.getFont());
     frameText.setFillColor(sf::Color::White);
     frameText.move(textFrameX, textFrameY);
-    frameText.setString("LEARNING");
+    //frameText.setString("LEARNING");
+    frameText.setString("FRAME " + std::to_string(0));
 
     window.setFramerateLimit(frameRate);
 	window.setKeyRepeatEnabled(false);
@@ -42,10 +44,6 @@ Render::Display::Display(): window(sf::VideoMode(width, height), title), clk(), 
     window.display();
 }
 
-sf::RenderWindow &Render::Display::getWindow()  {
-    return window;
-}
-
 void Render::controllerLoop(std::atomic<bool> &exit, std::atomic<bool> &toggleDisplay, std::atomic<bool> &doDisplay,
                             const TPG::TPGVertex **bestRoot, const Instructions::Set &set,
                             Flappy_bird &flappyBirdLE,
@@ -58,7 +56,7 @@ void Render::controllerLoop(std::atomic<bool> &exit, std::atomic<bool> &toggleDi
     Environment env(set, flappyBirdLE.getDataSources(), params.nbRegisters, params.nbProgramConstant);
     TPG::TPGExecutionEngine tee(env);
     uint64_t frame = 0;
-    sf::Image image;
+    sf::Image image = d.getImage();
     std::deque<std::tuple<uint64_t , sf::Image>> replay;
     while (!exit) {
         int event = 0;
@@ -88,7 +86,6 @@ void Render::controllerLoop(std::atomic<bool> &exit, std::atomic<bool> &toggleDi
             image = std::get<1>(replay.front());
             replay.pop_front();
        }
-
         event = d.renderEnv(image, generation, frame);
 
         switch (event) {
@@ -106,14 +103,14 @@ void Render::controllerLoop(std::atomic<bool> &exit, std::atomic<bool> &toggleDi
                 // Nothing to do
                 break;
         }
-        //TODO la fin du programme est mal géré : ferme la fenêtre et envoie le message mais ne quitte pas après la prochaine génération
     }
-
+    exit = true;
     printf("\nProgram will terminate at the end of next generation.\n");
     std::cout.flush();
 }
 
 int Render::Display::renderEnv(const sf::Image &imageRef, uint64_t generation, uint64_t frame) {
+
     int returnCode = 0;
     sf::Texture texture;
     sf::Sprite spr;
@@ -129,12 +126,11 @@ int Render::Display::renderEnv(const sf::Image &imageRef, uint64_t generation, u
 
         window.display();
 
-        // smoothing display by adding delay
-        //TODO use one of std library instead (std::wait maybe)
-        clk.restart();
-        while (clk.getElapsedTime() < deltaTime) {};
     }
 
+    // smoothing display by adding delay
+    std::this_thread::sleep_for(deltaTime);
+    //TODO problème ici en nbThread >= 3 le programme plante Refuse de pool des events => Solved sans le IF
     sf::Event event;
     window.pollEvent(event);
     switch (event.type) {
@@ -146,8 +142,6 @@ int Render::Display::renderEnv(const sf::Image &imageRef, uint64_t generation, u
                 case sf::Keyboard::Q :
                     returnCode = -1;
                     break;
-//                case sf::Keyboard::C :
-//                    return 2;
                 default:
                     break;
             }
@@ -157,6 +151,10 @@ int Render::Display::renderEnv(const sf::Image &imageRef, uint64_t generation, u
             break;
     }
     return returnCode;
+}
+
+sf::Image Render::Display::getImage() const {
+    return window.capture();
 }
 
 
