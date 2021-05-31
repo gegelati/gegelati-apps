@@ -94,7 +94,6 @@ int main() {
         sprintf(buff, "out_%04d.dot", i);
         dotExporter.setNewFilePath(buff);
         dotExporter.print();
-        while (doDisplay){} // waiting for the end of the computation of the replay
         la.trainOneGeneration(i);
 
 #ifndef NO_CONSOLE_CONTROL

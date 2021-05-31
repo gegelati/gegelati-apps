@@ -20,7 +20,7 @@ project(${PROJECT_NAME})
 # extensions off.
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
+#set(NO_CONSOLE_CONTROL defined)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -98,7 +98,3 @@ target_compile_definitions(flappy-bird_playable PRIVATE MNIST_DATA_LOCATION="${M
 add_executable(flappy-bird_TPG src/main.cpp src/Flappy_bird.cpp src/Render.cpp src/Game.cpp src/Flappy.cpp src/Texture.cpp src/Sound.cpp ${flappy-bird_files} ./params.json)
 target_link_libraries(flappy-bird_TPG  ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
 target_compile_definitions(flappy-bird_TPG PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")
-
-add_executable(affichage_TPG src/replay.cpp src/Flappy_bird.cpp src/Render.cpp src/Game.cpp src/Flappy.cpp src/Texture.cpp src/Sound.cpp ${flappy-bird_files} ./params.json)
-target_link_libraries(affichage_TPG  ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
-target_compile_definitions(affichage_TPG PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")

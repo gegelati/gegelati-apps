@@ -2,16 +2,16 @@
 	"nbGenerations" : 20000,
     "archiveSize" : 50,
     "archivingProbability" : 0.05,
-    "nbIterationsPerPolicyEvaluation" : 1,
-    "maxNbActionsPerEval" : 250,
+    "nbIterationsPerPolicyEvaluation" : 4,
+    "maxNbActionsPerEval" : 18000,
     "ratioDeletedRoots" : 0.97,
     "maxNbEvaluationPerPolicy" : 1,
 	"doValidation" : true,
-    "nbThreads" : 2,
 
-  "mutation": {
-    "tpg": {
-      "nbRoots": 50,
+    "mutation":
+{
+    "tpg" : {
+      "nbRoots" : 1000,
       "forceProgramBehaviorChangeOnMutation": true,
       "maxInitOutgoingEdges": 2,
       "maxOutgoingEdges": 999,

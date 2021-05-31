@@ -126,11 +126,10 @@ int Render::Display::renderEnv(const sf::Image &imageRef, uint64_t generation, u
 
         window.display();
 
+        // smoothing display by adding delay
+        std::this_thread::sleep_for(deltaTime);
     }
 
-    // smoothing display by adding delay
-    std::this_thread::sleep_for(deltaTime);
-    //TODO problème ici en nbThread >= 3 le programme plante Refuse de pool des events => Solved sans le IF
     sf::Event event;
     window.pollEvent(event);
     switch (event.type) {
