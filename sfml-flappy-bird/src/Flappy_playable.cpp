@@ -7,9 +7,6 @@
 #include <vector>
 
 
-using namespace sf;
-using namespace std;
-
 // rect rect collision detection helper function
 bool collides(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2) {
 	if (x1 + w1 >= x2 && x1 <= x2 + w2 && y1 + h1 >= y2 && y1 <= y2 + h2) {
@@ -21,19 +18,19 @@ bool collides(float x1, float y1, float w1, float h1, float x2, float y2, float 
 int main() {
 	
 	// create the window and set general settings. Plant the seeds
-	RenderWindow window(VideoMode(1000, 600), "Floppy Bird");
+	sf::RenderWindow window(sf::VideoMode(1000, 600), "Floppy Bird");
 	window.setFramerateLimit(60);
 	window.setKeyRepeatEnabled(false);
 	srand(time(0));
 
 	// all sounds and their buffers will rest in this singleton struct
 	struct Sounds {
-		SoundBuffer chingBuffer;
-		SoundBuffer hopBuffer;
-		SoundBuffer dishkBuffer;
-		Sound ching;
-		Sound hop;
-		Sound dishk;
+		sf::SoundBuffer chingBuffer;
+        sf::SoundBuffer hopBuffer;
+        sf::SoundBuffer dishkBuffer;
+        sf::Sound ching;
+        sf::Sound hop;
+        sf::Sound dishk;
 	} sounds;
 
 	// load sounds
@@ -46,10 +43,10 @@ int main() {
 
 	// all textures remain in here. Flappy has 3 textures, which will repeadetly draw, creating the illusion of flying.
 	struct Textures {
-		Texture flappy[3];
-		Texture pipe;
-		Texture background;
-		Texture gameover;
+        sf::Texture flappy[3];
+        sf::Texture pipe;
+        sf::Texture background;
+        sf::Texture gameover;
 	} textures;
 
 	// load textures
@@ -66,7 +63,7 @@ int main() {
 	struct Flappy {
 		double v = 0;
 		int frame = 0;
-		Sprite sprite;
+        sf::Sprite sprite;
 	} flappy;
 
 	// initial position, scale
@@ -74,7 +71,7 @@ int main() {
 	flappy.sprite.setScale(2, 2);
 
 	// resizable array of sprites representing pipes
-	vector<Sprite> pipes;
+	std::vector<sf::Sprite> pipes;
 
 	// waiting = game not started yet
 	// started = playing
@@ -91,12 +88,12 @@ int main() {
 		int highscore = 0;
 		int frames = 0;
 		GameState gameState = waiting;
-		Sprite background[3];
-		Sprite gameover;
-		Text pressC;
-		Text scoreText;
-		Text highscoreText;
-		Font font;
+		sf::Sprite background[3];
+		sf::Sprite gameover;
+        sf::Text pressC;
+        sf::Text scoreText;
+        sf::Text highscoreText;
+        sf::Font font;
 	} game;
 
 	// load font, set positions, scales etc
@@ -115,16 +112,16 @@ int main() {
 	game.gameover.setScale(2, 2);
 	game.pressC.setString("Press C to continue");
 	game.pressC.setFont(game.font);
-	game.pressC.setFillColor(Color::White);
+	game.pressC.setFillColor(sf::Color::White);
 	game.pressC.setCharacterSize(50);
 	game.pressC.setOrigin(game.pressC.getLocalBounds().width / 2, 0);
 	game.pressC.setPosition(500, 250);
 	game.scoreText.setFont(game.font);
-	game.scoreText.setFillColor(Color::White);
+	game.scoreText.setFillColor(sf::Color::White);
 	game.scoreText.setCharacterSize(75);
 	game.scoreText.move(30, 0);
 	game.highscoreText.setFont(game.font);
-	game.highscoreText.setFillColor(Color::White);
+	game.highscoreText.setFillColor(sf::Color::White);
 	game.highscoreText.move(30, 80);
 
 	// main loop
@@ -133,8 +130,8 @@ int main() {
 
 		// update score
 		flappy.sprite.setTexture(textures.flappy[1]);
-		game.scoreText.setString(to_string(game.score));
-		game.highscoreText.setString("HI " + to_string(game.highscore));
+		game.scoreText.setString(std::to_string(game.score));
+		game.highscoreText.setString("HI " + std::to_string(game.highscore));
 
 		// update flappy
 		float fx = flappy.sprite.getPosition().x;
@@ -176,7 +173,7 @@ int main() {
 		}
 
 		// count the score
-		for (vector<Sprite>::iterator itr = pipes.begin(); itr != pipes.end(); itr++) {
+		for (std::vector<sf::Sprite>::iterator itr = pipes.begin(); itr != pipes.end(); itr++) {
 			if (game.gameState == started && (*itr).getPosition().x == 250) {
 				game.score++;
 //				sounds.ching.play();
@@ -195,13 +192,13 @@ int main() {
 			int gap = 150;
 
 			// lower pipe
-			Sprite pipeL;
+			sf::Sprite pipeL;
 			pipeL.setTexture(textures.pipe);
 			pipeL.setPosition(1000, r + gap);
 			pipeL.setScale(2, 2);
 
 			// upper pipe
-			Sprite pipeU;
+			sf::Sprite pipeU;
 			pipeU.setTexture(textures.pipe);
 			pipeU.setPosition(1000, r);
 			pipeU.setScale(2, -2);
@@ -213,15 +210,15 @@ int main() {
 
 		// move pipes
 		if (game.gameState == started) {
-			for (vector<Sprite>::iterator itr = pipes.begin(); itr != pipes.end(); itr++) {
+			for (std::vector<sf::Sprite>::iterator itr = pipes.begin(); itr != pipes.end(); itr++) {
 				(*itr).move(-3, 0);
 			}
 		}
 
 		// remove pipes if offscreen
 		if (game.frames % 100 == 0) {
-			vector<Sprite>::iterator startitr = pipes.begin();
-			vector<Sprite>::iterator enditr = pipes.begin();
+			std::vector<sf::Sprite>::iterator startitr = pipes.begin();
+			std::vector<sf::Sprite>::iterator enditr = pipes.begin();
 
 			for (; enditr != pipes.end(); enditr++) {
 				if ((*enditr).getPosition().x > -104) {
@@ -234,7 +231,7 @@ int main() {
 
 		// collision detection
 		if (game.gameState == started) {
-			for (vector<Sprite>::iterator itr = pipes.begin(); itr != pipes.end(); itr++) {
+			for (std::vector<sf::Sprite>::iterator itr = pipes.begin(); itr != pipes.end(); itr++) {
 
 				float px, py, pw, ph;
 
@@ -258,17 +255,17 @@ int main() {
 		}
 
 		// events
-		Event event;
+        sf::Event event;
 		while (window.pollEvent(event)) {
 
 			// bye bye
-			if (event.type == Event::Closed) {
+			if (event.type == sf::Event::Closed) {
 				window.close();
 			}
 
 			// flap
-			else if (event.type == Event::KeyPressed &&
-					   event.key.code == Keyboard::Space) {
+			else if (event.type == sf::Event::KeyPressed &&
+					   event.key.code == sf::Keyboard::Space) {
 				if (game.gameState == waiting) {
 					game.gameState = started;
 				}
@@ -279,8 +276,8 @@ int main() {
 				}
 
 			// restart
-			} else if (event.type == Event::KeyPressed &&
-					   event.key.code == Keyboard::C &&
+			} else if (event.type == sf::Event::KeyPressed &&
+					   event.key.code == sf::Keyboard::C &&
 					   game.gameState == gameover) {
 				game.gameState = waiting;
 				flappy.sprite.setPosition(250, 300);
@@ -298,7 +295,7 @@ int main() {
 
 
 		// draw pipes
-		for (vector<Sprite>::iterator itr = pipes.begin(); itr != pipes.end(); itr++) {
+		for (std::vector<sf::Sprite>::iterator itr = pipes.begin(); itr != pipes.end(); itr++) {
 			window.draw(*itr);
 		}
 

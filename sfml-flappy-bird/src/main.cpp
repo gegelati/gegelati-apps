@@ -1,7 +1,6 @@
 #include <iostream>
 #include <thread>
 #include <atomic>
-//#include <chrono>
 #include <cinttypes>
 #include "Flappy_bird.h"
 #include "Render.h"
@@ -24,7 +23,6 @@ int main() {
     auto sin = [](double a)->double {return std::sin(a); };
     auto tan = [](double a)->double {return std::tan(a); };
     auto pi = [](double a)->double {return M_PI; };
-//    auto multByConst = [](double a, Data::Constant c)->double {return a * (double)c / 10.0; };
 
     set.add(*(new Instructions::LambdaInstruction<double, double>(minus)));
     set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
@@ -36,7 +34,6 @@ int main() {
     set.add(*(new Instructions::LambdaInstruction<double>(cos)));
     set.add(*(new Instructions::LambdaInstruction<double>(sin)));
     set.add(*(new Instructions::LambdaInstruction<double>(tan)));
-//    set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(multByConst)));
     set.add(*(new Instructions::LambdaInstruction<double>(pi)));
 
     // Set the parameters for the learning process.
