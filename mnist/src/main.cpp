@@ -130,6 +130,11 @@ int main() {
 	stats.open("bestPolicyStats.md");
 	Log::LAPolicyStatsLogger logStats(la, stats);
 
+	// Export parameters before starting training.
+	// These may differ from imported parameters because of LE or machine specific
+	// settings such as thread count of number of actions.
+	File::ParametersParser::writeParametersToJson("exported_params.json", params);
+
 	// Train for NB_GENERATIONS generations
 	for (int i = 0; i < params.nbGenerations && !exitProgram; i++) {
 		char buff[13];
