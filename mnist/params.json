@@ -7,7 +7,7 @@
   "nbGenerations": 200,
   "nbIterationsPerPolicyEvaluation": 1,
   "nbIterationsPerJob": 1,
-  "nbProgramConstant": 0,
+  "nbProgramConstant": 5,
   "nbRegisters": 8,
   "ratioDeletedRoots": 0.90,
 
