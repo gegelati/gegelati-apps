@@ -91,6 +91,11 @@ int main() {
 	stats.open("bestPolicyStats.md");
 	Log::LAPolicyStatsLogger policyStatsLogger(la, stats);
 
+	// Export parameters before starting training.
+	// These may differ from imported parameters because of LE or machine specific
+	// settings such as thread count of number of actions.
+	File::ParametersParser::writeParametersToJson("exported_params.json", params);
+
 	// Train for params.nbGenerations generations
 	for (int i = 0; i < params.nbGenerations && !exitProgram; i++) {
 		char buff[13];
@@ -112,6 +117,11 @@ int main() {
 
 	// Keep best policy
 	la.keepBestPolicy();
+
+	// Clear introns instructions
+	la.getTPGGraph().clearProgramIntrons();
+
+	// Export the graph
 	dotExporter.setNewFilePath("out_best.dot");
 	dotExporter.print();
 

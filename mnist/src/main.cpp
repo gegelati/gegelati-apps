@@ -51,6 +51,7 @@ int main() {
 	auto max = [](double a, double b)->double {return std::max(a, b); };
 	auto ln = [](double a)->double {return std::log(a); };
 	auto exp = [](double a)->double {return std::exp(a); };
+	auto multByConst = [](double a, Data::Constant c)->double {return a * (double)c / 10.0; };
 	auto sobelMagn = [](const double a[3][3])->double {
 		double result = 0.0;
 		double gx =
@@ -82,6 +83,7 @@ int main() {
 	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
 	set.add(*(new Instructions::LambdaInstruction<double>(exp)));
 	set.add(*(new Instructions::LambdaInstruction<double>(ln)));
+	set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(multByConst)));
 	set.add(*(new Instructions::LambdaInstruction<const double[3][3]>(sobelMagn)));
 	set.add(*(new Instructions::LambdaInstruction<const double[3][3]>(sobelDir)));
 
@@ -94,7 +96,6 @@ int main() {
 #ifdef NB_GENERATIONS
 	params.nbGenerations = NB_GENERATIONS;
 #endif // !NB_GENERATIONS
-
 
 	// Instantiate the LearningEnvironment
 	MNIST mnistLE;
@@ -129,6 +130,11 @@ int main() {
 	stats.open("bestPolicyStats.md");
 	Log::LAPolicyStatsLogger logStats(la, stats);
 
+	// Export parameters before starting training.
+	// These may differ from imported parameters because of LE or machine specific
+	// settings such as thread count of number of actions.
+	File::ParametersParser::writeParametersToJson("exported_params.json", params);
+
 	// Train for NB_GENERATIONS generations
 	for (int i = 0; i < params.nbGenerations && !exitProgram; i++) {
 		char buff[13];
@@ -146,6 +152,11 @@ int main() {
 
 	// Keep best policy
 	la.keepBestPolicy();
+
+	// Clear introns instructions
+	la.getTPGGraph().clearProgramIntrons();
+
+	// Export the graph
 	dotExporter.setNewFilePath("out_best.dot");
 	dotExporter.print();
 
