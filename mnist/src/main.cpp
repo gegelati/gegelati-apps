@@ -152,6 +152,11 @@ int main() {
 
 	// Keep best policy
 	la.keepBestPolicy();
+
+	// Clear introns instructions
+	la.getTPGGraph().clearProgramIntrons();
+
+	// Export the graph
 	dotExporter.setNewFilePath("out_best.dot");
 	dotExporter.print();
 
