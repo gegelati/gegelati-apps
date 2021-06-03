@@ -103,6 +103,9 @@ int main() {
 	bestStats << ps;
 	bestStats.close();
 
+	// close log file also
+	stats.close();
+
 	// cleanup
 	for (unsigned int i = 0; i < set.getNbInstructions(); i++) {
 		delete (&set.getInstruction(i));

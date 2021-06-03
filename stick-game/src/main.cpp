@@ -12,10 +12,10 @@
 
 
 
-int main(int argc, char *argv[]) {
-    if(argc>2 && (strcmp("-evaluate", argv[1]) == 0)) {
-        agentTest(argv[2]);
-    }
+int main(int argc, char* argv[]) {
+	if (argc > 2 && (strcmp("-evaluate", argv[1]) == 0)) {
+		agentTest(argv[2]);
+	}
 
 	// Create the instruction set for programs
 	Instructions::Set set;
@@ -59,6 +59,16 @@ int main(int argc, char *argv[]) {
 	// Create an exporter for all graphs
 	File::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
 
+	// File for printing best policy stat.
+	std::ofstream stats;
+	stats.open("bestPolicyStats.md");
+	Log::LAPolicyStatsLogger logStats(la, stats);
+
+	// Export parameters before starting training.
+	// These may differ from imported parameters because of LE or machine specific
+	// settings such as thread count of number of actions.
+	File::ParametersParser::writeParametersToJson("exported_params.json", params);
+
 	// Train for NB_GENERATIONS generations
 	for (int i = 0; i < params.nbGenerations; i++) {
 		char buff[16];
@@ -71,8 +81,24 @@ int main(int argc, char *argv[]) {
 
 	// Keep best policy
 	la.keepBestPolicy();
+
+	// Clear introns instructions
+	la.getTPGGraph().clearProgramIntrons();
+
+	// Export the graph
 	dotExporter.setNewFilePath("out_best.dot");
 	dotExporter.print();
+
+	TPG::PolicyStats ps;
+	ps.setEnvironment(la.getTPGGraph().getEnvironment());
+	ps.analyzePolicy(la.getBestRoot().first);
+	std::ofstream bestStats;
+	bestStats.open("out_best_stats.md");
+	bestStats << ps;
+	bestStats.close();
+
+	// close log file also
+	stats.close();
 
 	// cleanup
 	for (unsigned int i = 0; i < set.getNbInstructions(); i++) {
