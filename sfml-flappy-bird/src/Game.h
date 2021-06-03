@@ -7,7 +7,7 @@
 
 #include <SFML/Graphics.hpp>
 #include "Texture.h"
-#include "Sound.h"
+//#include "Sound.h"
 
 namespace fb {
     class Game {
@@ -48,7 +48,7 @@ namespace fb {
         static const sf::String FontFile;
 
         Texture textures;
-        Sound sound;
+        //Sound sound;
 
         sf::Sprite background[3];
         sf::Sprite gameoverSprite;
@@ -71,7 +71,7 @@ namespace fb {
 
         const Texture &getTextures() const;
 
-        Sound getSound() const;
+//        Sound getSound() const;
 
         const sf::Text &getPressC() const;
     };

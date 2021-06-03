@@ -5,7 +5,6 @@
 #include "Flappy_bird.h"
 #include "Render.h"
 
-
 int main() {
 
     std::cout << "Start flappy Bird application." << std::endl;
@@ -45,7 +44,7 @@ int main() {
 #ifdef NB_GENERATIONS
     params.nbGenerations = NB_GENERATIONS;
 #endif
-
+    std::cout << "avant la création de flappy" << std::endl;
     // Instantiate the LearningEnvironment
     Flappy_bird flappyBirdLE = Flappy_bird();
 
@@ -59,11 +58,11 @@ int main() {
     const TPG::TPGVertex* bestRoot = nullptr;
 
     // Start a thread for controlling the loop
-    std::atomic<bool> doDisplay = false;
 #ifndef NO_CONSOLE_CONTROL
     // Console
     std::atomic<bool> exitProgram = true; // (set to false by other thread)
     std::atomic<bool> toggleDisplay = true;
+    std::atomic<bool> doDisplay = false;
     std::atomic<uint64_t> generation = 0;
 
     std::thread threadDisplay(Render::controllerLoop, std::ref(exitProgram), std::ref(toggleDisplay), std::ref(doDisplay),

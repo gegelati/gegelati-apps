@@ -8,7 +8,7 @@ const sf::String fb::Game::pathImage = ROOT_DIR "/dat/images";
 const sf::String fb::Game::pathSound = ROOT_DIR "/dat/audio";
 const sf::String fb::Game::FontFile = ROOT_DIR "/dat/fonts";
 
-fb::Game::Game(): textures(pathImage), sound(pathSound){
+fb::Game::Game(): textures(pathImage)/*, sound(pathSound)*/{
 
     highscore = 0;
     frames = 0;
@@ -55,9 +55,9 @@ const fb::Texture &fb::Game::getTextures() const {
     return textures;
 }
 
-fb::Sound fb::Game::getSound() const{
-    return sound;
-}
+//fb::Sound fb::Game::getSound() const{
+//    return sound;
+//}
 
 const sf::Sprite *fb::Game::getBackground() const {
     return background;
@@ -78,7 +78,7 @@ void fb::Game::reset() {
 }
 
 fb::Game::Game(const Game &g):gameState(g.gameState), scoreText(g.scoreText), highscoreText(g.highscoreText),
-frames(g.frames), highscore(g.highscore), textures(g.textures), sound(g.sound), gameoverSprite(g.gameoverSprite),
+frames(g.frames), highscore(g.highscore), textures(g.textures)/*, sound(g.sound)*/, gameoverSprite(g.gameoverSprite),
 pressC(g.pressC), font(g.font) {
     this->background[0] = g.background[0];
     this->background[1] = g.background[1];

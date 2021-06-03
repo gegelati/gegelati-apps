@@ -95,6 +95,6 @@ target_link_libraries(flappy-bird_playable  ${GEGELATI_LIBRARIES} sfml-graphics 
 target_compile_definitions(flappy-bird_playable PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")
 
 
-add_executable(flappy-bird_TPG src/main.cpp src/Flappy_bird.cpp src/Render.cpp src/Game.cpp src/Flappy.cpp src/Texture.cpp src/Sound.cpp ${flappy-bird_files} ./params.json)
-target_link_libraries(flappy-bird_TPG  ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system sfml-audio)
+add_executable(flappy-bird_TPG src/main.cpp src/Flappy_bird.cpp src/Render.cpp src/Game.cpp src/Flappy.cpp src/Texture.cpp ${flappy-bird_files} ./params.json)
+target_link_libraries(flappy-bird_TPG  ${GEGELATI_LIBRARIES} sfml-graphics sfml-window sfml-system )
 target_compile_definitions(flappy-bird_TPG PRIVATE MNIST_DATA_LOCATION="${MNIST_DATA_DIR}" ROOT_DIR="${CMAKE_SOURCE_DIR}")
