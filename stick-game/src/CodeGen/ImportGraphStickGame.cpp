@@ -41,8 +41,8 @@ int main(){
     File::TPGGraphDotImporter dot(filename.c_str(), dotEnv, dotGraph);
     dot.importGraph();
 
-//    File::TPGGraphDotExporter dotExporter("src/StickGame_out_out2.dot", dotGraph);
-//    dotExporter.print();
+    File::TPGGraphDotExporter dotExporter("src/StickGame_out_out2.dot", dotGraph);
+    dotExporter.print();
     CodeGen::TPGGenerationEngine tpggen("stick_game", dotGraph, "src/");
     tpggen.generateTPGGraph();
 

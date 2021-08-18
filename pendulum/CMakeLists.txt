@@ -216,7 +216,7 @@ add_executable(${PROJECT_NAME} ${pendulum_files})
 target_link_libraries(${PROJECT_NAME} ${GEGELATI_LIBRARIES}  ${SDL2_LIBRARY} ${SDL2IMAGE_LIBRARY} ${SDL2TTF_LIBRARY})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}")
 
-# Code Gen example with the TPG store in the file stick-game/src/CodeGen/StickGame_out_best.dot
+# Code Gen example with the TPG store in the file pendulum/src/CodeGen/StickGame_out_best.dot
 
 # Create the target that will generate the C code of the TPG
 set(TARGET_CodeGen ${PROJECT_NAME}CodeGen)
