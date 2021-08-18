@@ -42,6 +42,7 @@ int main() {
     Learn::LearningParameters params;
     File::ParametersParser::loadParametersFromJson(ROOT_DIR"/params.json", params);
     Environment env(set, le.getDataSources(), params.nbRegisters);
+
     auto tpg = TPG::TPGGraph(env);
     TPG::TPGExecutionEngine tee(env);
     File::TPGGraphDotImporter dotImporter(ROOT_DIR"/src/CodeGen/StickGame_out_best.dot", env, tpg);
