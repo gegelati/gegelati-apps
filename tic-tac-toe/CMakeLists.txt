@@ -91,8 +91,8 @@ endif()
 # Executable to learn the TPG
 file(GLOB_RECURSE
 	tic-tac-toe_game_files
-	./src/*.cpp
-	./src/*.h
+	./src/Learn/*.cpp
+	./src/Learn/*.h
 )
 
 include_directories(${GEGELATI_INCLUDE_DIRS})
