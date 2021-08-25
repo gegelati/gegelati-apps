@@ -43,14 +43,12 @@ int main(){
     Learn::LearningParameters params;
     File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json", params);
     Environment dotEnv(set, data, params.nbRegisters);
-    std::cout << "nb program constant : " << params.nbProgramConstant << std::endl;
+
     TPG::TPGGraph dotGraph(dotEnv);
     std::string filename(path+"TicTacToe_out_best.dot");
     File::TPGGraphDotImporter dot(filename.c_str(), dotEnv, dotGraph);
     dot.importGraph();
 
-    File::TPGGraphDotExporter dotExporter("src/TicTacToe_out_out2.dot", dotGraph);
-    dotExporter.print();
     CodeGen::TPGGenerationEngine tpggen("TicTacToe", dotGraph, "src/");
     tpggen.generateTPGGraph();
 

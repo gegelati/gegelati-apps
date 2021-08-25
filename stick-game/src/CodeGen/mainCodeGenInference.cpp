@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cfloat>
+#include <ctime>
 
 #include <gegelati.h>
 
@@ -38,16 +39,9 @@ int main() {
     auto le = StickGameAdversarial(false);
 
     /// Instantiate an Environment and import (required only for gegelati Inference)
-
     Learn::LearningParameters params;
     File::ParametersParser::loadParametersFromJson(ROOT_DIR"/params.json", params);
     Environment env(set, le.getDataSources(), params.nbRegisters);
-
-    auto tpg = TPG::TPGGraph(env);
-    TPG::TPGExecutionEngine tee(env);
-    File::TPGGraphDotImporter dotImporter(ROOT_DIR"/src/CodeGen/StickGame_out_best.dot", env, tpg);
-    dotImporter.importGraph();
-    auto root2 = tpg.getRootVertices().back();
 
     /// fetch data in the environment
     auto &st = le.getDataSources().at(0).get();
@@ -58,30 +52,24 @@ int main() {
     /// set the number of game
     uint64_t action;
     int playerNb = 0;
-    size_t nbParties = 1;
+    size_t nbParties = 10;
     std::cout << "Game : " << le.toString() << std::endl;
-    // let's play, the only way to leave this loop is to enter -1
+    // let's play, the only way to leave this loop is to play nbParties games
     while (nbParties != 0) {
-        // gets the action the TPG would decide in this situation
-        /// to use gegelati Inference uncomment the following line
-        action=((const TPG::TPGAction *) tee.executeFromRoot(* root2).back())->getActionID();
 
-        /// to use inference with generated C files uncomment the 2 following lines
-//        action = executeFromVertex(root);
-//        reset();
+        ///inference with generated C files
+        action = inferenceTPG();
 
-        std::cout << "TPG : " << action+1 << std::endl;
+        std::cout << "player : " << playerNb << " removes : " << action+1 << " sticks " << std::endl;
         le.doAction(action);
         playerNb = !playerNb;
-        // prints the game board
-        std::cout << "Game : " << le.toString() << std::endl;
 
         if (le.isTerminal()) {
             std::cout << "TPG nb" << playerNb << " won !" << std::endl;
-            std::cout << "Reseting game..." << std::endl;
             le.reset();
             nbParties--;
             continue;
         }
     }
+
 }

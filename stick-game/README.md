@@ -17,6 +17,6 @@ To evaluate "by hand" a tpg, the main function enables to play against it. The c
 ## CodeGen example
 
 The folder src/CodeGen contains an example of use case for the code gen. There are 3 targets for this example, you can directly run the last one :
-- StickGameCodeGen that import the TPG_graph.dot and launch the code gen to generate the sources files. If you want to run this target you need to set your working directory as the current build directory of your build system. You can use the following variable $CMakeCurrentBuildDir$.
-- StickGameExecCodeGen that is a custom command to execute the previous target
-- StickGameInferenceCodeGen that use the generated file and link them with the learning environment of the directory src/Learn
+- StickGameCodeGenCompile that import the TPG_graph.dot and launch the code gen to generate the sources files. If you want to run this target you need to set your working directory as the current build directory of your build system. You can use the following variable $CMakeCurrentBuildDir$.
+- StickGameCodeGenGenerate that is a custom command to execute the previous target
+- StickGameCodeGenInference that use the generated file and link them with the learning environment of the directory src/Learn

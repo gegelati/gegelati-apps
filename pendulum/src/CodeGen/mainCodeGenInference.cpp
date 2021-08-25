@@ -48,12 +48,6 @@ int main() {
     File::ParametersParser::loadParametersFromJson(ROOT_DIR"/params.json", params);
     Environment env(set, le.getDataSources(), params.nbRegisters, params.nbProgramConstant);
 
-    auto tpg = TPG::TPGGraph(env);
-    TPG::TPGExecutionEngine tee(env);
-    File::TPGGraphDotImporter dotImporter(ROOT_DIR"/src/CodeGen/Pendulum_out_best.dot", env, tpg);
-    dotImporter.importGraph();
-    auto root2 = tpg.getRootVertices().front();
-
     /// fetch data in the environment
     auto &st = le.getDataSources().at(0).get();
     in1 = st.getDataAt(typeid(double), 0).getSharedPointer<double>().get();
@@ -65,24 +59,16 @@ int main() {
     in1[0] = M_PI;
     float angleDisplay = (float) (in1[0]);
     float torqueDisplay = (float) (in1[1]);
-    //    std::cout<<"Game :\n"<<le.toString()<<std::endl;
-    // let's play, the only way to leave this loop is finish all game
+    // let's play, the only way to leave this loop is finish all games
     Render::renderInit();
     Render::renderEnv(&angleDisplay, &torqueDisplay, 0, nbGame);
     int i = 1;
     while (nbGame != 0) {
-        // gets the action the TPG would decide in this situation
-        /// to use gegelati Inference uncomment the following line
-//        action = ((const TPG::TPGAction *) tee.executeFromRoot(*root2).back())->getActionID();
-
-        /// to use inference with generated C files uncomment the 2 following lines
-        action = executeFromVertex(root);
-        reset();
+        /// inference with generated C files
+        action = inferenceTPG();
 
         std::cout << "TPG : " << action << std::endl;
         playerNb = !playerNb;
-        // prints the game board
-//        std::cout<<"Game :\n"<<le.toString()<<std::endl;
         angleDisplay = (float) (in1[0]);
         torqueDisplay = (float) (in1[1]);
 #ifdef DEBUG

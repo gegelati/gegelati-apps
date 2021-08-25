@@ -56,16 +56,10 @@ int main(){
     size_t nbParties = 1;
     uint64_t action;
     int playerSymbol = 0;
-    std::cout<<"Game :\n"<<le.toString()<<std::endl;
-    // let's play, the only way to leave this loop is to enter -1
+    // let's play, the only way to leave this loop is finish all games
     while(nbParties!=0){
-        // gets the action the TPG would decide in this situation (the result can only be between 0 and 8 included)
-        /// to use gegelati Inference uncomment the following line
-//        action=((const TPG::TPGAction *) tee.executeFromRoot(* root2).back())->getActionID();
-
         /// to use inference with generated C files uncomment the 2 following lines
-        action = executeFromVertex(root);
-        reset();
+        action = inferenceTPG();
 
         std::cout<<"TPG : "<<action<<std::endl;
         le.play(action,playerSymbol);

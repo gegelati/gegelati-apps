@@ -14,6 +14,6 @@ The build process of applications relies on [cmake](https://cmake.org) to config
 ## CodeGen example
 
 The folder src/CodeGen contains an example of use case for the code gen. There are 3 targets for this example, you can directly run the last one :
-- TicTacToeCodeGen that import the TPG_graph.dot and launch the code gen to generate the sources files. If you want to run this target you need to set your working directory as the current build directory of your build system. You can use the following variable $CMakeCurrentBuildDir$.
-- TicTacToeExecCodeGen that is a custom command to execute the previous target 
-- TicTacToeInferenceCodeGen that use the generated file and link them with the learning environment of the directory src/Learn. 
+- TicTacToeCodeGenCompile that import the TPG_graph.dot and launch the code gen to generate the sources files. If you want to run this target you need to set your working directory as the current build directory of your build system. You can use the following variable $CMakeCurrentBuildDir$.
+- TicTacToeCodeGenGenerate that is a custom command to execute the previous target 
+- TicTacToeCodeGenInference that use the generated file and link them with the learning environment of the directory src/Learn. 

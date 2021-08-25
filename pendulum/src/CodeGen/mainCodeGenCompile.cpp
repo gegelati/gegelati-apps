@@ -63,15 +63,12 @@ int main() {
     File::ParametersParser::loadParametersFromJson(
             ROOT_DIR"/params.json", params);
     Environment dotEnv(set, data, params.nbRegisters, params.nbProgramConstant);
-    std::cout << "nb program constant : " << dotEnv.getNbConstant() << std::endl;
     TPG::TPGGraph dotGraph(dotEnv);
 
     std::string filename(path + "Pendulum_out_best.dot");
     File::TPGGraphDotImporter dot(filename.c_str(), dotEnv, dotGraph);
     dot.importGraph();
 
-//    File::TPGGraphDotExporter dotExporter("src/Pendulum/Pendulum_out_out2.dot", dotGraph);
-//    dotExporter.print();
     CodeGen::TPGGenerationEngine tpggen("pendulum", dotGraph, "src/");
     tpggen.generateTPGGraph();
 
