@@ -9,21 +9,14 @@
 
 #include <math.h>
 #include <iostream>
-#include <file/parametersParser.h>
-#include "instructions/set.h"
-#include "tpg/tpgGraph.h"
-#include "environment.h"
-#include "file/tpgGraphDotExporter.h"
-#include "instructions/lambdaInstruction.h"
-#include "code_gen/ProgramGenerationEngine.h"
-#include "code_gen/TpgGenerationEngine.h"
-#include "file/tpgGraphDotImporter.h"
-#include "float.h"
+#include <float.h>
+
+#include <gegelati.h>
 
 
 int main() {
 
-    std::cout << "Start Pendulum application." << std::endl;
+    std::cout << "Generate C code from pre-trained dot file." << std::endl;
 
     // Create the instruction set for programs
     Instructions::Set set;
