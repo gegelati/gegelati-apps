@@ -207,7 +207,7 @@ file(GLOB_RECURSE
 )
 
 if(${TESTING})
-	list(REMOVE_ITEM pendulum_files "src/Learn/render.cpp")
+	list(REMOVE_ITEM pendulum_files "${CMAKE_CURRENT_SOURCE_DIR}/./src/Learn/render.cpp")
 endif()
 
 include_directories(${GEGELATI_INCLUDE_DIRS}  ${SDL2_INCLUDE_DIR} ${SDL2IMAGE_INCLUDE_DIR} ${SDL2TTF_INCLUDE_DIR})
@@ -255,3 +255,11 @@ target_include_directories(${TARGET} BEFORE PUBLIC ${SRC_CODEGEN})
 target_compile_definitions(${TARGET} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}")
 # set the custom target that generate the source file as a dependency of the target
 add_dependencies(${TARGET} ${ExecCodeGen})
+
+# Create a project that does the inference from the dot 
+set(TARGET_TPGInference ${PROJECT_NAME}TPGInference)
+set(TARGET_TPGInference_files ${pendulum_files} ${SRC}/mainTPGInference.cpp)
+list(REMOVE_ITEM TARGET_TPGInference_files "${CMAKE_CURRENT_SOURCE_DIR}/./src/Learn/main.cpp")
+add_executable(${TARGET_TPGInference} ${TARGET_TPGInference_files})
+target_compile_definitions(${TARGET_TPGInference} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}")
+target_link_libraries(${TARGET_TPGInference} ${GEGELATI_LIBRARIES}  ${SDL2_LIBRARY} ${SDL2IMAGE_LIBRARY} ${SDL2TTF_LIBRARY})
