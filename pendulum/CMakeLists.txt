@@ -247,6 +247,7 @@ set(TARGET ${PROJECT_NAME}InferenceCodeGen)
 # create binary that need the generated file
 add_executable(${TARGET} ${SRC}/mainCodeGenInference.cpp ./src/Learn/instructions.cpp ./src/Learn/pendulum.cpp ./src/Learn/render.cpp ${CODEGEN} )
 target_link_libraries(${TARGET} ${GEGELATI_LIBRARIES} ${SDL2_LIBRARY} ${SDL2IMAGE_LIBRARY} ${SDL2TTF_LIBRARY})
+target_include_directories(${TARGET} BEFORE PUBLIC ${SRC_CODEGEN}) 
 target_compile_definitions(${TARGET} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}")
 # set the custom target that generate the source file as a dependency of the target
 add_dependencies(${TARGET} ${ExecCodeGen})

@@ -1,17 +1,16 @@
 #include <iostream>
 
-
+extern "C" {
+#include "externHeader.h"
+#include "pendulum.h"
+	/// instantiate global variable used to communicate between the TPG and the environment
+	double* in1;
+}
 
 #include "../Learn/pendulum.h"
 #include "../Learn/render.h"
 #include "../Learn/instructions.h"
 
-extern "C" {
-#include "pendulum.h"
-#include "externHeader.h"
-	/// instantiate global variable used to communicate between the TPG and the environment
-	double* in1;
-}
 
 int main() {
 	/// Import instruction set used during training(required only for gegelati Inference)
@@ -27,8 +26,10 @@ int main() {
 	Environment env(set, le.getDataSources(), params.nbRegisters, params.nbProgramConstant);
 
 	/// fetch data in the environment
-	auto& st = le.getDataSources().at(0).get();
-	in1 = st.getDataAt(typeid(double), 0).getSharedPointer<double>().get();
+	auto dataSources = le.getDataSources();
+	auto& st = dataSources.at(0).get();
+	auto dataSharedPointer = st.getDataAt(typeid(double), 0).getSharedPointer<double>();
+	in1 = dataSharedPointer.get();
 
 	/// set the number of generation
 	uint64_t action;
