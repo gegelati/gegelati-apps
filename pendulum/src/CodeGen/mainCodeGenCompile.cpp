@@ -6,7 +6,6 @@
 #include <inttypes.h>
 
 #define _USE_MATH_DEFINES // To get M_PI
-
 #include <math.h>
 #include <iostream>
 #include <float.h>

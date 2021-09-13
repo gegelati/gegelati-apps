@@ -245,7 +245,11 @@ add_dependencies(${ExecCodeGen} ${TARGET_CodeGen})
 # set target name for the executable that use the codeGen files to do an inference
 set(TARGET ${PROJECT_NAME}InferenceCodeGen)
 # create binary that need the generated file
-add_executable(${TARGET} ${SRC}/mainCodeGenInference.cpp ./src/Learn/instructions.cpp ./src/Learn/pendulum.cpp ./src/Learn/render.cpp ${CODEGEN} )
+set(inference_codegen_files ${SRC}/mainCodeGenInference.cpp ./src/Learn/instructions.cpp ./src/Learn/pendulum.cpp ./src/Learn/render.cpp ${CODEGEN})
+if(${TESTING})
+	list(REMOVE_ITEM inference_codegen_files "./src/Learn/render.cpp")
+endif()
+add_executable(${TARGET} ${inference_codegen_files})
 target_link_libraries(${TARGET} ${GEGELATI_LIBRARIES} ${SDL2_LIBRARY} ${SDL2IMAGE_LIBRARY} ${SDL2TTF_LIBRARY})
 target_include_directories(${TARGET} BEFORE PUBLIC ${SRC_CODEGEN}) 
 target_compile_definitions(${TARGET} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}")
