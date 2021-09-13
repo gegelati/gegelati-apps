@@ -219,7 +219,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}
 
 # Create the target that will generate the C code of the TPG
 set(TARGET_CodeGen ${PROJECT_NAME}CodeGenCompile)
-add_executable(${TARGET_CodeGen} src/CodeGen/mainCodeGenCompile.cpp)
+add_executable(${TARGET_CodeGen} src/Learn/instructions.cpp src/CodeGen/mainCodeGenCompile.cpp)
 target_link_libraries(${TARGET_CodeGen} ${GEGELATI_LIBRARIES})
 target_compile_definitions(${TARGET_CodeGen} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}")
 set_target_properties(${TARGET_CodeGen} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR})
@@ -245,7 +245,7 @@ add_dependencies(${ExecCodeGen} ${TARGET_CodeGen})
 # set target name for the executable that use the codeGen files to do an inference
 set(TARGET ${PROJECT_NAME}InferenceCodeGen)
 # create binary that need the generated file
-add_executable(${TARGET} ${SRC}/mainCodeGenInference.cpp ./src/Learn/pendulum.cpp ./src/Learn/render.cpp ${CODEGEN} )
+add_executable(${TARGET} ${SRC}/mainCodeGenInference.cpp ./src/Learn/instructions.cpp ./src/Learn/pendulum.cpp ./src/Learn/render.cpp ${CODEGEN} )
 target_link_libraries(${TARGET} ${GEGELATI_LIBRARIES} ${SDL2_LIBRARY} ${SDL2IMAGE_LIBRARY} ${SDL2TTF_LIBRARY})
 target_compile_definitions(${TARGET} PRIVATE ROOT_DIR="${CMAKE_SOURCE_DIR}")
 # set the custom target that generate the source file as a dependency of the target
