@@ -1,0 +1,12 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  Generic:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        game: [pendulum, tic-tac-toe, mnist, stick-game]
+    steps:
+      - name: Config
+        run: echo "Run ${{ matrix.os }} ${{ matrix.game }}"
