@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        game: [pendulum, tic-tac-toe, mnist, stick-game]
+        app: [pendulum, tic-tac-toe, mnist, stick-game]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -18,7 +18,7 @@ jobs:
         run: |
           if [ ${GITHUB_REF##*/} == "master" ]; then curl -L -J $(curl -s https://api.github.com/repos/gegelati/gegelati/releases/latest | grep "browser_download_url.*zip" | cut -d':' -f 2,3 | tr -d \") -o gegelatilib-latest.zip; else curl https://gegelati.github.io/neutral-builds/gegelatilib-latest-develop.zip -o gegelatilib-latest.zip;  fi
           7z x gegelatilib-latest.zip
-          export LATEST_FOLDER=$(find -maxdepth 1 -regextype posix-egrep -regex "./gegelatilib-[0-9]+\.[0-9]+\.[0-9]+\$" | cut -d'/' -f 2)
+          echo "LATEST_FOLDER=$(find -maxdepth 1 -regextype posix-egrep -regex "./gegelatilib-[0-9]+\.[0-9]+\.[0-9]+\$" | cut -d'/' -f 2)" >> $GITHUB_ENV
         shell: bash
       - name: Install gegelati Ubuntu
         if: matrix.os == 'ubuntu-latest'
@@ -27,3 +27,16 @@ jobs:
           cd gegelati/bin
           cmake .. -DCMAKE_BUILD_TYPE=Release
           sudo make install
+      - name: Compile appli
+        run: |
+          cd ${{ matrix.app }}
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then cp -r ../${LATEST_FOLDER} ./lib/ ; fi
+          cd bin
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then cmake .. -DTESTING=1 ; fi
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then cmake .. -DTESTING=1 -DCMAKE_BUILD_TYPE=Release ; fi
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then cmake --build . --target ${{ matrix.app }} --config Release ; fi
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then cmake --build . --target ${{ matrix.app }} ; fi
+        shell: bash
+      - name: Run appli
+        run: ./${{ matrix.app }}/bin/Release/${{ matrix.app }}
+        shell: bash
