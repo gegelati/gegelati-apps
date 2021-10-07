@@ -8,5 +8,22 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         game: [pendulum, tic-tac-toe, mnist, stick-game]
     steps:
-      - name: Config
-        run: echo "Run ${{ matrix.os }} ${{ matrix.game }}"
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Doxygen
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt install doxygen
+      - name: Install gegelati Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          if [ ${GITHUB_REF##*/} == "master" ]; then curl -L -J $(curl -s https://api.github.com/repos/gegelati/gegelati/releases/latest | grep "browser_download_url.*zip" | cut -d':' -f 2,3 | tr -d \") -o gegelatilib-latest.zip; else curl https://gegelati.github.io/neutral-builds/gegelatilib-latest-develop.zip -o gegelatilib-latest.zip;  fi
+          7z x gegelatilib-latest.zip
+          export LATEST_FOLDER=$(find -maxdepth 1 -regextype posix-egrep -regex "./gegelatilib-[0-9]+\.[0-9]+\.[0-9]+\$" | cut -d'/' -f 2)
+        shell: bash
+      - name: Install gegelati Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          git clone --branch $([ ${GITHUB_REF##*/} == "master" ] && echo "master" || echo "develop") $() https://github.com/gegelati/gegelati.git
+          cd gegelati/bin
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          sudo make install
