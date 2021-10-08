@@ -1,0 +1,42 @@
+name: CI
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  Generic:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        app: [pendulum, tic-tac-toe, mnist, stick-game]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Doxygen
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt install doxygen
+      - name: Install gegelati Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          if [[ "${{ github.ref }}" == *"master" ]] || [[ "${{ github.base_ref }}" == *"master" ]] || [[ "${{ github.base_ref }}" == *"tags/v"* ]]; then curl -L -J $(curl -s https://api.github.com/repos/gegelati/gegelati/releases/latest | grep "browser_download_url.*zip" | cut -d':' -f 2,3 | tr -d \") -o gegelatilib-latest.zip; else curl https://gegelati.github.io/neutral-builds/gegelatilib-latest-develop.zip -o gegelatilib-latest.zip;  fi
+          7z x gegelatilib-latest.zip
+          echo "LATEST_FOLDER=$(find -maxdepth 1 -regextype posix-egrep -regex "./gegelatilib-[0-9]+\.[0-9]+\.[0-9]+\$" | cut -d'/' -f 2)" >> $GITHUB_ENV
+        shell: bash
+      - name: Install gegelati Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          git clone --branch $([ ${GITHUB_REF##*/} == "master" ] && echo "master" || echo "develop") $() https://github.com/gegelati/gegelati.git
+          cd gegelati/bin
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          sudo make install
+      - name: Compile appli
+        run: |
+          cd ${{ matrix.app }}
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then cp -r ../${LATEST_FOLDER} ./lib/ ; fi
+          cd bin
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then cmake .. -DTESTING=1 ; fi
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then cmake .. -DTESTING=1 -DCMAKE_BUILD_TYPE=Release ; fi
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then cmake --build . --target ${{ matrix.app }} --config Release ; fi
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then cmake --build . --target ${{ matrix.app }} ; fi
+        shell: bash
+      - name: Run appli
+        run: ./${{ matrix.app }}/bin/Release/${{ matrix.app }}
+        shell: bash
