@@ -1,6 +1,6 @@
 # GEGELATI Applications
 
-The purpose of this repository is to gather several applications built with the [GEGELATI library](https://github.com/gegelati/gegelati). 
+The purpose of this repository is to gather several applications built with the [GEGELATI library](https://github.com/gegelati/gegelati).
 
 ## Available applications
 * [MNIST](./mnist): Classification learning environment based on the eponymous data-set from LeCun et al.
@@ -10,12 +10,12 @@ The purpose of this repository is to gather several applications built with the 
 
 ## Continuous Integration
 
-| Branches | [Travis Status](https://travis-ci.com/gegelati/gegelati-apps) |
+| Branches | [CI  Status](https://github.com/gegelati/gegelati-apps/actions/workflows/ci.yml) |
 | ------------- |  ------------- |
-| master  |  [![Build Status](https://travis-ci.com/gegelati/gegelati-apps.svg?branch=master)](https://travis-ci.com/gegelati/gegelati-apps/branches)  |
-| develop  | [![Build Status](https://travis-ci.com/gegelati/gegelati-apps.svg?branch=develop)](https://travis-ci.com/gegelati/gegelati-apps/branches) |
+| master  |  [![CI](https://github.com/gegelati/gegelati-apps/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/gegelati/gegelati-apps/actions/workflows/ci.yml)  |
+| develop  | [![CI](https://github.com/gegelati/gegelati-apps/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/gegelati/gegelati-apps/actions/workflows/ci.yml) |
 
-All applications are currently tested under a Windows environment with MSVC19, and under a Linux environment with gcc 7.
+All applications are currently tested under a Windows environment with MSVC19, and under a Linux environment with gcc 9.
 
 ## License
 
