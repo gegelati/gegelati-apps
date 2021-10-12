@@ -16,7 +16,7 @@ jobs:
       - name: Install gegelati Windows
         if: matrix.os == 'windows-latest'
         run: |
-          if [[ "${{ github.ref }}" == *"master" ]] || [[ "${{ github.base_ref }}" == *"master" ]] || [[ "${{ github.base_ref }}" == *"tags/v"* ]]; then curl -L -J $(curl -s https://api.github.com/repos/gegelati/gegelati/releases/latest | grep "browser_download_url.*zip" | cut -d':' -f 2,3 | tr -d \") -o gegelatilib-latest.zip; else curl https://gegelati.github.io/neutral-builds/gegelatilib-latest-develop.zip -o gegelatilib-latest.zip;  fi
+          if [[ "${{ github.ref }}" == *"master" ]] || [[ "${{ github.base_ref }}" == *"master" ]] || [[ "${{ github.ref }}" == *"tags/v"* ]]; then curl -L -J $(curl -s https://api.github.com/repos/gegelati/gegelati/releases/latest | grep "browser_download_url.*zip" | cut -d':' -f 2,3 | tr -d \") -o gegelatilib-latest.zip; else curl https://gegelati.github.io/neutral-builds/gegelatilib-latest-develop.zip -o gegelatilib-latest.zip;  fi
           7z x gegelatilib-latest.zip
           echo "LATEST_FOLDER=$(find -maxdepth 1 -regextype posix-egrep -regex "./gegelatilib-[0-9]+\.[0-9]+\.[0-9]+\$" | cut -d'/' -f 2)" >> $GITHUB_ENV
         shell: bash
