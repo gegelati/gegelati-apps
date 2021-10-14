@@ -40,3 +40,42 @@ jobs:
       - name: Run appli
         run: ./${{ matrix.app }}/bin/Release/${{ matrix.app }}
         shell: bash
+  Codegen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Doxygen
+        run: sudo apt install doxygen
+      - name: Install gegelati Ubuntu
+        run: |
+          git clone --branch $([ ${GITHUB_REF##*/} == "master" ] && echo "master" || echo "develop") $() https://github.com/gegelati/gegelati.git
+          cd gegelati/bin
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          sudo make install
+      - name: Compile Code Generation
+        run: |
+          cd pendulum
+          cd bin
+          cmake .. -DTESTING=1 -DCMAKE_BUILD_TYPE=Release
+          cmake --build . --target pendulumCodeGenCompile
+      - name: Run Code Generation
+        run: |
+          cd pendulum
+          cd bin
+          cmake --build . --target pendulumExecCodeGen
+        shell: bash
+      - name: Compile and Run Generated Code
+        run: |
+          cd pendulum
+          cd bin
+          cmake --build . --target pendulumInferenceCodegen
+          ./bin/Release/pendulumInferenceCodegen
+        shell: bash
+      - name: Run Reference TPG
+        run: |
+          cd pendulum
+          cd bin
+          cmake --build . --target pendulumTPGInference
+          ./bin/Release/pendulumTPGInference
+        shell: bash
