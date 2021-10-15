@@ -69,13 +69,13 @@ jobs:
         run: |
           cd pendulum
           cd bin
-          cmake --build . --target pendulumInferenceCodegen
-          ./bin/Release/pendulumInferenceCodegen
+          cmake --build . --target pendulumInferenceCodeGen
+          ./Release/pendulumInferenceCodeGen
         shell: bash
       - name: Run Reference TPG
         run: |
           cd pendulum
           cd bin
           cmake --build . --target pendulumTPGInference
-          ./bin/Release/pendulumTPGInference
+          ./Release/pendulumTPGInference
         shell: bash
