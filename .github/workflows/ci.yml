@@ -70,12 +70,20 @@ jobs:
           cd pendulum
           cd bin
           cmake --build . --target pendulumInferenceCodeGen
-          ./Release/pendulumInferenceCodeGen
+          ./Release/pendulumInferenceCodeGen >> codegen.log
+          tail -n  3 codegen.log
         shell: bash
-      - name: Run Reference TPG
+      - name: Compile and run Reference TPG
         run: |
           cd pendulum
           cd bin
           cmake --build . --target pendulumTPGInference
-          ./Release/pendulumTPGInference
+          ./Release/pendulumTPGInference >> tpg.log
+          tail -n  3 tpg.log
+          echo "Count the number of line that differs between the two logs"
+          set +o pipefail
+          NB_DIFF=$(diff -y --suppress-common-lines codegen.log tpg.log | wc -l) 
+          echo "(should be 3 if only the measured execution times differ)"
+          echo "$NB_DIFF"
+          if [ $NB_DIFF == 3 ]; then exit 0; else exit 1; fi
         shell: bash

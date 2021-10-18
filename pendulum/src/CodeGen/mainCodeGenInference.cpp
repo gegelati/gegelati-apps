@@ -69,7 +69,8 @@ int main() {
 	// do a replay to subtract non-inference time
 	size_t iter = 0;
 	le.reset(seed);
-	// in1[0] = M_PI; // reset pendulum position
+
+	std::cout << "Replay environment without TPG" << std::endl;
 	auto startReplay = std::chrono::system_clock::now();
 	while (iter < nbActions) {
 		// Do the action 
