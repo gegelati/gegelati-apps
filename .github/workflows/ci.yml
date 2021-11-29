@@ -42,6 +42,10 @@ jobs:
         shell: bash
   Codegen:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [pendulum]
+    name: Codegen-${{ matrix.app }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -55,30 +59,30 @@ jobs:
           sudo make install
       - name: Compile Code Generation
         run: |
-          cd pendulum
+          cd ${{ matrix.app }}
           cd bin
           cmake .. -DTESTING=1 -DCMAKE_BUILD_TYPE=Release
-          cmake --build . --target pendulumCodeGenCompile
+          cmake --build . --target ${{ matrix.app }}CodeGenCompile
       - name: Run Code Generation
         run: |
-          cd pendulum
+          cd ${{ matrix.app }}
           cd bin
-          cmake --build . --target pendulumExecCodeGen
+          cmake --build . --target ${{ matrix.app }}ExecCodeGen
         shell: bash
       - name: Compile and Run Generated Code
         run: |
-          cd pendulum
+          cd ${{ matrix.app }}
           cd bin
-          cmake --build . --target pendulumInferenceCodeGen
-          ./Release/pendulumInferenceCodeGen >> codegen.log
+          cmake --build . --target ${{ matrix.app }}InferenceCodeGen
+          ./Release/${{ matrix.app }}InferenceCodeGen >> codegen.log
           tail -n  3 codegen.log
         shell: bash
       - name: Compile and run Reference TPG
         run: |
-          cd pendulum
+          cd ${{ matrix.app }}
           cd bin
-          cmake --build . --target pendulumTPGInference
-          ./Release/pendulumTPGInference >> tpg.log
+          cmake --build . --target ${{ matrix.app }}TPGInference
+          ./Release/${{ matrix.app }}TPGInference >> tpg.log
           tail -n  3 tpg.log
           echo "Count the number of line that differs between the two logs"
           set +o pipefail
