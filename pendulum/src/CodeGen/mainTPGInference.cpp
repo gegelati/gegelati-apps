@@ -64,7 +64,7 @@ int main() {
 	// measure time 
 	auto start = std::chrono::system_clock::now();
 	while (nbActions < 1000 && !le.isTerminal()) {
-		/// inference with generated C files
+		/// inference with TPG
 		auto trace = tee.executeFromRoot(*root);
 		actions[nbActions] = ((const TPG::TPGAction*)trace.back())->getActionID();
 

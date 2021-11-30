@@ -4,12 +4,9 @@
 
 #include <gegelati.h>
 
-extern "C" {
-#include "stick_game.h"
-	/// instantiate global variable used to communicate between the TPG and the environment
-	int* in1;
-	int* in2;
-}
+/// instantiate global variable used to communicate between the TPG and the environment
+int* in1;
+int* in2;
 
 #include "../Learn/instructions.h"
 #include "../Learn/stickGameAdversarial.h"
@@ -26,7 +23,18 @@ int main() {
 	/// Instantiate an Environment and import (required only for gegelati Inference)
 	Learn::LearningParameters params;
 	File::ParametersParser::loadParametersFromJson(ROOT_DIR"/params.json", params);
-	Environment env(set, le.getDataSources(), params.nbRegisters);
+
+	// Load graph from dot file
+	std::string path(ROOT_DIR "/src/CodeGen/");
+	Environment dotEnv(set, le.getDataSources(), params.nbRegisters, params.nbProgramConstant);
+	TPG::TPGGraph dotGraph(dotEnv);
+	std::string filename(path + "StickGame_out_best.dot");
+	File::TPGGraphDotImporter dot(filename.c_str(), dotEnv, dotGraph);
+	dot.importGraph();
+
+	// Prepare for inference
+	TPG::TPGExecutionEngine tee(dotEnv);
+	const TPG::TPGVertex* root(dotGraph.getRootVertices().back());
 
 	/// fetch data in the environment
 	auto& st = le.getDataSources().at(0).get();
@@ -43,7 +51,8 @@ int main() {
 	while (nbParties != 0) {
 
 		///inference with generated C files
-		action = inferenceTPG();
+		auto trace = tee.executeFromRoot(*root);
+		action = ((const TPG::TPGAction*)trace.back())->getActionID();
 
 		std::cout << "player : " << playerNb << " removes : " << action + 1 << " sticks " << std::endl;
 		le.doAction(action);
