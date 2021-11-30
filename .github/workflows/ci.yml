@@ -89,5 +89,5 @@ jobs:
           NB_DIFF=$(diff -y --suppress-common-lines codegen.log tpg.log | wc -l) 
           echo "(should be 3 if only the measured execution times differ)"
           echo "$NB_DIFF"
-          if [ $NB_DIFF == 3 ]; then exit 0; else exit 1; fi
+          if [ $NB_DIFF -le 3 ]; then exit 0; else exit 1; fi
         shell: bash
