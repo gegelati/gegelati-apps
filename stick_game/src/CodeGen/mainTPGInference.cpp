@@ -43,27 +43,66 @@ int main() {
 	in2 = st2.getDataAt(typeid(int), 0).getSharedPointer<int>().get();
 
 	/// set the number of game
-	uint64_t action;
 	int playerNb = 0;
-	size_t nbParties = 10;
+	const size_t nbGames = 100;
 	std::cout << "Game : " << le.toString() << std::endl;
-	// let's play, the only way to leave this loop is to play nbParties games
-	while (nbParties != 0) {
+
+	// let's play, the only way to leave this loop is to play nbGames games
+	int nbActions = 0;
+	size_t actions[1000];
+	// measure time
+	auto start = std::chrono::system_clock::now();
+
+	size_t playedGames = 0;
+	while (playedGames < nbGames) {
 
 		///inference with generated C files
 		auto trace = tee.executeFromRoot(*root);
-		action = ((const TPG::TPGAction*)trace.back())->getActionID();
+		actions[nbActions] = ((const TPG::TPGAction*)trace.back())->getActionID();
 
-		std::cout << "player : " << playerNb << " removes : " << action + 1 << " sticks " << std::endl;
-		le.doAction(action);
+		std::cout << "player : " << playerNb << " removes : " << actions[nbActions] + 1 << " sticks " << std::endl;
+		le.doAction(actions[nbActions]);
 		playerNb = !playerNb;
+
+		nbActions++;
 
 		if (le.isTerminal()) {
 			std::cout << "TPG nb" << playerNb << " won !" << std::endl;
 			le.reset();
-			nbParties--;
+			++playedGames;
 			continue;
 		}
 	}
+
+	auto stop = std::chrono::system_clock::now();
+
+	// do a replay to subtract non-inference time
+	playedGames = 0;
+	nbActions = 0;
+
+	std::cout << "Replay environment without TPG" << std::endl;
+	auto startReplay = std::chrono::system_clock::now();
+	while (playedGames < nbGames) {
+
+		std::cout << "player : " << playerNb << " removes : " << actions[nbActions] + 1 << " sticks " << std::endl;
+		le.doAction(actions[nbActions]);
+		playerNb = !playerNb;
+
+		nbActions++;
+
+		if (le.isTerminal()) {
+			std::cout << "TPG nb" << playerNb << " won !" << std::endl;
+			le.reset();
+			++playedGames;
+			continue;
+		}
+	}
+
+	auto stopReplay = std::chrono::system_clock::now();
+	auto totalTime = ((std::chrono::duration<double>)(stop - start)).count();
+	auto replayTime = ((std::chrono::duration<double>)(stopReplay - startReplay)).count();
+	std::cout << std::setprecision(6) << " Total time: " << totalTime << std::endl;
+	std::cout << std::setprecision(6) << "  Env. time: " << replayTime << std::endl;
+	std::cout << std::setprecision(6) << "Infer. time: " << totalTime - replayTime << std::endl;
 
 }
