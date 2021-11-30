@@ -9,6 +9,7 @@
 
 #include "pendulum.h"
 #include "render.h"
+#include "instructions.h"
 
 int main() {
 
@@ -16,31 +17,7 @@ int main() {
 
 	// Create the instruction set for programs
 	Instructions::Set set;
-	auto minus = [](double a, double b)->double {return a - b; };
-	auto add = [](double a, double b)->double {return a + b; };
-	auto mult = [](double a, double b)->double {return a * b; };
-	auto div = [](double a, double b)->double {return a / b; };
-	auto max = [](double a, double b)->double {return std::max(a, b); };
-	auto ln = [](double a)->double {return std::log(a); };
-	auto exp = [](double a)->double {return std::exp(a); };
-	auto cos = [](double a)->double {return std::cos(a); };
-	auto sin = [](double a)->double {return std::sin(a); };
-	auto tan = [](double a)->double {return std::tan(a); };
-	auto pi = [](double a)->double {return M_PI; };
-	auto multByConst = [](double a, Data::Constant c)->double {return a * (double)c / 10.0; };
-
-	set.add(*(new Instructions::LambdaInstruction<double, double>(minus)));
-	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
-	set.add(*(new Instructions::LambdaInstruction<double, double>(mult)));
-	set.add(*(new Instructions::LambdaInstruction<double, double>(div)));
-	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
-	set.add(*(new Instructions::LambdaInstruction<double>(exp)));
-	set.add(*(new Instructions::LambdaInstruction<double>(ln)));
-	set.add(*(new Instructions::LambdaInstruction<double>(cos)));
-	set.add(*(new Instructions::LambdaInstruction<double>(sin)));
-	set.add(*(new Instructions::LambdaInstruction<double>(tan)));
-	set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(multByConst)));
-	set.add(*(new Instructions::LambdaInstruction<double>(pi)));
+	fillInstructionSet(set);
 
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
