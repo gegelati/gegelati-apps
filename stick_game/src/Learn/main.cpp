@@ -7,6 +7,7 @@
 
 #include <gegelati.h>
 
+#include "instructions.h"
 #include "stickGameAdversarial.h"
 #include "resultTester.h"
 
@@ -19,21 +20,7 @@ int main(int argc, char* argv[]) {
 
 	// Create the instruction set for programs
 	Instructions::Set set;
-	auto minus = [](int a, int b)->double {return (double)a - (double)b; };
-	auto cast = [](int a)->double {return (double)a; };
-	auto add = [](double a, double b)->double {return a + b; };
-	auto max = [](double a, double b)->double {return std::max(a, b); };
-	auto nulltest = [](double a)->double {return (a == 0.0) ? 10.0 : 0.0; };
-	auto modulo = [](double a, double b)->double {
-		if (b != 0.0) { return fmod(a, b); }
-		else { return  DBL_MIN; }	};
-
-	set.add(*(new Instructions::LambdaInstruction<double, double>(modulo)));
-	set.add(*(new Instructions::LambdaInstruction<int, int>(minus)));
-	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
-	set.add(*(new Instructions::LambdaInstruction<int>(cast)));
-	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
-	set.add(*(new Instructions::LambdaInstruction<double>(nulltest)));
+	fillInstructionSet(set);
 
 	// Set the parameters for the learning process.
 	// (Controls mutations probability, program lengths, and graph size
