@@ -1,3 +1,5 @@
+#include <numeric>
+#include <cfloat>
 #define _USE_MATH_DEFINES // To get M_PI
 #include <math.h>
 
