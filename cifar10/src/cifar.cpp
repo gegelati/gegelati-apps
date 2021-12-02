@@ -198,7 +198,7 @@ void CIFAR::processDataset()
 		this->tmp_dataset.training_images.empty();
 		this->tmp_dataset.training_labels.empty();
 		this->tmp_dataset.test_images.empty();
-		this->tmp_dataset.test_images.empty();
+		this->tmp_dataset.test_labels.empty();
 
 		Learn::LearningParameters params;
 		File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json", params);
