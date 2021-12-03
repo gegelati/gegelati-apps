@@ -60,9 +60,9 @@ endif()
 # *******************************************
 # ************ CIFAR10 database ***************
 # *******************************************
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/dat/cifar10-binary.tar.gz")
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/dat/cifar-10-binary.tar.gz")
 	message(STATUS "Download CIFAR10 training database (may take a few seconds).")
-	file(DOWNLOAD https://www.cs.toronto.edu/~kriz/cifar10-binary.tar.gz ${CMAKE_CURRENT_SOURCE_DIR}/dat/cifar10-binary.tar.gz)
+	file(DOWNLOAD https://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz ${CMAKE_CURRENT_SOURCE_DIR}/dat/cifar-10-binary.tar.gz SHOW_PROGRESS)
 	
 else()
 	message(STATUS "CIFAR10 data already downloaded.")
@@ -70,8 +70,14 @@ endif()
 
 message(STATUS "Extract CIFAR10 database.")
 execute_process(
-	COMMAND gzip -dfk ${CMAKE_SOURCE_DIR}/dat/cifar10-binary.tar.gz
+	COMMAND tar -xf ${CMAKE_SOURCE_DIR}/dat/cifar-10-binary.tar.gz
 )
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/bin/cifar10")
+	execute_process(
+		COMMAND mv cifar-10-batches-bin cifar10
+		COMMAND rm -rf cifar-10-batches-bin
+	)
+endif()
 set(CIFAR10_DATA_DIR ${CMAKE_SOURCE_DIR}/dat)
 
 # *******************************************
