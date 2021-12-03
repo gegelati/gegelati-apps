@@ -13,3 +13,11 @@ The build process of applications relies on [cmake](https://cmake.org) to config
 
 ### Evaluation
 To evaluate "by hand" a tpg, the main function enables to play against it. The command is `executable -evaluate tpgFile.dot`
+
+## CodeGen example
+
+The folder src/CodeGen contains an example of use case for the code gen. There are 3 targets for this example, you can directly run the last one :
+- stick_gameCodeGenCompile that import the TPG_graph.dot and launch the code gen to generate the sources files. If you want to run this target you need to set your working directory as the current build directory of your build system. You can use the following variable $CMakeCurrentBuildDir$.
+- stick_gameCodeGenGenerate that is a custom command to execute the previous target
+- stick_gameCodeGenInference that use the generated file and link them with the learning environment of the directory src/Learn
+- stick_gameTPGInference that use the *.dot file to perform the inference.
