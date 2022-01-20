@@ -8,6 +8,8 @@
 #include <gegelati.h>
 
 #include "mnist.h"
+#define NO_CONSOLE_CONTROL
+
 
 void getKey(std::atomic<bool>& exit, std::atomic<bool>& printStats) {
 	std::cout << std::endl;
@@ -103,7 +105,8 @@ int main() {
 	std::cout << "Number of threads: " << params.nbThreads << std::endl;
 
 	// Instantiate and init the learning agent
-	Learn::ClassificationLearningAgent la(mnistLE, set, params);
+	//Learn::ClassificationLearningAgent la(mnistLE, set, params);
+	Learn::ParallelLearningAgent la(mnistLE, set, params);
 	la.init();
 
 	// Create an exporter for all graphs
@@ -136,7 +139,7 @@ int main() {
 	File::ParametersParser::writeParametersToJson("exported_params.json", params);
 
 	// Train for NB_GENERATIONS generations
-	for (int i = 0; i < params.nbGenerations && !exitProgram; i++) {
+	for (int i = 0; i < params.nbGenerations; i++) {
 		char buff[13];
 		sprintf(buff, "out_%04d.dot", i);
 		dotExporter.setNewFilePath(buff);
@@ -144,10 +147,11 @@ int main() {
 
 		la.trainOneGeneration(i);
 
-		if (printStats) {
+		if (printStats||1) {
 			mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), la.getBestRoot().first);
 			printStats = false;
 		}
+		// mnistLE.computeKappa();
 	}
 
 	// Keep best policy

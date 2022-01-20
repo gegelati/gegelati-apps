@@ -7,13 +7,29 @@
 
 #include "mnist_reader/mnist_reader.hpp"
 
+/*
+#ifndef RATIO_IMB
+#define RATIO_IMB 0		 // should be 4, 2, 1 or 0.5
+#endif
+#ifndef TARGET_CLASS
+#define TARGET_CLASS 0
+#endif
+#ifndef FITNESS
+#define FITNESS 0
+#endif
+*/
+
 /**
 * LearningEnvironment to train an agent to classify the MNIST database.
 */
-class MNIST : public Learn::ClassificationLearningEnvironment {
+class MNIST : public Learn::LearningEnvironment {
 protected:
 	/// MNIST dataset for the training.
 	static mnist::MNIST_dataset<std::vector, std::vector<double>, uint8_t> dataset;
+
+    /// MNIST dataset for the training.
+    static mnist::MNIST_dataset<std::vector, std::vector<double>, uint8_t> subset;
+
 
 	/// Current LearningMode of the LearningEnvironment.
 	Learn::LearningMode currentMode;
@@ -27,7 +43,26 @@ protected:
 	/// Current index of the image in the dataset.
 	uint64_t currentIndex;
 
-	/**
+	/// Current Class
+	uint32_t currentClass;
+
+    /// True Positives
+    int tp;
+
+    /// True Negatives
+    int tn;
+
+    /// False Positives
+    int fp;
+
+    /// False Negatives
+    int fn;
+
+    /// Score of the generation
+    int score;
+
+
+    /**
 	* \brief Change the image currently available in the dataSources of the LearningEnvironment.
 	*
 	* A random image from the dataset for the current mode is selected.
@@ -96,6 +131,16 @@ public:
 	* with their score in ascending order.
 	*/
 	void printClassifStatsTable(const Environment& env, const TPG::TPGVertex* bestRoot);
+
+	/*
+	 * \brief compute the kappa of the classifier.
+	 */
+	double computeKappa();
+
+	/*
+	 *  \brief reduce the dataset depending on the imbalance ratio and the target class
+	 */
+	void computeSubset();
 };
 
 #endif

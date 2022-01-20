@@ -4,12 +4,13 @@
 #include "mnist.h"
 
 mnist::MNIST_dataset<std::vector, std::vector<double>, uint8_t> MNIST::dataset(mnist::read_dataset<std::vector, std::vector, double, uint8_t>(MNIST_DATA_LOCATION));
+mnist::MNIST_dataset<std::vector, std::vector<double>, uint8_t> MNIST::subset;
 
 void MNIST::changeCurrentImage()
 {
 	// Get the container for the current mode.
 	std::vector<std::vector<double>>& dataSource = (this->currentMode == Learn::LearningMode::TRAINING) ?
-		this->dataset.training_images : this->dataset.test_images;
+		this->subset.training_images : this->subset.test_images;
 
 	// Select the image 
 	// If the mode is training or validation
@@ -29,28 +30,55 @@ void MNIST::changeCurrentImage()
 
 	// Keep current label too.
 	this->currentClass = (this->currentMode == Learn::LearningMode::TRAINING) ?
-		this->dataset.training_labels.at(this->currentIndex) : this->dataset.test_labels.at(this->currentIndex);
+		this->subset.training_labels.at(this->currentIndex) : this->subset.test_labels.at(this->currentIndex);
 
 }
 
-MNIST::MNIST() : ClassificationLearningEnvironment(10), currentImage(28, 28)
+MNIST::MNIST() : LearningEnvironment(10), currentImage(28, 28)
 {
+    computeSubset();
 	// Fill shared dataset dataset(mnist::read_dataset<std::vector, std::vector, double, uint8_t>(MNIST_DATA_LOCATION))
-	if (MNIST::dataset.training_labels.size() != 0) {
-		std::cout << "Nbr of training images = " << dataset.training_images.size() << std::endl;
-		std::cout << "Nbr of training labels = " << dataset.training_labels.size() << std::endl;
-		std::cout << "Nbr of test images = " << dataset.test_images.size() << std::endl;
-		std::cout << "Nbr of test labels = " << dataset.test_labels.size() << std::endl;
+	/*if (MNIST::subset.training_labels.size() != 0) {
+		std::cout << "Nbr of training images = " << subset.training_images.size() << std::endl;
+		std::cout << "Nbr of training labels = " << subset.training_labels.size() << std::endl;
+		std::cout << "Nbr of test images = " << subset.test_images.size() << std::endl;
+		std::cout << "Nbr of test labels = " << subset.test_labels.size() << std::endl;
 	}
 	else {
 		throw std::runtime_error("Initialization of MNIST databased failed.");
-	}
+	}*/
 }
 
 void MNIST::doAction(uint64_t actionID)
 {
+    static int r = (dataset.training_images.size()-50*RATIO_IMB)/50*RATIO_IMB;
+    // Call to default method to increment classificationTable
+    if(this->currentClass == TARGET_CLASS && actionID == TARGET_CLASS) //TP
+    {
+        this->score += 1;  // basic TPG reward
+        //this->score += r;  // linear compensation
+        this->tp += 1;       // GScore, MCC or
+    }
+    else if(this->currentClass != TARGET_CLASS && actionID == this->currentClass) //TN
+    {
+        this->score += 1;
+        this->tn += 1;
+    }
+    else if (this->currentClass != TARGET_CLASS && actionID == TARGET_CLASS) //FP
+    {
+        this->score -= 1;   //basic TPG reward
+        //this->score -= r;   //linear compensation
+        this->fp += 1;
+    }
+    else if (this->currentClass == TARGET_CLASS && actionID != TARGET_CLASS) //FN
+    {
+        this->score -= 1;
+        this->fn += 1;
+    }
+
 	// Call to devault method to increment classificationTable
-	ClassificationLearningEnvironment::doAction(actionID);
+	//ClassificationLearningEnvironment::doAction(actionID);
+    LearningEnvironment::doAction(actionID);
 
 	this->changeCurrentImage();
 }
@@ -58,11 +86,14 @@ void MNIST::doAction(uint64_t actionID)
 void MNIST::reset(size_t seed, Learn::LearningMode mode)
 {
 	// Reset the classificationTable
-	ClassificationLearningEnvironment::reset(seed);
-
+	//ClassificationLearningEnvironment::reset(seed);
 	this->currentMode = mode;
 	this->rng.setSeed(seed);
-
+    this->score = 0;
+    this->tp = 0;
+    this->tn = 0;
+    this->fp = 0;
+    this->fn = 0;
 	// Reset at -1 so that in TESTING mode, first value tested is 0.
 	this->currentIndex = -1;
 	this->changeCurrentImage();
@@ -87,8 +118,69 @@ Learn::LearningEnvironment* MNIST::clone() const
 
 double MNIST::getScore() const
 {
+    //MCC
+#if FITNESS==2
+    int num = tp*tn-fp*fn;
+	double densquare = (tp+fp)*(tp+fn)*(tn+fp)*(tn+fn);
+	if(densquare <= 0)
+	{
+		return -100;
+	}
+	double res = (double)num / sqrt(densquare);
+	return res;
+#endif
+
+    //kappa
+#if FITNESS==1
+    double sum = tp + tn + fp + fn;
+
+    double P_agree = (double)(tp + tn)/(double)sum;
+
+    double P_tp = (double)(tp+fp)/(double)sum * (double)(tp + fn)/(double)sum;
+    double P_tn = (double)(tn+fp)/(double)sum * (double)(tn + fn)/(double)sum;
+
+    double P_rand = P_tp + P_tn;
+
+    double kappa = (P_agree - P_rand)/(1-P_rand);
+    return kappa;
+#endif
+
+    //custom cost based 1
+    /*int num = tp*tn-fp*fn;
+    double densquare = (tp+fp)*(tp+fp)*(tn+fp)*(tn+fn);
+    if(densquare <= 0)
+    {
+        return -100;
+    }
+    double res = (double)num / sqrt(densquare);
+    return res;*/
+
+    //GSCORE
+#if FITNESS==3
+    double sen = (double)tp/(double)(tp+fn);
+	double spe = (double)tn/(double)(tn+fp);
+	if(sen*spe!=0)
+	{
+		return (sqrt(sen * spe));
+	}
+	return -10;
+#endif
+
+    //linear
+#if FITNESS==0
+    return (double)this->score/5000.0; // Basic TGP reward and linear compensation
+#endif
+
+    //F1
+#if FITNESS==4
+    //f1 score
+	double pre = (double)tp/(double)(tp+fp);
+	double rec = (double)tp/(double)(tp+fn);
+	return (pre+rec)>0? 0 : (double)(2*pre*rec)/(double)(rec+pre);
+#endif
+    //return ClassificationLearningEnvironment::getScore();
 	// Return the default classification score
-	return ClassificationLearningEnvironment::getScore();
+	//return ClassificationLearningEnvironment::getScore();
 }
 
 bool MNIST::isTerminal() const
@@ -131,7 +223,7 @@ void MNIST::printClassifStatsTable(const Environment& env, const TPG::TPGVertex*
 	}
 
 	// Print the table
-	printf("\t");
+	/*printf("\t");
 	for (int i = 0; i < 10; i++) {
 		printf("%d\t", i);
 	}
@@ -149,5 +241,70 @@ void MNIST::printClassifStatsTable(const Environment& env, const TPG::TPGVertex*
 		}
 		printf("%4" PRIu64 "\n", nbPerClass[i]);
 	}
-	std::cout << std::endl;
+	std::cout << std::endl;*/
+	printf("\n%d \t %d \t %d \t %d \n", tp, tn, fp, fn);
 }
+
+double MNIST::computeKappa() {
+    static double kappa = 0;
+    double sum = tp + tn + fp + fn;
+
+    double P_agree = (double)(tp + tn)/(double)sum;
+
+    double P_tp = (double)(tp+fp)/(double)sum * (double)(tp + fn)/(double)sum;
+    double P_tn = (double)(tn+fp)/(double)sum * (double)(tn + fn)/(double)sum;
+
+    double P_rand = P_tp + P_tn;
+
+    double tmp = (double)(P_agree - P_rand)/(double)(1-P_rand);
+    if(kappa < tmp)
+    {
+        kappa = tmp;
+        printf("\t kappa : %lf \t \n", kappa);
+    }
+    return kappa;
+}
+
+void MNIST::computeSubset() {
+    int count_min_class = 0;
+    int count_maj_class = 0;
+
+    double nb_sample_min[19]={1000, 666,  500,  400,  333,  285,  250,  222,  200,  166,  133,  111,   66,   20,    6,    2, 0.67, 0.2};
+    double nb_sample_max[19]={1000,1344, 1500, 1600, 1667, 1715, 1750, 1778, 1800, 1844, 1867, 1889, 1934, 1980, 1994, 1999.33, 1999.8};
+    /// MNIST dataset for the training.
+    for(int i = 0;i < dataset.training_images.size(); i++)
+    {
+        if(dataset.training_labels.at(i) == TARGET_CLASS && count_min_class < 5*nb_sample_min[RATIO_IMB])
+        {
+            count_min_class++;
+            subset.training_images.push_back(dataset.training_images.at(i));
+            subset.training_labels.push_back(TARGET_CLASS);
+        }
+        else if (count_maj_class < 5*nb_sample_max[RATIO_IMB])
+        {
+            count_maj_class++;
+            subset.training_images.push_back(dataset.training_images.at(i));
+            subset.training_labels.push_back(dataset.training_labels.at(i));
+        }
+    }
+
+    count_min_class = 0;
+    count_maj_class = 0;
+
+    for(int i = 0;i < dataset.test_images.size(); i++)
+    {
+        if(dataset.test_labels.at(i) == TARGET_CLASS && count_min_class < nb_sample_min[RATIO_IMB])
+        {
+            count_min_class++;
+            subset.test_images.push_back(dataset.test_images.at(i));
+            subset.test_labels.push_back(TARGET_CLASS);
+        }
+        else if (count_maj_class < nb_sample_max[RATIO_IMB])
+        {
+            count_maj_class++;
+            subset.test_images.push_back(dataset.test_images.at(i));
+            subset.test_labels.push_back(dataset.test_labels.at(i));
+        }
+    }
+}
+
