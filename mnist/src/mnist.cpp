@@ -268,9 +268,11 @@ double MNIST::computeKappa() {
 void MNIST::computeSubset() {
     int count_min_class = 0;
     int count_maj_class = 0;
-
-    double nb_sample_min[19]={1000, 666,  500,  400,  333,  285,  250,  222,  200,  166,  133,  111,   66,   20,    6,    2, 0.67, 0.2};
-    double nb_sample_max[19]={1000,1344, 1500, 1600, 1667, 1715, 1750, 1778, 1800, 1844, 1867, 1889, 1934, 1980, 1994, 1999.33, 1999.8};
+    //                             1    2     3     4     5     6     7    8     9     10
+    //double nb_sample_min[19]={1000, 666,  500,  400,  333,  285,  250,  222,  200,  166,  133,  111,   66,   20,    6,    2, 0.67, 0.2};
+    double nb_sample_min[19]={1000, 500, 333,  166, 66, 20,    6,    2, 0.67, 0.2};
+    //double nb_sample_max[19]={1000,1344, 1500, 1600, 1667, 1715, 1750, 1778, 1800, 1844, 1867, 1889, 1934, 1980, 1994, 1999.33, 1999.8};
+    double nb_sample_max[19]={1000, 1500, 1667, 1844, 1934, 1980, 1994, 1999.33, 1999.8};
     /// MNIST dataset for the training.
     for(int i = 0;i < dataset.training_images.size(); i++)
     {

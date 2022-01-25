@@ -13,6 +13,8 @@ def linear(tp,tn,fp,fn,ratio):
 	return ratio*tp+tn-ratio*fp-fn
 
 def mcc(tp,tn,fp,fn):
+	if((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn) == 0):
+		return tp*tn-fp-fn
 	return (tp*tn-fp*fn)/math.sqrt((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn))
 
 def gscore(tp,tn,fp,fn):
@@ -27,13 +29,16 @@ def kappa(tp,tn,fp,fn):
 	tot = tp + tn + fp + fn
 	pagree=(tp+tn)/tot
 	prand=(fn+tp)/tot*(tp+fp)/tot - (tn+fp)/tot*(tn+fn)/tot
+	if(prand == 1):
+		return 0;
 	return (pagree-prand)/(1-prand)
 
 os.chdir("bin")
 os.system("rm -f ../res/result_brute_force.md")
-ratio_imb=[1,2,3,4,5,6,7,8,9,10,12,15,18,30,100,300,1000,3000,10000]
+# 1 - 3 - 5 - 10 -30 - 100 -300 -1000 -3000 - 10000
+ratio_imb=[1,3,10,30,100,300,1000,3000,10000]
 
-for ratio in ratio_imb:
+for ratio in range(10):
 	#M is the fitness used
 	for m in range(6):
 		fin = open("../res/result_brute_force.md", "a")
