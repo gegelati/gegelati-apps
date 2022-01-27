@@ -14,7 +14,7 @@ void MNIST::changeCurrentImage()
 
 	// Select the image 
 	// If the mode is training or validation
-	if (this->currentMode == Learn::LearningMode::TRAINING || this->currentMode == Learn::LearningMode::VALIDATION) {
+	if (this->currentMode == Learn::LearningMode::TRAINING) {
 		// Select a random image index
 		this->currentIndex = rng.getUnsignedInt64(0, dataSource.size() - 1);
 	}
@@ -22,7 +22,6 @@ void MNIST::changeCurrentImage()
 		// If the mode is TESTING, just go to the next image
 		this->currentIndex = (this->currentIndex + 1) % dataSource.size();
 	}
-
 	// Load the image in the dataSource
 	for (uint64_t pxlIndex = 0; pxlIndex < 28 * 28; pxlIndex++) {
 		this->currentImage.setPointer(&dataSource.at(this->currentIndex));
@@ -38,7 +37,7 @@ MNIST::MNIST() : LearningEnvironment(10), currentImage(28, 28)
 {
     computeSubset();
 	// Fill shared dataset dataset(mnist::read_dataset<std::vector, std::vector, double, uint8_t>(MNIST_DATA_LOCATION))
-	/*if (MNIST::subset.training_labels.size() != 0) {
+	if (MNIST::subset.training_labels.size() != 0) {
 		std::cout << "Nbr of training images = " << subset.training_images.size() << std::endl;
 		std::cout << "Nbr of training labels = " << subset.training_labels.size() << std::endl;
 		std::cout << "Nbr of test images = " << subset.test_images.size() << std::endl;
@@ -46,12 +45,12 @@ MNIST::MNIST() : LearningEnvironment(10), currentImage(28, 28)
 	}
 	else {
 		throw std::runtime_error("Initialization of MNIST databased failed.");
-	}*/
+	}
 }
 
 void MNIST::doAction(uint64_t actionID)
 {
-    static int r = (dataset.training_images.size()-50*RATIO_IMB)/50*RATIO_IMB;
+    static int r = (subset.training_images.size()-50*RATIO_IMB)/50*RATIO_IMB;
     // Call to default method to increment classificationTable
     if(this->currentClass == TARGET_CLASS && actionID == TARGET_CLASS) //TP
     {
@@ -59,7 +58,7 @@ void MNIST::doAction(uint64_t actionID)
         //this->score += r;  // linear compensation
         this->tp += 1;       // GScore, MCC or
     }
-    else if(this->currentClass != TARGET_CLASS && actionID == this->currentClass) //TN
+    else if(this->currentClass != TARGET_CLASS && actionID != TARGET_CLASS) //TN
     {
         this->score += 1;
         this->tn += 1;
@@ -78,7 +77,7 @@ void MNIST::doAction(uint64_t actionID)
 
 	// Call to devault method to increment classificationTable
 	//ClassificationLearningEnvironment::doAction(actionID);
-    LearningEnvironment::doAction(actionID);
+    //LearningEnvironment::doAction(actionID);
 
 	this->changeCurrentImage();
 }
@@ -199,12 +198,15 @@ void MNIST::printClassifStatsTable(const Environment& env, const TPG::TPGVertex*
 
 	// Change the MODE of mnist
 	this->reset(0, Learn::LearningMode::TESTING);
-
+ 	this->tp = 0;
+    this->tn = 0;
+    this->fp = 0;
+    this->fn = 0;
 	// Fill the table
 	uint64_t classifTable[10][10] = { 0 };
 	uint64_t nbPerClass[10] = { 0 };
 
-	const int TOTAL_NB_IMAGE = 10000;
+	const int TOTAL_NB_IMAGE = 1000;
 	for (int nbImage = 0; nbImage < TOTAL_NB_IMAGE; nbImage++) {
 		// Get answer
 		uint8_t currentLabel = this->getCurrentImageLabel();
@@ -242,7 +244,7 @@ void MNIST::printClassifStatsTable(const Environment& env, const TPG::TPGVertex*
 		printf("%4" PRIu64 "\n", nbPerClass[i]);
 	}
 	std::cout << std::endl;*/
-	printf("\n%d \t %d \t %d \t %d \n", tp, tn, fp, fn);
+	printf("\n%d \t %d \t %d \t %d \t %f\n", this->tp, this->tn, this->fp, this->fn, getScore());
 }
 
 double MNIST::computeKappa() {
@@ -268,11 +270,11 @@ double MNIST::computeKappa() {
 void MNIST::computeSubset() {
     int count_min_class = 0;
     int count_maj_class = 0;
-    //                             1    2     3     4     5     6     7    8     9     10
+    //                             1    2     3     4     5     6     7    8     9     10    12    15    18   100   300  1000  3000  10000
     //double nb_sample_min[19]={1000, 666,  500,  400,  333,  285,  250,  222,  200,  166,  133,  111,   66,   20,    6,    2, 0.67, 0.2};
-    double nb_sample_min[19]={1000, 500, 333,  166, 66, 20,    6,    2, 0.67, 0.2};
-    //double nb_sample_max[19]={1000,1344, 1500, 1600, 1667, 1715, 1750, 1778, 1800, 1844, 1867, 1889, 1934, 1980, 1994, 1999.33, 1999.8};
-    double nb_sample_max[19]={1000, 1500, 1667, 1844, 1934, 1980, 1994, 1999.33, 1999.8};
+    double nb_sample_min[19]={500, 250, 83, 33, 10,    3,    1};
+    //double nb_sample_max[19]={1000,1344, 1500, 1600, 1667, 1715, 1750, 1778, 1800, 1844, 1867, 1889, 1934, 1980, 1994, 1998, 1999.33, 1999.8};
+    double nb_sample_max[19]={500, 750, 917, 967, 990, 997, 999};
     /// MNIST dataset for the training.
     for(int i = 0;i < dataset.training_images.size(); i++)
     {
@@ -280,9 +282,9 @@ void MNIST::computeSubset() {
         {
             count_min_class++;
             subset.training_images.push_back(dataset.training_images.at(i));
-            subset.training_labels.push_back(TARGET_CLASS);
+            subset.training_labels.push_back(dataset.training_labels.at(i));
         }
-        else if (count_maj_class < 5*nb_sample_max[RATIO_IMB])
+        else if (dataset.training_labels.at(i) != TARGET_CLASS && count_maj_class < 5*nb_sample_max[RATIO_IMB])
         {
             count_maj_class++;
             subset.training_images.push_back(dataset.training_images.at(i));
@@ -299,14 +301,31 @@ void MNIST::computeSubset() {
         {
             count_min_class++;
             subset.test_images.push_back(dataset.test_images.at(i));
-            subset.test_labels.push_back(TARGET_CLASS);
+            subset.test_labels.push_back(dataset.test_labels.at(i));
         }
-        else if (count_maj_class < nb_sample_max[RATIO_IMB])
+        else if (dataset.test_labels.at(i) != TARGET_CLASS && count_maj_class < nb_sample_max[RATIO_IMB])
         {
             count_maj_class++;
             subset.test_images.push_back(dataset.test_images.at(i));
             subset.test_labels.push_back(dataset.test_labels.at(i));
         }
+        if(count_maj_class + count_min_class >= nb_sample_min[RATIO_IMB] + nb_sample_max[RATIO_IMB])
+        	break;
     }
+
+    int counttab[10] ={0}; 
+    for (int i = 0; i < this->subset.test_labels.size(); i++)
+    {
+    	counttab[subset.test_labels.at(i)] += 1;
+    }
+
+    for (int i = 0; i < 10; i++)
+    {
+    	printf("%d: %d\n",i,counttab[i]);
+    }
+    printf("class to detect : %d\n", TARGET_CLASS);
+
+    printf("%d, %d\n", count_min_class, count_maj_class);
+    printf("%d\n", subset.test_images.size());
 }
 

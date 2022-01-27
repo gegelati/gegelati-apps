@@ -7,7 +7,7 @@ import math
 # 		 0       1     2        3    4       5
 
 def basic(tp,tn,fp,fn):
-	return tp+tn-fp-fn
+	return (tp+tn-fp-fn)/(tp+tn+fp+fn)
 
 def linear(tp,tn,fp,fn,ratio):
 	return ratio*tp+tn-ratio*fp-fn
