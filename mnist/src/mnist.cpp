@@ -30,14 +30,13 @@ void MNIST::changeCurrentImage()
 	// Keep current label too.
 	this->currentClass = (this->currentMode == Learn::LearningMode::TRAINING) ?
 		this->subset.training_labels.at(this->currentIndex) : this->subset.test_labels.at(this->currentIndex);
-
 }
 
 MNIST::MNIST() : LearningEnvironment(10), currentImage(28, 28)
 {
     computeSubset();
 	// Fill shared dataset dataset(mnist::read_dataset<std::vector, std::vector, double, uint8_t>(MNIST_DATA_LOCATION))
-	if (MNIST::subset.training_labels.size() != 0) {
+	/*if (MNIST::subset.training_labels.size() != 0) {
 		std::cout << "Nbr of training images = " << subset.training_images.size() << std::endl;
 		std::cout << "Nbr of training labels = " << subset.training_labels.size() << std::endl;
 		std::cout << "Nbr of test images = " << subset.test_images.size() << std::endl;
@@ -45,7 +44,7 @@ MNIST::MNIST() : LearningEnvironment(10), currentImage(28, 28)
 	}
 	else {
 		throw std::runtime_error("Initialization of MNIST databased failed.");
-	}
+	}*/
 }
 
 void MNIST::doAction(uint64_t actionID)
@@ -86,16 +85,20 @@ void MNIST::reset(size_t seed, Learn::LearningMode mode)
 {
 	// Reset the classificationTable
 	//ClassificationLearningEnvironment::reset(seed);
+	if(this->currentMode != mode)
+	{
+		this->rng.setSeed(seed);
+		this->currentIndex = -1;
+	}
 	this->currentMode = mode;
-	this->rng.setSeed(seed);
     this->score = 0;
     this->tp = 0;
     this->tn = 0;
     this->fp = 0;
     this->fn = 0;
+    this->changeCurrentImage();
 	// Reset at -1 so that in TESTING mode, first value tested is 0.
-	this->currentIndex = -1;
-	this->changeCurrentImage();
+	
 }
 
 std::vector<std::reference_wrapper<const Data::DataHandler>> MNIST::getDataSources()
@@ -123,7 +126,7 @@ double MNIST::getScore() const
 	double densquare = (tp+fp)*(tp+fn)*(tn+fp)*(tn+fn);
 	if(densquare <= 0)
 	{
-		return -100;
+		return num;
 	}
 	double res = (double)num / sqrt(densquare);
 	return res;
@@ -158,11 +161,11 @@ double MNIST::getScore() const
 #if FITNESS==3
     double sen = (double)tp/(double)(tp+fn);
 	double spe = (double)tn/(double)(tn+fp);
-	if(sen*spe!=0)
+	if(sen*spe>=0 )
 	{
 		return (sqrt(sen * spe));
 	}
-	return -10;
+	return 0;
 #endif
 
     //linear
@@ -206,7 +209,7 @@ void MNIST::printClassifStatsTable(const Environment& env, const TPG::TPGVertex*
 	uint64_t classifTable[10][10] = { 0 };
 	uint64_t nbPerClass[10] = { 0 };
 
-	const int TOTAL_NB_IMAGE = 1000;
+	const int TOTAL_NB_IMAGE = 2000;
 	for (int nbImage = 0; nbImage < TOTAL_NB_IMAGE; nbImage++) {
 		// Get answer
 		uint8_t currentLabel = this->getCurrentImageLabel();
@@ -244,7 +247,18 @@ void MNIST::printClassifStatsTable(const Environment& env, const TPG::TPGVertex*
 		printf("%4" PRIu64 "\n", nbPerClass[i]);
 	}
 	std::cout << std::endl;*/
-	printf("\n%d \t %d \t %d \t %d \t %f\n", this->tp, this->tn, this->fp, this->fn, getScore());
+
+	double sum = tp + tn + fp + fn;
+    
+    double P_agree = (double)(tp + tn)/(double)sum;
+    
+    double P_tp = (double)(tp+fp)/(double)sum * (double)(tp + fn)/(double)sum;
+    double P_tn = (double)(tn+fp)/(double)sum * (double)(tn + fn)/(double)sum;
+    
+    double P_rand = P_tp + P_tn; 
+    
+    double kappa = (P_agree - P_rand)/(1-P_rand);
+	printf("\n%d \t %d \t %d \t %d \t %f\n", this->tp, this->tn, this->fp, this->fn, kappa);
 }
 
 double MNIST::computeKappa() {
@@ -272,9 +286,9 @@ void MNIST::computeSubset() {
     int count_maj_class = 0;
     //                             1    2     3     4     5     6     7    8     9     10    12    15    18   100   300  1000  3000  10000
     //double nb_sample_min[19]={1000, 666,  500,  400,  333,  285,  250,  222,  200,  166,  133,  111,   66,   20,    6,    2, 0.67, 0.2};
-    double nb_sample_min[19]={500, 250, 83, 33, 10,    3,    1};
+    double nb_sample_min[9]={1000, 500, 166, 66, 20,    6,    2, 0.67, 0.2};
     //double nb_sample_max[19]={1000,1344, 1500, 1600, 1667, 1715, 1750, 1778, 1800, 1844, 1867, 1889, 1934, 1980, 1994, 1998, 1999.33, 1999.8};
-    double nb_sample_max[19]={500, 750, 917, 967, 990, 997, 999};
+    double nb_sample_max[9]={1000, 1500, 1834, 1934, 1980, 1994, 1998, 1999.33, 1999.8};
     /// MNIST dataset for the training.
     for(int i = 0;i < dataset.training_images.size(); i++)
     {
@@ -290,6 +304,8 @@ void MNIST::computeSubset() {
             subset.training_images.push_back(dataset.training_images.at(i));
             subset.training_labels.push_back(dataset.training_labels.at(i));
         }
+        if(count_maj_class + count_min_class >= nb_sample_min[RATIO_IMB] + nb_sample_max[RATIO_IMB])
+        	break;
     }
 
     count_min_class = 0;
@@ -309,23 +325,7 @@ void MNIST::computeSubset() {
             subset.test_images.push_back(dataset.test_images.at(i));
             subset.test_labels.push_back(dataset.test_labels.at(i));
         }
-        if(count_maj_class + count_min_class >= nb_sample_min[RATIO_IMB] + nb_sample_max[RATIO_IMB])
-        	break;
+        
     }
-
-    int counttab[10] ={0}; 
-    for (int i = 0; i < this->subset.test_labels.size(); i++)
-    {
-    	counttab[subset.test_labels.at(i)] += 1;
-    }
-
-    for (int i = 0; i < 10; i++)
-    {
-    	printf("%d: %d\n",i,counttab[i]);
-    }
-    printf("class to detect : %d\n", TARGET_CLASS);
-
-    printf("%d, %d\n", count_min_class, count_maj_class);
-    printf("%d\n", subset.test_images.size());
 }
 

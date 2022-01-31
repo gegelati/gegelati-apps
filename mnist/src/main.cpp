@@ -106,7 +106,8 @@ int main() {
 
 	// Instantiate and init the learning agent
 	//Learn::ClassificationLearningAgent la(mnistLE, set, params);
-	Learn::ParallelLearningAgent la(mnistLE, set, params);
+	Learn::ImbalancedLearningAgent la(mnistLE, set, params);
+	//Learn::ParallalLearningAgent la(mnistLE, set, params);
 	la.init();
 
 	// Create an exporter for all graphs
