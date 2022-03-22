@@ -107,7 +107,7 @@ int main() {
 	la.init();
 
 	// Create an exporter for all graphs
-	File::TPGGraphDotExporter dotExporter("out_0000.dot", la.getTPGGraph());
+	File::TPGGraphDotExporter dotExporter("out_0000.dot", *la.getTPGGraph());
 
 	// Start a thread for controlling the loop
 #ifndef NO_CONSOLE_CONTROL
@@ -145,7 +145,7 @@ int main() {
 		la.trainOneGeneration(i);
 
 		if (printStats) {
-			mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), la.getBestRoot().first);
+			mnistLE.printClassifStatsTable(la.getTPGGraph()->getEnvironment(), la.getBestRoot().first);
 			printStats = false;
 		}
 	}
@@ -154,14 +154,14 @@ int main() {
 	la.keepBestPolicy();
 
 	// Clear introns instructions
-	la.getTPGGraph().clearProgramIntrons();
+	la.getTPGGraph()->clearProgramIntrons();
 
 	// Export the graph
 	dotExporter.setNewFilePath("out_best.dot");
 	dotExporter.print();
 
 	TPG::PolicyStats ps;
-	ps.setEnvironment(la.getTPGGraph().getEnvironment());
+	ps.setEnvironment(la.getTPGGraph()->getEnvironment());
 	ps.analyzePolicy(la.getBestRoot().first);
 	std::ofstream bestStats;
 	bestStats.open("out_best_stats.md");
@@ -172,7 +172,7 @@ int main() {
 	stats.close();
 
 	// Print stats one last time
-	mnistLE.printClassifStatsTable(la.getTPGGraph().getEnvironment(), la.getTPGGraph().getRootVertices().at(0));
+	mnistLE.printClassifStatsTable(la.getTPGGraph()->getEnvironment(), la.getTPGGraph()->getRootVertices().at(0));
 
 	// cleanup
 	for (unsigned int i = 0; i < set.getNbInstructions(); i++) {
