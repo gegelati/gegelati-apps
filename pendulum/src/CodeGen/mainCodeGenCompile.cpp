@@ -38,8 +38,9 @@ int main() {
 	File::TPGGraphDotImporter dot(filename.c_str(), dotEnv, dotGraph);
 	dot.importGraph();
 
-	CodeGen::TPGGenerationEngine tpggen("pendulum", dotGraph, "src/");
-	tpggen.generateTPGGraph();
+	CodeGen::TPGGenerationEngineFactory factory(CodeGen::TPGGenerationEngineFactory::switchMode);
+	std::unique_ptr<CodeGen::TPGGenerationEngine> tpggen = factory.create("pendulum", dotGraph, "src/");
+	tpggen->generateTPGGraph();
 
 
 	return 0;

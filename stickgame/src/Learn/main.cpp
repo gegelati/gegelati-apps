@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 	Log::LABasicLogger logger(la);
 
 	// Create an exporter for all graphs
-	File::TPGGraphDotExporter dotExporter("out_000.dot", la.getTPGGraph());
+	File::TPGGraphDotExporter dotExporter("out_000.dot", *la.getTPGGraph());
 
 	// File for printing best policy stat.
 	std::ofstream stats;
@@ -70,14 +70,14 @@ int main(int argc, char* argv[]) {
 	la.keepBestPolicy();
 
 	// Clear introns instructions
-	la.getTPGGraph().clearProgramIntrons();
+	la.getTPGGraph()->clearProgramIntrons();
 
 	// Export the graph
 	dotExporter.setNewFilePath("out_best.dot");
 	dotExporter.print();
 
 	TPG::PolicyStats ps;
-	ps.setEnvironment(la.getTPGGraph().getEnvironment());
+	ps.setEnvironment(la.getTPGGraph()->getEnvironment());
 	ps.analyzePolicy(la.getBestRoot().first);
 	std::ofstream bestStats;
 	bestStats.open("out_best_stats.md");
