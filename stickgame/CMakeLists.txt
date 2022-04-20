@@ -8,9 +8,12 @@ cmake_minimum_required(VERSION 3.8)
 # Programs
 #  - stick_game
 
-set (PROJECT_NAME stick_game)
+set (PROJECT_NAME stickgame)
 
 project(${PROJECT_NAME})
+
+# Add definition for relative path into project
+add_definitions( -DPROJECT_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Disable C and C++ compiler extensions.
 # C/CXX_EXTENSIONS are ON by default to allow the compilers to use extended
@@ -32,11 +35,11 @@ if(NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
 	if(CMAKE_BUILD_TYPE MATCHES "Debug")
 			MESSAGE("Generate Debug project")
 			set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Debug)
-			set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -pg -Wall")
+			set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -pg -Wall")
 	else()
 			MESSAGE("Generate Release project")
 			set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Release)
-			set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wall")
+			set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 	endif()
 	#add libmath during non visual studio builds
 	set(CMAKE_EXTRA_LIB m)
@@ -71,9 +74,8 @@ if (WIN32)
 	)
 
 	MESSAGE("Copy GEGELATI DLLs into ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-	if(NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
-		file(COPY ${GEGELATI_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-	else()
+	file(COPY ${GEGELATI_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+	if(${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
 		file(COPY ${GEGELATI_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
 		file(COPY ${GEGELATI_DLL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release)
 	endif()
@@ -115,6 +117,7 @@ set(SRC_CODEGEN ${CMAKE_CURRENT_BINARY_DIR}/src/)
 set(SRC ./src/CodeGen)
 file(MAKE_DIRECTORY ${SRC_CODEGEN})
 include_directories(${SRC_CODEGEN} ${SRC})
+# !!! Files are not properly handled in MSVS if they contains upper-case char or '_'
 set(CODEGEN ${SRC_CODEGEN}/${PROJECT_NAME}.c ${SRC_CODEGEN}/${PROJECT_NAME}_program.c ${SRC_CODEGEN}/${PROJECT_NAME}.h ${SRC_CODEGEN}/${PROJECT_NAME}_program.h)
 
 # set codeGen source file as generated

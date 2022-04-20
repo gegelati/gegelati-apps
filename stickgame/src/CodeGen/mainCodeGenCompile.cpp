@@ -28,7 +28,7 @@ int main(){
     dot.importGraph();
 
     CodeGen::TPGGenerationEngineFactory factory(CodeGen::TPGGenerationEngineFactory::switchMode);
-    std::unique_ptr<CodeGen::TPGGenerationEngine> tpggen = factory.create("stick_game", dotGraph, ROOT_DIR "/src/");
+    std::unique_ptr<CodeGen::TPGGenerationEngine> tpggen = factory.create("stickgame", dotGraph, "src/");
     tpggen->generateTPGGraph();
 
     return 0;

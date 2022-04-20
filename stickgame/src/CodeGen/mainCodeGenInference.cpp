@@ -5,7 +5,7 @@
 #include <gegelati.h>
 
 extern "C" {
-#include "stick_game.h"
+#include "stickgame.h"
 	/// instantiate global variable used to communicate between the TPG and the environment
 	int* in1;
 	int* in2;
