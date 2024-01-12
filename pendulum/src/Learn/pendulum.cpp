@@ -39,7 +39,7 @@ std::vector<std::reference_wrapper<const Data::DataHandler>> Pendulum::getDataSo
 	return result;
 }
 
-void Pendulum::reset(size_t seed, Learn::LearningMode mode)
+void Pendulum::reset(size_t seed, Learn::LearningMode mode, uint16_t iterationNumber, uint64_t generationNumber)
 {
 	// Create seed from seed and mode
 	size_t hash_seed = Data::Hash<size_t>()(seed) ^ Data::Hash<Learn::LearningMode>()(mode);

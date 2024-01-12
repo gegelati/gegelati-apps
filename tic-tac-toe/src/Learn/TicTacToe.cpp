@@ -98,7 +98,7 @@ void TicTacToe::randomPlay(double symbolOfPlayer) {
     this->board.setDataAt(typeid(double), i, symbolOfPlayer);
 }
 
-void TicTacToe::reset(size_t seed, Learn::LearningMode mode) {
+void TicTacToe::reset(size_t seed, Learn::LearningMode mode, uint16_t iterationNumber, uint64_t generationNumber) {
     // Create seed from seed and mode
     size_t hash_seed = Data::Hash<size_t>()(seed) ^Data::Hash<Learn::LearningMode>()(mode);
     this->rng.setSeed(hash_seed);

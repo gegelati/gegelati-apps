@@ -55,7 +55,7 @@ void MNIST::doAction(uint64_t actionID)
 	this->changeCurrentImage();
 }
 
-void MNIST::reset(size_t seed, Learn::LearningMode mode)
+void MNIST::reset(size_t seed, Learn::LearningMode mode, uint16_t iterationNumber, uint64_t generationNumber)
 {
 	// Reset the classificationTable
 	ClassificationLearningEnvironment::reset(seed);
