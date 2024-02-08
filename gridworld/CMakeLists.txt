@@ -6,9 +6,9 @@ cmake_minimum_required(VERSION 3.12.4)
 # This CMake create a workspace containing the following projects
 # 
 # Programs
-#  - gridWorld
+#  - gridworld
 
-set (PROJECT_NAME gridWorld)
+set (PROJECT_NAME gridworld)
 
 project(${PROJECT_NAME})
 
