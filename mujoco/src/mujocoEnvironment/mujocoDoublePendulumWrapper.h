@@ -17,14 +17,14 @@ protected:
 	/// Number of actions since the last reset
 	uint64_t nbActionsExecuted = 0;
 
-public:
-
-	
-
 
 	const std::string xmlFile;
 	// Parameters
 	double reset_noise_scale_ = 5e-3;
+public:
+
+	
+
 
 
 

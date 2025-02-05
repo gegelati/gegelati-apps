@@ -17,34 +17,29 @@ protected:
 	/// Number of actions since the last reset
 	uint64_t nbActionsExecuted = 0;
 
-public:
-
-	
-
-
 	const std::string xmlFile;
-    // Parameters
-    double control_cost_weight_ = 0.5;
 	bool use_healthy_reward;
     bool use_contact_forces_;
+    bool exclude_current_positions_from_observation_;
+    std::vector<double> healthy_z_range_;
+    std::vector<double> contact_force_range_;
+    // Parameters
+    double control_cost_weight_ = 0.5;
     double contact_cost_weight_ = 5e-4;
     double healthy_reward_ = 1.0;
     bool terminate_when_unhealthy_ = true;
-    std::vector<double> healthy_z_range_;
-    std::vector<double> contact_force_range_;
     double reset_noise_scale_ = 0.1;
-    bool exclude_current_positions_from_observation_ = false;
-
+public:
 
 	/**
 	* \brief Default constructor.
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoAntWrapper(const char *pXmlFile, bool useHealthyReward=true, bool useContactForce=false, bool exclude_current_positions_from_observation = false) :
-		MujocoWrapper(8, (exclude_current_positions_from_observation) ? 27:29), 
+	MujocoAntWrapper(const char *pXmlFile, bool useHealthyReward=true, bool useContactForce=false, bool p_exclude_current_positions_from_observation = false) :
+		MujocoWrapper(8, (p_exclude_current_positions_from_observation) ? 27:29), 
 		xmlFile{pXmlFile}, use_healthy_reward{useHealthyReward}, use_contact_forces_{useContactForce},
-		exclude_current_positions_from_observation_{exclude_current_positions_from_observation}
+		exclude_current_positions_from_observation_{p_exclude_current_positions_from_observation}
 		{
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
 			healthy_z_range_ = {0.2, 1.0};
@@ -56,9 +51,9 @@ public:
     * \brief Copy constructor for the armLearnWrapper.
     */ 
     MujocoAntWrapper(const MujocoAntWrapper &other) : MujocoWrapper(other), 
-	use_healthy_reward{other.use_healthy_reward}, use_contact_forces_{other.use_contact_forces_},
-	exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_},
-	xmlFile{other.xmlFile}
+	xmlFile{other.xmlFile}, use_healthy_reward{other.use_healthy_reward}, use_contact_forces_{other.use_contact_forces_},
+	exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}
+	
 	{
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		healthy_z_range_ = {0.2, 1.0};

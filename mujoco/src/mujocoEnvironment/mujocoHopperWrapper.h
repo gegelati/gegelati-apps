@@ -17,12 +17,9 @@ protected:
 	/// Number of actions since the last reset
 	uint64_t nbActionsExecuted = 0;
 
-public:
-
-	
-
 
 	const std::string xmlFile;
+	bool exclude_current_positions_from_observation_ = true;
 	// Parameters
 	double forward_reward_weight = 1.0;
 	double control_cost_weight_ = 1e-3;
@@ -32,7 +29,10 @@ public:
 	std::vector<double> healthy_z_range_;
 	std::vector<double> healthy_angle_range_;
 	double reset_noise_scale_ = 5e-3;
-	bool exclude_current_positions_from_observation_ = true;
+
+public:
+
+	
 
 
 
@@ -57,8 +57,8 @@ public:
     * \brief Copy constructor for the armLearnWrapper.
     */ 
     MujocoHopperWrapper(const MujocoHopperWrapper &other) : MujocoWrapper(other), 
-	exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_},
-	xmlFile{other.xmlFile}
+		xmlFile{other.xmlFile}, exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}
+
 	{
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		healthy_state_range_ = {-100.0, 100.0};

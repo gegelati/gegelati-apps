@@ -19,13 +19,13 @@ protected:
 
 	const std::string xmlFile;
 
-public:
-
     // Parameters
 	double reward_distance_weight = 1.0;
 	double reward_control_weight = 0.1;
 	double reset_noise_scale_pos = -0.1;
 	double reset_noise_scale_vel = -0.005;
+public:
+
 
 
 	/**

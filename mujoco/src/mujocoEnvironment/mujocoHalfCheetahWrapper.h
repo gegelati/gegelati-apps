@@ -19,13 +19,13 @@ protected:
 
 	const std::string xmlFile;
 
-public:
-
     // Parameters
     double forward_reward_weight = 1.0;
     double control_cost_weight_ = 0.5;
     double reset_noise_scale_ = 0.1;
     bool exclude_current_positions_from_observation_ = true;
+public:
+
 
 
 	MujocoHalfCheetahWrapper(const char *pXmlFile, bool exclude_current_positions_from_observation = true) :
@@ -41,8 +41,7 @@ public:
     * \brief Copy constructor for the armLearnWrapper.
     */ 
     MujocoHalfCheetahWrapper(const MujocoHalfCheetahWrapper &other) : MujocoWrapper(other),
-	exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_},
-	xmlFile{other.xmlFile}
+	xmlFile{other.xmlFile}, exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}
 	{   
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		initialize_simulation();

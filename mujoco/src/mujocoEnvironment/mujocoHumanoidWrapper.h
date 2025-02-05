@@ -12,18 +12,18 @@ protected:
     uint64_t nbActionsExecuted = 0;
     const std::string xmlFile;
 
-public:
-    double control_cost_weight_ = 0.1;
-    double forward_reward_weight_ = 1.25;
-    double healthy_reward_ = 5.0;
-    bool terminate_when_unhealthy_ = true;
     bool use_healthy_reward;
     bool use_contact_forces_;
+    bool exclude_current_positions_from_observation_;
+    double forward_reward_weight_ = 1.25;
+    double control_cost_weight_ = 0.1;
+    double healthy_reward_ = 5.0;
+    bool terminate_when_unhealthy_ = true;
     double contact_cost_weight_ = 5e-4;
     std::vector<double> healthy_z_range_ = {1.0, 2.0};
     std::vector<double> contact_force_range_ = {-1.0, 1.0};
     double reset_noise_scale_ = 1e-2;
-    bool exclude_current_positions_from_observation_;
+public:
 
     // Constructeur
     MujocoHumanoidWrapper(const char *pXmlFile, 
@@ -43,15 +43,15 @@ public:
     MujocoHumanoidWrapper(const MujocoHumanoidWrapper &other) :
         MujocoWrapper(other),
         xmlFile{other.xmlFile},
+        use_healthy_reward{other.use_healthy_reward},
+        use_contact_forces_{other.use_contact_forces_},
+        exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_},
         forward_reward_weight_{other.forward_reward_weight_},
         control_cost_weight_{other.control_cost_weight_},
         healthy_reward_{other.healthy_reward_},
         terminate_when_unhealthy_{other.terminate_when_unhealthy_},
         healthy_z_range_{other.healthy_z_range_},
-        reset_noise_scale_{other.reset_noise_scale_},
-        exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_},
-        use_healthy_reward{other.use_healthy_reward},
-        use_contact_forces_{other.use_contact_forces_}
+        reset_noise_scale_{other.reset_noise_scale_}
     {
         model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
         initialize_simulation();

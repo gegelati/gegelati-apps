@@ -96,7 +96,7 @@ bool MujocoHopperWrapper::is_healthy() const{
       double angle = d_->qpos[2];
 
       bool healthy_state = true;
-	  int size_state = (exclude_current_positions_from_observation_) ? 11:12;
+	  size_t size_state = (exclude_current_positions_from_observation_) ? 11:12;
       for (size_t idx = 0; idx < size_state; idx++) {
 
 		double s = *currentState.getDataAt(typeid(double), idx).getSharedPointer<const double>().get();

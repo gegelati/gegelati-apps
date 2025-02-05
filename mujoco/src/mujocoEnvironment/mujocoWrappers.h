@@ -6,6 +6,4 @@
 #include "mujocoWalker2DWrapper.h"
 #include "mujocoDoublePendulumWrapper.h"
 
-#include "multiMujocoWrapper.h"
-
 #include "mujocoWrapper.h"
