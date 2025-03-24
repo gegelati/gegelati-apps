@@ -237,7 +237,7 @@ int main(int argc, char ** argv) {
 	la.init(seed);
 
     auto &tpg = *la.getTPGGraph();
-    Environment env(set, params, mujocoLE->getDataSources(), mujocoLE->getNbContinuousAction());
+    Environment env(set, params, mujocoLE->getDataSources(), mujocoLE->getNbActions());
 
     File::TPGGraphDotImporter dotImporter(dotPath, env, tpg);
 
@@ -277,9 +277,10 @@ int main(int argc, char ** argv) {
     InitVisualization(mujocoLE->m_, mujocoLE->d_);
     StepVisualization(isRenderVideoSaved, pathRenderVideo);
 
-    std::vector<double> actions(mujocoLE->getNbContinuousAction(), 0);
+    std::vector<double> actions(mujocoLE->getNbActions(), 0);
     uint64_t nbActions = 0;
     while (!mujocoLE->isTerminal() && nbActions < params.maxNbActionsPerEval) {
+
         // Get the actions
         std::vector<double> actionsID =
             tee.executeFromRoot(*tpg.getRootVertices()[0]).second;
