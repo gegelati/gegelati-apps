@@ -89,7 +89,16 @@ if(WIN32)
 	file(GLOB GEGELATI_ROOT_DIR "${LIBS_DIR}/gegelatilib-[\\.|0-9]*")
 	set(ENV{GEGELATI_DIR} ${GEGELATI_ROOT_DIR})
 endif()
-find_package(GEGELATI)
+
+# Set the module path to find GEGELATI
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/gegelati/bin/")
+set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/gegelati/bin" ${CMAKE_PREFIX_PATH})
+find_package(GEGELATI REQUIRED)
+
+# Set the module path to find GEGELATI
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/gegelati/bin/")
+set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/gegelati/bin" ${CMAKE_PREFIX_PATH})
+find_package(GEGELATI REQUIRED)
 
 
 if (WIN32)

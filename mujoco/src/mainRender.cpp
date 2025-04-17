@@ -11,6 +11,7 @@
 
 #include "mainRender.h"
 #include <glfw3.h>
+#include <filesystem>
 
 // keyboard callback
 void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods) {
@@ -212,6 +213,8 @@ int main(int argc, char ** argv) {
 	File::ParametersParser::loadParametersFromJson(paramFile, params);
 
 
+	std::cout << "Start Mujoco Rendering application with seed " << seed<<"." << std::endl;
+
 	// Instantiate the LearningEnvironment
 	MujocoWrapper* mujocoLE = nullptr;
 	if(strcmp(usecase, "humanoid") == 0){
@@ -270,6 +273,26 @@ int main(int argc, char ** argv) {
 
     }
 
+    tpg.clearProgramIntrons();
+    char clearDot[250];
+    // Export the graph    
+    strncpy(clearDot, dotPath, strstr(dotPath, ".dot") - dotPath);
+    strcat(clearDot, ".clear.dot");
+    File::TPGGraphDotExporter dotExporter(clearDot, *la.getTPGGraph());
+    dotExporter.print();
+    std::cout<<"Save cleared root in "<<clearDot<<std::endl;
+
+    // Print graph
+    std::string codeGenPath = "logs/codeGen/";
+    std::cout<<codeGenPath<<std::endl;
+    if(!std::filesystem::exists(codeGenPath)){
+        std::filesystem::create_directory(codeGenPath);
+    }
+
+    std::cout << "Printing C code." << std::endl;
+	CodeGen::TPGGenerationEngineFactory factory(CodeGen::TPGGenerationEngineFactory::switchMode);
+    std::unique_ptr<CodeGen::TPGGenerationEngine> tpggen = factory.create("codeGenMujoco", tpg, codeGenPath);
+    tpggen->generateTPGGraph();
     TPG::TPGExecutionEngine tee(env, NULL);
 
     mujocoLE->reset(seed, Learn::LearningMode::TESTING);
@@ -310,6 +333,8 @@ int main(int argc, char ** argv) {
     for(auto act: actions){
         std::cout<<act/(double)nbActions<<"-";
     }std::cout<<std::endl;
+
+
 
     if(isRenderVideoSaved){
         // Change size of images and save

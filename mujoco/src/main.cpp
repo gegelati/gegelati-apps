@@ -119,7 +119,7 @@ int main(int argc, char ** argv) {
 
 	// Create an exporter for all graphs
     char dotPath[400];
-    sprintf(dotPath, "%s/out_0000.%" PRIu64 ".p%d.%s.dot", logsFolder, seed, indexParam, usecase);
+    sprintf(dotPath, "%s/out_lastGen.%" PRIu64 ".p%d.%s.dot", logsFolder, seed, indexParam, usecase);
 	File::TPGGraphDotExporter dotExporter(dotPath, *la.getTPGGraph());
 
 	// Logging best policy stat.
@@ -138,7 +138,7 @@ int main(int argc, char ** argv) {
 #if PRINT_ALL_DOT
 		if(i % 1 == 0){
 			char buff[250];
-			sprintf(buff, "%s/out_lastGen.%" PRIu64 ".p%d.%s.dot", logsFolder, seed, indexParam, usecase);
+			sprintf(buff, "%s/out_lastGen.%" PRIu64 ".%" PRIu64 ".p%d.%s.dot", logsFolder, i, seed, indexParam, usecase);
 			dotExporter.setNewFilePath(buff);
 			dotExporter.print();
 		}
@@ -149,8 +149,42 @@ int main(int argc, char ** argv) {
 		la.trainOneGeneration(i);
 	}
 
-	// Keep best policy
+	
+	// Keep best policy and clear graph
 	la.keepBestPolicy();
+	la.getTPGGraph()->clearProgramIntrons();
+
+	
+	/*auto root = la.getTPGGraph()->getRootVertices().front();
+	std::vector<const TPG::TPGVertex*> vertex = {root};
+	int i = 0;
+	while(vertex.size() > 0){
+		auto currVertex = vertex.front();
+		vertex.erase(vertex.begin());
+
+		if(dynamic_cast<const TPG::TPGActivationVertex*>(currVertex) != nullptr){
+
+			std::vector<const TPG::TPGVertex *> insertedVertex;
+			for(auto e: dynamic_cast<const TPG::TPGActivationVertex*>(currVertex)->getOutgoingConnectionEdges()){
+				insertedVertex.push_back(e->getDestination());
+			}
+			vertex.insert(vertex.begin(), insertedVertex.begin(), insertedVertex.end());
+		} else {
+			
+			std::vector<const TPG::TPGVertex *> insertedVertex;
+			for(auto e: currVertex->getOutgoingEdges()){
+				insertedVertex.push_back(e->getDestination());
+			}
+			vertex.insert(vertex.begin(), insertedVertex.begin(), insertedVertex.end());
+		}
+
+		std::cout<<"Vertex ";
+		if(i<10) std::cout<<i++<<"  : ";
+		else std::cout<<i++<<" : ";
+		for(auto val: currVertex->getPath()){
+			std::cout<<val<<" ";
+		}std::cout<<std::endl;
+	}*/
 
     char bestDot[250];
 	// Export the graph

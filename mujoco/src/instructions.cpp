@@ -39,7 +39,7 @@ void fillInstructionSet(Instructions::Set& set) {
         set.add(*(new Instructions::LambdaInstruction<double>(cos, "$0 = cos($1);")));
         set.add(*(new Instructions::LambdaInstruction<double>(sin, "$0 = sin($1);")));
         set.add(*(new Instructions::LambdaInstruction<double>(tan, "$0 = tan($1);")));
-        set.add(*(new Instructions::LambdaInstruction<double, double>(modulo)));
+        set.add(*(new Instructions::LambdaInstruction<double, double>(modulo, "$0 = $1 % $2;")));
 
         /*set.add(*(new Instructions::LambdaInstruction<double, double>(min)));
         set.add(*(new Instructions::LambdaInstruction<double>(absolute)));
