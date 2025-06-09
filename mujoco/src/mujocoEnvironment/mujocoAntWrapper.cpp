@@ -39,7 +39,7 @@ void MujocoAntWrapper::doActions(std::vector<double> actionsID)
 	do_simulation(actionsID, frame_skip_);
 	auto x_pos_after = d_->qpos[0];
 	auto x_vel = (x_pos_after - x_pos_before) / m_->opt.timestep;
-	auto forward_reward = x_vel;
+	auto forward_reward = x_vel * forward_reward_weight;
 	auto rewards = forward_reward;
 	
 	if(use_healthy_reward){
@@ -47,9 +47,6 @@ void MujocoAntWrapper::doActions(std::vector<double> actionsID)
 	};
 	auto ctrl_cost = control_cost(actionsID);
 	auto costs = ctrl_cost;
-	if (use_contact_forces_) {
-		costs += contact_cost();
-	}
 	auto reward = rewards - costs;
 
 	this->computeState();
@@ -83,8 +80,7 @@ bool MujocoAntWrapper::isTerminal() const
 }
 
 double MujocoAntWrapper::healthy_reward() {
-	return static_cast<double>(is_healthy() || terminate_when_unhealthy_) *
-			healthy_reward_;
+	return static_cast<double>(is_healthy()) * healthy_reward_;
 }
 
 double MujocoAntWrapper::control_cost(std::vector<double>& action) {
@@ -93,22 +89,6 @@ double MujocoAntWrapper::control_cost(std::vector<double>& action) {
 	return control_cost_weight_ * cost;
 }
 
-std::vector<double> MujocoAntWrapper::contact_forces() {
-	std::vector<double> forces;
-	std::copy_n(d_->cfrc_ext, m_->nbody * 6, back_inserter(forces));
-	for (auto& f : forces) {
-		f = std::max(contact_force_range_[0],
-						std::min(f, contact_force_range_[1]));
-	}
-	return forces;
-}
-
-double MujocoAntWrapper::contact_cost() {
-	auto forces = contact_forces();
-	double cost = 0;
-	for (auto& f : forces) cost += f * f;
-	return contact_cost_weight_ * cost;
-}
 
 bool MujocoAntWrapper::is_healthy() const{
 	for (int i = 0; i < m_->nq; i++)

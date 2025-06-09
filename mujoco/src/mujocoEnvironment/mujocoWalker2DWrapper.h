@@ -48,6 +48,7 @@ public:
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
 			healthy_z_range_ = {0.8, 2};
 			healthy_angle_range_ = {-1.0, 1.0};
+			frame_skip_ = 4;
 			initialize_simulation();
 		};
 

@@ -55,7 +55,7 @@ public:
     std::vector<double> init_qvel_;  // Initial velocities
 
     std::string model_path_;  // Absolute path to model xml file
-    int frame_skip_ = 1;  // Number of frames per simlation step
+    int frame_skip_ = 5;  // Number of frames per simlation step
     int obs_size_;  // Number of variables in observation vector
 
     void initialize_simulation();

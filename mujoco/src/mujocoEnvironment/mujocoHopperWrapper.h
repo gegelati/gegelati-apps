@@ -50,7 +50,9 @@ public:
 			healthy_state_range_ = {-100.0, 100.0};
 			healthy_z_range_ = {0.7, float(INFINITY)};
 			healthy_angle_range_ = {-0.2, 0.2};
+			frame_skip_ = 4;
 			initialize_simulation();
+			
 		};
 
     /**
