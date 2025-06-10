@@ -11,11 +11,11 @@
 	// Boolean used to activate an evaluation of the surviving roots in validation
 	// mode after the training at each generation.
 	// "doValidation" : false, // Default value
-	"doValidation" : true,
+	"doValidation" : false,
 	// Maximum number of actions performed on the learning environment during the
 	// each evaluation of a root.
 	// "maxNbActionsPerEval" : 1000, // Default value
-	"maxNbActionsPerEval" : 100,
+	"maxNbActionsPerEval" : 1000,
 	// Maximum number of times a given root is evaluated.After this number is
 	// reached, possibly after several generations, the score of the root will be
 	// fixed, and no further evaluation will be done.
@@ -72,7 +72,7 @@
 			"genMut" : 7,
 			//  Number of actions vertex at the initialisation of a TPGGraph
 			// "initNbActions" : 10, // Default value
-			"initNbActions" : 30,
+			"initNbActions" : 1000,
 			// Number of root TPGTeams at the initialisation of a TPGGraph.
 			// If 0, if will be init to the number of surviving roots
 			// "nbRoots" : 0, // Default value
@@ -92,13 +92,13 @@
 			"nbActionEdgeInit" : 4,
 			// Number of root TPGTeams to maintain when populating the TPGGraph
 			// "nbRoots" : 100, // Default value
-			"nbRoots" : 30,
+			"nbRoots" : 1000,
 			// Probability of adding an outgoing Action Edge to a Action.
 			// "pActionEdgeAddition" : 0.7, // Default value
-			"pActionEdgeAddition" : 0.0,
+			"pActionEdgeAddition" : 0.7,
 			// Probability of deleting an outgoing ActionEdge of a Action.
 			// "pActionEdgeDeletion" : 0.7, // Default value
-			"pActionEdgeDeletion" : 0.0,
+			"pActionEdgeDeletion" : 0.7,
 			//  Probablity of changing the action edge by any other action edge in the graph
 			// "pChangeActionClass" : 0.1, // Default value
 			"pChangeActionClass" : 0.2,
@@ -128,10 +128,10 @@
 			"probaContextOverActionProgram" : 0.1,
 			// Proportion of new agents created with crossover instead of mutation.
 			// "probaCrossAgents" : 0.0, // Default value
-			"probaCrossAgents" : 0.5,
+			"probaCrossAgents" : 0.0,
 			// probability of new agents created with crossover instead of mutation (in onlyOne mode).
 			// "probaCrossOverMut" : 0.0, // Default value
-			"probaCrossOverMut" : 0.7,
+			"probaCrossOverMut" : 0.0,
 			// Proportion of new programs created threw crossover.
 			// "probaCrossPrograms" : 0.0, // Default value
 			"probaCrossPrograms" : 0.5,
@@ -157,7 +157,7 @@
 	"nbIterationsPerJob" : 1,
 	// Number of evaluation of each root per generation.
 	// "nbIterationsPerPolicyEvaluation" : 5, // Default value
-	"nbIterationsPerPolicyEvaluation" : 3,
+	"nbIterationsPerPolicyEvaluation" : 1,
 	// Number of evaluation of each root per generation.
 	// "nbIterationsPerPolicyValidation" : 5, // Default value
 	"nbIterationsPerPolicyValidation" : 20,
@@ -172,7 +172,7 @@
 	// When undefined in the json file, this parameter is automatically set to the
 	// number of cores of the CPU.
 	// /* "nbThreads" : 0,*/ // Commented by default
-	"nbThreads" : 16,
+	"nbThreads" : 1,
 	// Percentage of deleted (and regenerated) root TPGVertex at each generation.
 	// "ratioDeletedRoots" : 0.5, // Default value
 	"ratioDeletedRoots" : 0.95,

@@ -103,3 +103,7 @@ std::string MujocoWrapper::ExpandEnvVars(const std::string &str) {
 	}
 	return result;
 }
+
+const std::vector<double>& MujocoWrapper::getNbFeetContact() {
+	return nb_feet_in_contact_;
+}

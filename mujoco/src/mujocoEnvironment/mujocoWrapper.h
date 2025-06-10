@@ -58,6 +58,8 @@ public:
     int frame_skip_ = 5;  // Number of frames per simlation step
     int obs_size_;  // Number of variables in observation vector
 
+	std::vector<double> nb_feet_in_contact_; // Number of feets in contact with the ground
+
     void initialize_simulation();
 
     void set_state(std::vector<double>& qpos, std::vector<double>& qvel);
@@ -71,6 +73,8 @@ public:
 
 	std::string ExpandEnvVars(const std::string &str);
 
+
+	const std::vector<double>& getNbFeetContact();
 
 };
 

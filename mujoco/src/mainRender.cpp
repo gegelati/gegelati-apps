@@ -307,6 +307,15 @@ int main(int argc, char ** argv) {
         // Get the actions
         std::vector<double> actionsID =
             tee.executeFromRoot(*tpg.getRootVertices()[0]).second;
+        
+        /*if((nbActions / 5 )%2 == 0){
+        actionsID = {0.0, 0.0, 0.0, -0.5, 0.0, 0.0,0.0,0.0};
+        } else {
+            
+        actionsID = {0.0, 0.0, 0.0, 0.5,0.0,0.0,0.0,0.0};
+        }*/
+
+
         // Do it
         mujocoLE->doActions(actionsID);
 
@@ -317,8 +326,8 @@ int main(int argc, char ** argv) {
             actions[i] += abs(act);
             i++;
         }std::cout<<std::endl;
-        if(strcmp(usecase, "reacher") == 0){
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        if(nbActions > 2000){
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
         
 

@@ -31,6 +31,10 @@ void MujocoAntWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t ite
 	this->computeState();
 	this->nbActionsExecuted = 0;
 	this->totalReward = 0.0;
+
+
+	// Reset feet in contact
+	nb_feet_in_contact_ = {0.0, 0.0, 0.0, 0.0};
 }
 
 void MujocoAntWrapper::doActions(std::vector<double> actionsID)
@@ -56,6 +60,7 @@ void MujocoAntWrapper::doActions(std::vector<double> actionsID)
 
 	this->nbActionsExecuted++;
 
+	computeFeetContact();
 
 }
 
@@ -118,3 +123,40 @@ void MujocoAntWrapper::computeState(){
 	}
 }
 
+void MujocoAntWrapper::computeFeetContact() {
+
+    // Look at all the contact founded
+    for (int i = 0; i < d_->ncon; ++i) {
+        const mjContact& contact = d_->contact[i];
+
+        // get the geom shapes
+        int geom1 = contact.geom1;
+        int geom2 = contact.geom2;
+
+        // If there is a contact, it is with the ground
+        for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
+            int foot_geom = feet_geom_ids_[j];
+
+            if ((geom1 == foot_geom || geom2 == foot_geom)) {
+                nb_feet_in_contact_[j]++;
+            }
+        }
+		
+    }
+	
+	/*for (size_t i = 0; i < feet_geom_ids_.size(); ++i) {
+		std::cout << "Foot " << i << " geom ID = " << feet_geom_ids_[i] << " is in contact  "<< feet_in_contact_[i];
+		if(i == 0){
+			std::cout<< "  red"<<std::endl;
+		}
+				if(i == 1){
+			std::cout<< "  yellow"<<std::endl;
+		}
+				if(i == 2){
+			std::cout<< "  purple"<<std::endl;
+		}
+				if(i == 3){
+			std::cout<< "  blue"<<std::endl;
+		}
+	}*/
+}

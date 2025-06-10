@@ -152,39 +152,7 @@ int main(int argc, char ** argv) {
 	
 	// Keep best policy and clear graph
 	la.keepBestPolicy();
-	la.getTPGGraph()->clearProgramIntrons();
-
-	
-	/*auto root = la.getTPGGraph()->getRootVertices().front();
-	std::vector<const TPG::TPGVertex*> vertex = {root};
-	int i = 0;
-	while(vertex.size() > 0){
-		auto currVertex = vertex.front();
-		vertex.erase(vertex.begin());
-
-		if(dynamic_cast<const TPG::TPGActivationVertex*>(currVertex) != nullptr){
-
-			std::vector<const TPG::TPGVertex *> insertedVertex;
-			for(auto e: dynamic_cast<const TPG::TPGActivationVertex*>(currVertex)->getOutgoingConnectionEdges()){
-				insertedVertex.push_back(e->getDestination());
-			}
-			vertex.insert(vertex.begin(), insertedVertex.begin(), insertedVertex.end());
-		} else {
-			
-			std::vector<const TPG::TPGVertex *> insertedVertex;
-			for(auto e: currVertex->getOutgoingEdges()){
-				insertedVertex.push_back(e->getDestination());
-			}
-			vertex.insert(vertex.begin(), insertedVertex.begin(), insertedVertex.end());
-		}
-
-		std::cout<<"Vertex ";
-		if(i<10) std::cout<<i++<<"  : ";
-		else std::cout<<i++<<" : ";
-		for(auto val: currVertex->getPath()){
-			std::cout<<val<<" ";
-		}std::cout<<std::endl;
-	}*/
+	//la.getTPGGraph()->clearProgramIntrons();
 
     char bestDot[250];
 	// Export the graph
