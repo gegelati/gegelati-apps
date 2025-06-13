@@ -11,6 +11,7 @@
 #include <filesystem>
 
 #include "mujocoEnvironment/mujocoWrappers.h"
+#include "mujocoMapEliteAgent.h"
 #include "instructions.h"
 
 int main(int argc, char ** argv) {
@@ -23,11 +24,12 @@ int main(int argc, char ** argv) {
 	char usecase[150];
 	bool useHealthyReward = 1;
 	bool useContactForce = 0;
+	size_t size_archive = 0;
     strcpy(logsFolder, "logs");
     strcpy(paramFile, "params_0.json");
 	strcpy(usecase, "ant");
     strcpy(xmlFile, "none");
-    while((option = getopt(argc, argv, "s:p:l:x:h:c:u:")) != -1){
+    while((option = getopt(argc, argv, "s:p:l:x:h:c:u:a:")) != -1){
         switch (option) {
             case 's': seed= atoi(optarg); break;
             case 'p': strcpy(paramFile, optarg); break;
@@ -36,7 +38,8 @@ int main(int argc, char ** argv) {
 			case 'h': useHealthyReward = atoi(optarg); break;
 			case 'c': useContactForce = atoi(optarg); break;
             case 'x': strcpy(xmlFile, optarg); break;
-            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-logs logs Folder\'  \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\'." << std::endl; exit(1);
+            case 'a': size_archive= atoi(optarg); break;
+            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-logs logs Folder\'  \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\' \'-a sizeArchive\'." << std::endl; exit(1);
         }
     }
 	if(strcmp(xmlFile, "none") == 0){
@@ -49,13 +52,23 @@ int main(int argc, char ** argv) {
 	}
 
 
-    std::cout << "Selected seed : " << seed << std::endl;
-    std::cout << "Selected params: " << paramFile << std::endl;
+    std::cout << "SELECTED SEED : " << seed << std::endl;
+    std::cout << "SELECTED PARAMS FILE: " << paramFile << std::endl;
+
 
     // Save the index of the parameter file.
-    int indexParam = std::stoi(std::regex_replace(paramFile, std::regex(R"(.*params_(\d+)\.json)"), "$1"));
+    int indexParam = 0;
+	std::string paramFileStr(paramFile);
+	std::smatch match;
+	std::regex re(R"((\d+)(?!.*\d))"); // Capture le dernier groupe de chiffres
 
-	std::cout << "Start Mujoco application." << std::endl;
+	if (std::regex_search(paramFileStr, match, re)) {
+		indexParam = std::stoi(match[1]);
+	} else {
+		throw std::runtime_error("error detection of index");
+	}
+
+
 
 	// Create the instruction set for programs
 	Instructions::Set set;
@@ -68,12 +81,23 @@ int main(int argc, char ** argv) {
 	Learn::LearningParameters params;
 	File::ParametersParser::loadParametersFromJson(paramFile, params);
 
+	std::cout << "SELECTION METHOD :";
+	if(size_archive > 0){
+		std::cout<<" MAP ELITES"<<std::endl;
+	} else if(params.useTournamentSelection){
+		std::cout<<" TOURNAMENT SELECTION"<<std::endl;
+	} else {
+		std::cout<<" STANDARD SELECTION"<<std::endl;
+	}
+
+
+	std::cout << "START MUJOCO APPLICATION WITH ENVIRONMENT "<< usecase << std::endl;
 
 	// Export parameters before starting training.
 	// These may differ from imported parameters because of LE or machine specific
 	// settings such as thread count of number of actions.
 	char jsonFilePath[200];  // Assurez-vous que ce soit assez grand pour contenir les deux parties concaténées.
-	snprintf(jsonFilePath, sizeof(jsonFilePath), "%s/exported_params.p%d.json", logsFolder, indexParam);
+	snprintf(jsonFilePath, sizeof(jsonFilePath), "%s/exported_params.%s.p%d.json", logsFolder, usecase, indexParam);
 
 	// Instantiate the LearningEnvironment
 	MujocoWrapper* mujocoLE = nullptr;
@@ -98,7 +122,7 @@ int main(int argc, char ** argv) {
 	std::cout << "Number of threads: " << params.nbThreads << std::endl;
 
 	// Instantiate and init the learning agent
-	Learn::ParallelLearningAgent la(*mujocoLE, set, params);
+	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, params, size_archive);
 	la.init(seed);
 
 

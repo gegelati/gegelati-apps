@@ -38,7 +38,7 @@ public:
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoAntWrapper(const char *pXmlFile, bool useHealthyReward=true, bool p_exclude_current_positions_from_observation = false) :
+	MujocoAntWrapper(const char *pXmlFile, bool useHealthyReward=true, bool p_exclude_current_positions_from_observation = true) :
 		MujocoWrapper(8, (p_exclude_current_positions_from_observation) ? 27:29), 
 		xmlFile{pXmlFile}, use_healthy_reward{useHealthyReward},
 		exclude_current_positions_from_observation_{p_exclude_current_positions_from_observation}
@@ -65,6 +65,13 @@ public:
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		healthy_z_range_ = {0.2, 1.0};
 		initialize_simulation();
+
+		
+		feet_geom_ids_.clear();
+		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "left_ankle_geom"));
+		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "right_ankle_geom"));
+		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "third_ankle_geom"));
+		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "fourth_ankle_geom"));
     }
 
     ~MujocoAntWrapper() {

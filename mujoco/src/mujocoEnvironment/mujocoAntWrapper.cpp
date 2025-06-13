@@ -125,7 +125,11 @@ void MujocoAntWrapper::computeState(){
 
 void MujocoAntWrapper::computeFeetContact() {
 
-    // Look at all the contact founded
+	std::set<uint64_t> increasedLegs;
+
+
+	
+	// Look at all the contact founded
     for (int i = 0; i < d_->ncon; ++i) {
         const mjContact& contact = d_->contact[i];
 
@@ -137,8 +141,9 @@ void MujocoAntWrapper::computeFeetContact() {
         for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
             int foot_geom = feet_geom_ids_[j];
 
-            if ((geom1 == foot_geom || geom2 == foot_geom)) {
+            if ((geom1 == foot_geom || geom2 == foot_geom) && increasedLegs.find(j) == increasedLegs.end()) {
                 nb_feet_in_contact_[j]++;
+				increasedLegs.insert(j);
             }
         }
 		

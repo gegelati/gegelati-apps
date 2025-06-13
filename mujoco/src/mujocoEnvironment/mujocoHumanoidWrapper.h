@@ -29,7 +29,7 @@ public:
     MujocoHumanoidWrapper(const char *pXmlFile, 
                           bool useHealthyReward = true, 
                           bool useContactForce = false,
-                          bool excludeCurrentPositionsFromObservation = false) :
+                          bool excludeCurrentPositionsFromObservation = true) :
         MujocoWrapper(17, excludeCurrentPositionsFromObservation ? 376 : 378),
         xmlFile{pXmlFile},
         use_healthy_reward{useHealthyReward},

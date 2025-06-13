@@ -50,6 +50,10 @@ void MujocoHumanoidWrapper::doActions(std::vector<double> actionsID)
 {
     // Record the initial center of mass position before the action
     auto com_before = massCenter();
+    
+    for (auto& val : actionsID) {
+        val *= 0.4;
+    }
 
     // Execute the simulation with the given actions
     do_simulation(actionsID, frame_skip_);

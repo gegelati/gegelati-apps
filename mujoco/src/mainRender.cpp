@@ -13,6 +13,8 @@
 #include <glfw3.h>
 #include <filesystem>
 
+#include "mujocoMapEliteAgent.h"
+
 // keyboard callback
 void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods) {
     // backspace: reset simulation
@@ -236,7 +238,7 @@ int main(int argc, char ** argv) {
 	}
 
 	// Instantiate and init the learning agent
-	Learn::ParallelLearningAgent la(*mujocoLE, set, params);
+	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, params);
 	la.init(seed);
 
     auto &tpg = *la.getTPGGraph();
@@ -318,6 +320,8 @@ int main(int argc, char ** argv) {
 
         // Do it
         mujocoLE->doActions(actionsID);
+        StepVisualization(isRenderVideoSaved, pathRenderVideo);
+        std::this_thread::sleep_for(std::chrono::milliseconds(25));
 
         std::cout<<"Action "<<nbActions<<":";
         int i = 0;
@@ -333,7 +337,6 @@ int main(int argc, char ** argv) {
 
         // Count actions
         nbActions++;
-        StepVisualization(isRenderVideoSaved, pathRenderVideo);
 
     }
     
