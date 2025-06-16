@@ -14,9 +14,9 @@ USECASE=${2:-ant}
 # Paramètres pour la soumission SLURM
 MEMORY="4G"
 NTASKS=1
-CPUS_PER_TASK=16
+CPUS_PER_TASK=32
 TIME="1440"
-OUTPUT_DIR="/data/lab_ietr/qvacher/MAPLE_CROSS/logs"
+OUTPUT_DIR="/home/vacherq/scratch/2025/mujoco/logs/"
 JOB_NAME_BASE="TPG_${USECASE,,}"
 
 
@@ -27,16 +27,15 @@ mkdir -p "$OUTPUT_DIR/out"
 mkdir -p "$OUTPUT_DIR/err"
 
 
-
-list_params=$(seq  5 11 | sed 's/^/params_/' | sed 's/$/.json/')
-seeds=$(seq 0 4)
+list_params=$(seq 0 0 | sed "s/^/params_${USECASE}_/" | sed 's/$/.json/')
+seeds=$(seq 0 9)
 
 # Boucle sur chaque ensemble de paramètres
 for params in ${list_params[@]}; do
     echo "Params used $params"
 
     # Extraire l'index du fichier JSON
-    index_param=$(basename "$params" | sed 's/[^0-9]*\([0-9]*\)\.json/\1/')
+    index_param=$(basename "$params" | grep -oE '[0-9]+' | tail -n1)
 
     for i in ${seeds[*]}; do
         echo "Seed used $i"
@@ -57,7 +56,7 @@ for params in ${list_params[@]}; do
 #SBATCH --error=${OUTPUT_DIR}/err/cerr_%j.txt
 
 # Exécution du programme avec les paramètres
-./bin/Release/mujoco -s ${i} -p ${params} -l ${OUTPUT_PATH} -u ${USECASE}
+./bin/Release/mujoco -s ${i} -p ${params} -l ${OUTPUT_PATH} -u ${USECASE} -a 0.33,0.67,1
 
 EOF
 

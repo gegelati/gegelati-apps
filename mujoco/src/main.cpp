@@ -24,7 +24,8 @@ int main(int argc, char ** argv) {
 	char usecase[150];
 	bool useHealthyReward = 1;
 	bool useContactForce = 0;
-	size_t size_archive = 0;
+	std::string archiveValuesStr = "";
+
     strcpy(logsFolder, "logs");
     strcpy(paramFile, "params_0.json");
 	strcpy(usecase, "ant");
@@ -38,7 +39,7 @@ int main(int argc, char ** argv) {
 			case 'h': useHealthyReward = atoi(optarg); break;
 			case 'c': useContactForce = atoi(optarg); break;
             case 'x': strcpy(xmlFile, optarg); break;
-            case 'a': size_archive= atoi(optarg); break;
+			case 'a': archiveValuesStr = optarg; break;
             default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-logs logs Folder\'  \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\' \'-a sizeArchive\'." << std::endl; exit(1);
         }
     }
@@ -49,6 +50,20 @@ int main(int argc, char ** argv) {
 	// Create log folder if needed
 	if (!std::filesystem::exists(logsFolder)) {
 		std::filesystem::create_directory(logsFolder);
+	}
+
+	std::vector<double> archiveValues;
+	if (!archiveValuesStr.empty()) {
+		std::stringstream ss(archiveValuesStr);
+		std::string token;
+		while (std::getline(ss, token, ',')) {
+			try {
+				archiveValues.push_back(std::stod(token));
+			} catch (const std::invalid_argument& e) {
+				std::cerr << "Valeur invalide dans -a : " << token << std::endl;
+				exit(1);
+			}
+		}
 	}
 
 
@@ -82,7 +97,7 @@ int main(int argc, char ** argv) {
 	File::ParametersParser::loadParametersFromJson(paramFile, params);
 
 	std::cout << "SELECTION METHOD :";
-	if(size_archive > 0){
+	if(archiveValues.size() > 0){
 		std::cout<<" MAP ELITES"<<std::endl;
 	} else if(params.useTournamentSelection){
 		std::cout<<" TOURNAMENT SELECTION"<<std::endl;
@@ -122,7 +137,7 @@ int main(int argc, char ** argv) {
 	std::cout << "Number of threads: " << params.nbThreads << std::endl;
 
 	// Instantiate and init the learning agent
-	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, params, size_archive);
+	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, params, archiveValues);
 	la.init(seed);
 
 
@@ -140,6 +155,13 @@ int main(int argc, char ** argv) {
     std::ofstream logStream;
     logStream.open(logPath);
     Log::LABasicLogger log(la, logStream);
+
+	// Create the archive CSV file
+	char archivePath[250];
+	if(archiveValues.size() > 0){
+		sprintf(archivePath, "%s/archive.%" PRIu64 ".p%d.%s.csv", logsFolder, seed, indexParam, usecase);
+		la.initCSVarchive(archivePath);
+	}
 
 	// Create an exporter for all graphs
     char dotPath[400];
@@ -171,6 +193,11 @@ int main(int argc, char ** argv) {
 
 
 		la.trainOneGeneration(i);
+
+		if(archiveValues.size() > 0){
+			// Update the archive CSV file
+			la.updateCSVArchive(archivePath, i);
+		}
 	}
 
 	

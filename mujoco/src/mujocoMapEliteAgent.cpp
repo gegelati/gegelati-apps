@@ -112,7 +112,6 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
 
     while(results.size() > 0){
 
-        //std::cout<<1<<std::endl;
 
         // Get the evaluation (casted) and root
         std::shared_ptr<EvaluationResult> eval = results.begin()->first;
@@ -122,18 +121,16 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
         MapElitesEvaluationResult* castEval = dynamic_cast<MapElitesEvaluationResult*>(eval.get());
         const TPG::TPGVertex* root = results.begin()->second;
 
-        //std::cout<<2<<std::endl;
         // Get the saved evaluation and root
         const std::pair<std::shared_ptr<EvaluationResult>, const TPG::TPGVertex*>& pairSaved = getArchiveFromDescriptors(castEval->getFeetContact());
         
-        //std::cout<<3<<std::endl;
         
         // The value saved in the archive is better than the current root
         // There is also a verification that the root is not the same
 
         if(pairSaved.second != nullptr && pairSaved.second != root && pairSaved.first->getResult() > castEval->getResult()){
 
-            //std::cout<<4<<std::endl;
+
             // Delete the root
             tpg->removeVertex(*root);
             // Removed stored result (if any)
@@ -142,15 +139,14 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
 
         // The current root is better than the values saved
         } else if (pairSaved.second != root) {
-            //std::cout<<5<<std::endl;
+
             // Save the new root and delete the old one
             tpg->removeVertex(*pairSaved.second);
-            //std::cout<<51<<std::endl;
+
             // Removed stored result (if any)
             this->resultsPerRoot.erase(pairSaved.second);
 
 
-            //std::cout<<52<<pairSaved.second<<std::endl;
             if(pairSaved.second != nullptr){
                 // Erase it from preserved roots too if the value is in it
                 auto it = preservedRoots.find(pairSaved.first);
@@ -159,51 +155,80 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
                 }
             }
 
-            //std::cout<<6<<std::endl;
             // Saving
             this->setArchiveFromDescriptors(root, eval, castEval->getFeetContact());
             
-            //std::cout<<7<<std::endl;
             // Preserved the root
             preservedRoots.insert(*results.begin()); // Root are presevered if they are override in this same generation !
 
         }
         results.erase(results.begin());
 
-    }//std::cout<<8<<std::endl;
+    }
 
     
     // Restore root actions
     results.insert(preservedRoots.begin(), preservedRoots.end());
 
-    //std::cout<<"Info "<<results.size()<<" "<<tpg->getNbVertices()<<" "<<preservedRoots.size()<<std::endl;
-    
-    bool printShit = true;
-    if(printShit){
-        std::cout<<"\n SUDOKU PRIIIIINT"<<std::endl;
-        for(int i = 0; i < 3; ++i) {
-                for(int k = 0; k < 3; ++k) {
-                    for(int j = 0; j < 3; ++j) {
-                        for(int l = 0; l < 3; ++l) {
-                            int idx = i*27 + j*9 + k*3 + l;
-                            const auto& elem = archive[idx];
-                            if(elem.second != nullptr){
-                                int val = static_cast<int>(std::round(elem.first->getResult()));
-                                std::cout << std::setw(4) << val;
-                            } else {
-                                std::cout << "   0";  // 4 espaces pour aligner avec setw(4)
-                            }
-                            if(l != 2) std::cout << ";"; // espace entre colonnes
-                        }
-                        if(j != 2) std::cout << " | ";
-                    }
-                    std::cout << "\n";
+
+}
+
+void Learn::MujocoMapEliteLearningAgent::initCSVarchive(std::string path)
+{
+    std::ofstream outFile(path);
+    if (!outFile.is_open()) {
+        std::cerr << "Archive file could not be created " << path << std::endl;
+        return;
+    }
+
+    outFile << "generation";
+    for (size_t i = 0; i < sizeArchive; ++i) {
+        for (size_t k = 0; k < sizeArchive; ++k) {
+            for (size_t j = 0; j < sizeArchive; ++j) {
+                for (size_t l = 0; l < sizeArchive; ++l) {
+                    std::string key = std::to_string(i) + "_" + std::to_string(k) + "_" + std::to_string(j) + "_" + std::to_string(l);
+                    outFile << "," << key;
                 }
             }
         }
- 
+    }
+    outFile << "," << "archiveRange\n";
+    outFile.close();
+}
+void Learn::MujocoMapEliteLearningAgent::updateCSVArchive(std::string path, size_t generationNumber)
+{
+   std::ofstream outFile(path, std::ios::app); // append mode
+    if (!outFile.is_open()) {
+        std::cerr << "Archive file not found " << path << std::endl;
+        return;
+    }
 
+    outFile << generationNumber;
+    for (size_t i = 0; i < sizeArchive; ++i) {
+        for (size_t k = 0; k < sizeArchive; ++k) {
+            for (size_t j = 0; j < sizeArchive; ++j) {
+                for (size_t l = 0; l < sizeArchive; ++l) {
+                    const auto& elem = getArchiveAt(i,k,j,l);
 
+                    if (elem.second != nullptr) {
+                        outFile << "," << elem.first->getResult();
+                    } else {
+                        outFile << ",nan";
+                    }
+                }
+            }
+        }
+    }
+
+    if(generationNumber == 0){
+        outFile<<",";
+        for(double l: archiveLimits){
+            outFile <<l<< ";" ;
+        }
+    }
+
+    outFile << "\n";
+    outFile.close();
 }
 
 void Learn::MujocoMapEliteLearningAgent::updateEvaluationRecords(
@@ -251,41 +276,49 @@ void Learn::MujocoMapEliteLearningAgent::updateEvaluationRecords(
     }
 }
 
+uint64_t Learn::MujocoMapEliteLearningAgent::getIndexArchive(double value)
+{
+    size_t idx = 0;
+    while(value > archiveLimits[idx]){
+        idx++;
+    }
+    return idx;
+}
+
 
 const std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>& Learn::MujocoMapEliteLearningAgent::getArchiveAt(size_t i, size_t j, size_t k, size_t l) {
     return archive[i * sizeArchive * sizeArchive * sizeArchive +
-                j * sizeArchive * sizeArchive +
-                k * sizeArchive +
-                l];
+                   j * sizeArchive * sizeArchive +
+                   k * sizeArchive +
+                   l];
 }
 
 const std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>& Learn::MujocoMapEliteLearningAgent::getArchiveFromDescriptors(
     const std::vector<double>& descriptors)
 {
     return getArchiveAt(
-        static_cast<size_t>(std::trunc(descriptors[0] * sizeArchive)),
-        static_cast<size_t>(std::trunc(descriptors[1] * sizeArchive)),
-        static_cast<size_t>(std::trunc(descriptors[2] * sizeArchive)),
-        static_cast<size_t>(std::trunc(descriptors[3] * sizeArchive))
+        getIndexArchive(descriptors[0]),
+        getIndexArchive(descriptors[1]),
+        getIndexArchive(descriptors[2]),
+        getIndexArchive(descriptors[3])
     );
 }
 
 void Learn::MujocoMapEliteLearningAgent::setArchiveAt(const TPG::TPGVertex* vertex, std::shared_ptr<Learn::EvaluationResult> eval, size_t i, size_t j, size_t k, size_t l) {
     archive[i * sizeArchive * sizeArchive * sizeArchive +
-        j * sizeArchive * sizeArchive +
-        k * sizeArchive +
-        l] = std::make_pair(eval, vertex);
+            j * sizeArchive * sizeArchive +
+            k * sizeArchive +
+            l] = std::make_pair(eval, vertex);
 } 
 
 void Learn::MujocoMapEliteLearningAgent::setArchiveFromDescriptors(const TPG::TPGVertex* vertex, std::shared_ptr<Learn::EvaluationResult> eval, const std::vector<double>& descriptors)
 {
 
-    //std::cout<<descriptors[0]<<descriptors[1]<<descriptors[2]<<descriptors[3]<<std::endl;
     setArchiveAt(
         vertex, eval,
-        static_cast<size_t>(std::trunc(descriptors[0] * sizeArchive)),
-        static_cast<size_t>(std::trunc(descriptors[1] * sizeArchive)),
-        static_cast<size_t>(std::trunc(descriptors[2] * sizeArchive)),
-        static_cast<size_t>(std::trunc(descriptors[3] * sizeArchive))
+        getIndexArchive(descriptors[0]),
+        getIndexArchive(descriptors[1]),
+        getIndexArchive(descriptors[2]),
+        getIndexArchive(descriptors[3])
     );
 }

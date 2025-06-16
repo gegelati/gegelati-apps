@@ -11,6 +11,7 @@ namespace Learn {
     {
         protected:
 
+        std::vector<double> archiveLimits;
         uint64_t sizeArchive;
         std::vector<std::pair<std::shared_ptr<EvaluationResult>, const TPG::TPGVertex*>> archive;
 
@@ -18,9 +19,9 @@ namespace Learn {
         public: 
         MujocoMapEliteLearningAgent(
             MujocoWrapper& le, const Instructions::Set& iSet,
-            const LearningParameters& p, uint64_t sizeArchive=0,
+            const LearningParameters& p, std::vector<double> archiveLimits={},
             const TPG::TPGFactory& factory = TPG::TPGFactory())
-            : ParallelLearningAgent(le, iSet, p, factory), sizeArchive{sizeArchive}
+            : ParallelLearningAgent(le, iSet, p, factory), archiveLimits{archiveLimits}, sizeArchive{archiveLimits.size()}
         {
             uint64_t nbFeets = 4;
             archive.resize(std::pow(sizeArchive, nbFeets));
@@ -29,6 +30,9 @@ namespace Learn {
                 throw std::runtime_error("With map elites, an agent should not be evaluated again");
             }
         }
+
+        virtual void initCSVarchive(std::string path);
+        virtual void updateCSVArchive(std::string path, size_t generationNumber);
 
         virtual void decimateWorstRoots(
             std::multimap<std::shared_ptr<EvaluationResult>,
@@ -49,6 +53,8 @@ namespace Learn {
 
         void setArchiveAt(const TPG::TPGVertex* vertex, std::shared_ptr<EvaluationResult> eval, size_t i, size_t j, size_t k, size_t l);  
         void setArchiveFromDescriptors(const TPG::TPGVertex* vertex, std::shared_ptr<EvaluationResult> eval, const std::vector<double>& descriptors);  
+
+        uint64_t getIndexArchive(double value);
 
     };
 }
