@@ -47,9 +47,22 @@ int main(int argc, char ** argv) {
     	snprintf(xmlFile, sizeof(xmlFile), "mujoco_models/%s.xml", usecase);
 	}
 
+	char dotGen[160];
+	snprintf(dotGen, sizeof(dotGen), "%s/dotFiles", logsFolder);
+	char archiveDots[160];
+	snprintf(archiveDots, sizeof(archiveDots), "%s/archiveDots", logsFolder);
+
 	// Create log folder if needed
 	if (!std::filesystem::exists(logsFolder)) {
 		std::filesystem::create_directory(logsFolder);
+	}
+	// Create dot per generation folder if needed
+	if (!std::filesystem::exists(dotGen)) {
+		std::filesystem::create_directory(dotGen);
+	}
+	// Create archiveDots logs folder if needed
+	if (!std::filesystem::exists(archiveDots)) {
+		std::filesystem::create_directory(archiveDots);
 	}
 
 	std::vector<double> archiveValues;
@@ -121,15 +134,15 @@ int main(int argc, char ** argv) {
 	} else if (strcmp(usecase, "half_cheetah") == 0) {
 		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile);
 	} else if (strcmp(usecase, "hopper") == 0) {
-		mujocoLE = new MujocoHopperWrapper(xmlFile);
+		mujocoLE = new MujocoHopperWrapper(xmlFile, useHealthyReward);
 	} else if (strcmp(usecase, "walker2d") == 0) {
-		mujocoLE = new MujocoWalker2DWrapper(xmlFile);
+		mujocoLE = new MujocoWalker2DWrapper(xmlFile, useHealthyReward);
 	} else if (strcmp(usecase, "inverted_double_pendulum") == 0) {
 		mujocoLE = new MujocoDoublePendulumWrapper(xmlFile);
 	} else if (strcmp(usecase, "reacher") == 0) {
 		mujocoLE = new MujocoReacherWrapper(xmlFile);
 	} else if (strcmp(usecase, "ant") == 0) {
-		mujocoLE = new MujocoAntWrapper(xmlFile, useHealthyReward, useContactForce);
+		mujocoLE = new MujocoAntWrapper(xmlFile, archiveValues.size() > 0, useHealthyReward, useContactForce);
 	} else {
 		throw std::runtime_error("Use case not found");
 	}
@@ -165,7 +178,7 @@ int main(int argc, char ** argv) {
 
 	// Create an exporter for all graphs
     char dotPath[400];
-    sprintf(dotPath, "%s/out_lastGen.%" PRIu64 ".p%d.%s.dot", logsFolder, seed, indexParam, usecase);
+    sprintf(dotPath, "%s/out_lastGen.%" PRIu64 ".0.p%d.%s.dot", dotGen, seed, indexParam, usecase);
 	File::TPGGraphDotExporter dotExporter(dotPath, *la.getTPGGraph());
 
 	// Logging best policy stat.
@@ -184,7 +197,7 @@ int main(int argc, char ** argv) {
 #if PRINT_ALL_DOT
 		if(i % 1 == 0){
 			char buff[250];
-			sprintf(buff, "%s/out_lastGen.%" PRIu64 ".%" PRIu64 ".p%d.%s.dot", logsFolder, i, seed, indexParam, usecase);
+			sprintf(buff, "%s/out_lastGen.%" PRIu64 ".%" PRIu64 ".p%d.%s.dot", dotGen, i, seed, indexParam, usecase);
 			dotExporter.setNewFilePath(buff);
 			dotExporter.print();
 		}
@@ -201,15 +214,35 @@ int main(int argc, char ** argv) {
 	}
 
 	
-	// Keep best policy and clear graph
-	la.keepBestPolicy();
 	//la.getTPGGraph()->clearProgramIntrons();
 
-    char bestDot[250];
-	// Export the graph
-    sprintf(bestDot, "%s/out_best.%" PRIu64 ".p%d.%s.dot", logsFolder, seed, indexParam, usecase);
-	dotExporter.setNewFilePath(bestDot);
-	dotExporter.print();
+	if(archiveValues.size() > 0){
+
+		for (size_t i = 0; i < archiveValues.size(); ++i) {
+			for (size_t k = 0; k < archiveValues.size(); ++k) {
+				for (size_t j = 0; j < archiveValues.size(); ++j) {
+					for (size_t l = 0; l < archiveValues.size(); ++l) {
+						const auto& elem = la.getArchiveAt(i,k,j,l);
+
+						if(elem.second != nullptr){
+							char bestDot[300];
+							// Export the graph
+							sprintf(bestDot, "%s/out_best_%zu_%zu_%zu_%zu.%" PRIu64 ".p%d.%s.dot", archiveDots, i, k, j, l, seed, indexParam, usecase);
+							dotExporter.setNewFilePath(bestDot);
+							dotExporter.printSubGraph(elem.second);
+						}
+					}
+				}
+			}
+		}
+	} else {
+		char bestDot[250];
+		// Export the graph
+		sprintf(bestDot, "%s/out_best.%" PRIu64 ".p%d.%s.dot", logsFolder, seed, indexParam, usecase);
+		dotExporter.setNewFilePath(bestDot);
+		dotExporter.print();
+	}
+
 
 	TPG::PolicyStats ps;
 	ps.setEnvironment(la.getTPGGraph()->getEnvironment());

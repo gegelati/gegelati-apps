@@ -13,12 +13,14 @@ protected:
 
 	/// Total reward accumulated since the last reset
 	double totalReward = 0.0;
+    double totalUtility = 0.0;
 
 	/// Number of actions since the last reset
 	uint64_t nbActionsExecuted = 0;
 
 
 	const std::string xmlFile;
+	bool useHealthyReward;
 	bool exclude_current_positions_from_observation_ = true;
 	// Parameters
 	double forward_reward_weight = 1.0;
@@ -32,18 +34,14 @@ protected:
 
 public:
 
-	
-
-
-
 	/**
 	* \brief Default constructor.
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoHopperWrapper(const char *pXmlFile, bool exclude_current_positions_from_observation = true) :
+	MujocoHopperWrapper(const char *pXmlFile, bool useHealthyReward_p=true, bool exclude_current_positions_from_observation = true) :
 		MujocoWrapper(3, (exclude_current_positions_from_observation) ? 11:12), 
-		xmlFile{pXmlFile},
+		xmlFile{pXmlFile}, useHealthyReward{useHealthyReward_p},
 		exclude_current_positions_from_observation_{exclude_current_positions_from_observation}
 		{
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
@@ -59,13 +57,14 @@ public:
     * \brief Copy constructor for the armLearnWrapper.
     */ 
     MujocoHopperWrapper(const MujocoHopperWrapper &other) : MujocoWrapper(other), 
-		xmlFile{other.xmlFile}, exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}
+		xmlFile{other.xmlFile}, useHealthyReward{other.useHealthyReward}, exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}
 
 	{
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		healthy_state_range_ = {-100.0, 100.0};
 		healthy_z_range_ = {0.7, float(INFINITY)};
 		healthy_angle_range_ = {-0.2, 0.2};
+		frame_skip_ = 4;
 		initialize_simulation();
     }
 
@@ -116,6 +115,7 @@ public:
 	* \return a double value corresponding to the score.
 	*/
 	virtual double getScore() const override;
+	virtual double getUtility() const override;
 
 	/**
 	* \brief Is the pendulum considered stabilized.

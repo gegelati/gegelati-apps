@@ -13,6 +13,7 @@ protected:
 
 	/// Total reward accumulated since the last reset
 	double totalReward = 0.0;
+    double totalUtility = 0.0;
 
 	/// Number of actions since the last reset
 	uint64_t nbActionsExecuted = 0;
@@ -29,6 +30,7 @@ protected:
     double reset_noise_scale_ = 0.1;
 	uint64_t main_body = 1;
 
+	bool useFeetContact;
 	std::vector<int> feet_geom_ids_; // À initialiser avec les indices MuJoCo des pieds
 	std::vector<bool> feet_in_contact_;
 public:
@@ -38,10 +40,11 @@ public:
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoAntWrapper(const char *pXmlFile, bool useHealthyReward=true, bool p_exclude_current_positions_from_observation = true) :
+	MujocoAntWrapper(const char *pXmlFile, bool useFeetContact = false, bool useHealthyReward=true, bool p_exclude_current_positions_from_observation = true) :
 		MujocoWrapper(8, (p_exclude_current_positions_from_observation) ? 27:29), 
 		xmlFile{pXmlFile}, use_healthy_reward{useHealthyReward},
-		exclude_current_positions_from_observation_{p_exclude_current_positions_from_observation}
+		exclude_current_positions_from_observation_{p_exclude_current_positions_from_observation},
+		useFeetContact{useFeetContact}
 		{
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
 			healthy_z_range_ = {0.2, 1.0};
@@ -59,7 +62,7 @@ public:
     */ 
     MujocoAntWrapper(const MujocoAntWrapper &other) : MujocoWrapper(other), 
 	xmlFile{other.xmlFile}, use_healthy_reward{other.use_healthy_reward},
-	exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}
+	exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}, useFeetContact{useFeetContact}
 	
 	{
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
@@ -121,6 +124,7 @@ public:
 	* \return a double value corresponding to the score.
 	*/
 	virtual double getScore() const override;
+	virtual double getUtility() const override;
 
 	/**
 	* \brief Is the pendulum considered stabilized.

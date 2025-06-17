@@ -13,6 +13,7 @@ protected:
 
 	/// Total reward accumulated since the last reset
 	double totalReward = 0.0;
+    double totalUtility = 0.0;
 
 	/// Number of actions since the last reset
 	uint64_t nbActionsExecuted = 0;
@@ -97,6 +98,7 @@ public:
 	* \return a double value corresponding to the score.
 	*/
 	virtual double getScore() const override;
+	virtual double getUtility() const override;
 
 	/**
 	* \brief Is the pendulum considered stabilized.

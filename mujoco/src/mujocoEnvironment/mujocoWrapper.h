@@ -73,6 +73,7 @@ public:
 
 	std::string ExpandEnvVars(const std::string &str);
 
+	
 
 	const std::vector<double>& getNbFeetContact();
 

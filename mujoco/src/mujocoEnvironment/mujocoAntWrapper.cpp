@@ -31,6 +31,7 @@ void MujocoAntWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t ite
 	this->computeState();
 	this->nbActionsExecuted = 0;
 	this->totalReward = 0.0;
+	this->totalUtility = 0.0;
 
 
 	// Reset feet in contact
@@ -42,7 +43,7 @@ void MujocoAntWrapper::doActions(std::vector<double> actionsID)
 	auto x_pos_before = d_->qpos[0];
 	do_simulation(actionsID, frame_skip_);
 	auto x_pos_after = d_->qpos[0];
-	auto x_vel = (x_pos_after - x_pos_before) / m_->opt.timestep;
+	auto x_vel = (x_pos_after - x_pos_before) / (m_->opt.timestep * frame_skip_);
 	auto forward_reward = x_vel * forward_reward_weight;
 	auto rewards = forward_reward;
 	
@@ -56,11 +57,14 @@ void MujocoAntWrapper::doActions(std::vector<double> actionsID)
 	this->computeState();
 
 	// Incremente the reward.
-	this->totalReward += reward;
+	this->totalReward += reward + int(use_healthy_reward) * healthy_reward();
+	this->totalUtility += reward + healthy_reward();
 
 	this->nbActionsExecuted++;
 
-	computeFeetContact();
+	if(useFeetContact){
+		computeFeetContact();
+	}
 
 }
 
@@ -77,6 +81,10 @@ Learn::LearningEnvironment* MujocoAntWrapper::clone() const
 double MujocoAntWrapper::getScore() const
 {
 	return totalReward;
+}
+double MujocoAntWrapper::getUtility() const
+{
+	return totalUtility;
 }
 
 bool MujocoAntWrapper::isTerminal() const
@@ -144,6 +152,7 @@ void MujocoAntWrapper::computeFeetContact() {
             if ((geom1 == foot_geom || geom2 == foot_geom) && increasedLegs.find(j) == increasedLegs.end()) {
                 nb_feet_in_contact_[j]++;
 				increasedLegs.insert(j);
+				break;
             }
         }
 		

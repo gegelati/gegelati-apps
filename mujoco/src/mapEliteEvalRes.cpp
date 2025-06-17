@@ -30,6 +30,12 @@ Learn::EvaluationResult& Learn::MapElitesEvaluationResult::operator+=(
                     otherConverted.result * (double)otherConverted.nbEvaluation;
     this->result /= (double)this->nbEvaluation + (double)otherConverted.nbEvaluation;
 
+
+    
+    this->utility = this->utility * (double)this->nbEvaluation +
+                    otherConverted.utility * (double)otherConverted.nbEvaluation;
+    this->utility /= (double)this->nbEvaluation + (double)otherConverted.nbEvaluation;
+
     // If the added type is Learn::EvaluationResult
     // Weighted addition of results
     for (size_t i = 0; i < feetContact.size(); i++) {

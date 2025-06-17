@@ -13,6 +13,8 @@ std::vector<std::reference_wrapper<const Data::DataHandler>> MujocoWrapper::getD
 
 
 
+
+
 void MujocoWrapper::initialize_simulation() {
 	// Load and compile model
 	char error[1000] = "Could not load binary model";

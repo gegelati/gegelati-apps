@@ -9,6 +9,7 @@ class MujocoHumanoidWrapper : public MujocoWrapper
 protected:
     Mutator::RNG rng;
     double totalReward = 0.0;
+    double totalUtility = 0.0;
     uint64_t nbActionsExecuted = 0;
     const std::string xmlFile;
 
@@ -71,6 +72,7 @@ public:
     virtual bool isCopyable() const override;
     virtual LearningEnvironment* clone() const override;
     virtual double getScore() const override;
+	virtual double getUtility() const override;
     virtual bool isTerminal() const override;
 
     double healthy_reward();

@@ -44,6 +44,7 @@ void MujocoHumanoidWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_
     this->computeState();
     this->nbActionsExecuted = 0;
     this->totalReward = 0.0;
+	this->totalUtility = 0.0;
 }
 
 void MujocoHumanoidWrapper::doActions(std::vector<double> actionsID)
@@ -60,7 +61,7 @@ void MujocoHumanoidWrapper::doActions(std::vector<double> actionsID)
 
     // Record the center of mass position after the action and compute the velocity
     auto com_after = massCenter();
-    auto x_velocity = (com_after[0] - com_before[0]) / m_->opt.timestep;
+    auto x_velocity = (com_after[0] - com_before[0]) / (m_->opt.timestep * frame_skip_);
 
     // Calculate the control cost (penalizes large action magnitudes)
     auto ctrl_cost = control_cost(actionsID);
@@ -68,12 +69,6 @@ void MujocoHumanoidWrapper::doActions(std::vector<double> actionsID)
     // Calculate rewards
     auto forward_reward = forward_reward_weight_ * x_velocity;
     auto rewards = forward_reward;
-    
-    if (use_healthy_reward) {
-        rewards += healthy_reward();
-    }
-
-
 
     // Final reward for this step
     auto reward = rewards - ctrl_cost;
@@ -82,7 +77,8 @@ void MujocoHumanoidWrapper::doActions(std::vector<double> actionsID)
     this->computeState();
 
     // Increment the total reward and the count of executed actions
-    this->totalReward += reward;
+	this->totalReward += reward + int(use_healthy_reward) * healthy_reward();
+	this->totalUtility += reward + healthy_reward();
     this->nbActionsExecuted++;
 
 
@@ -102,6 +98,10 @@ Learn::LearningEnvironment* MujocoHumanoidWrapper::clone() const
 double MujocoHumanoidWrapper::getScore() const
 {
     return totalReward;
+}
+double MujocoHumanoidWrapper::getUtility() const
+{
+    return totalUtility;
 }
 
 bool MujocoHumanoidWrapper::isTerminal() const

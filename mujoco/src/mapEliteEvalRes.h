@@ -39,9 +39,9 @@ namespace Learn {
          * number of evaluations.
          */
         MapElitesEvaluationResult(
-            const double& res, const size_t& nbEval,
+            const double& res, const double& uti, const size_t& nbEval,
             const std::vector<double>& feetContact)
-            : EvaluationResult(res, nbEval), feetContact{feetContact}
+            : EvaluationResult(res, uti, nbEval), feetContact{feetContact}
               
         {
         };

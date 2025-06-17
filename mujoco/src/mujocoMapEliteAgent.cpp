@@ -18,6 +18,9 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
             return Learn::LearningAgent::evaluateJob(tee, job, generationNumber, mode, le);
         }
     }
+    if(sizeArchive > 0){
+        return Learn::LearningAgent::evaluateJob(tee, job, generationNumber, mode, le);
+    }
     MujocoAntWrapper* antLE = dynamic_cast<MujocoAntWrapper*>(&le);
 
     // Only consider the first root of jobs as we are not in adversarial mode
@@ -33,6 +36,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
 
     // Init results
     double result = 0.0;
+    double utility = 0.0;
 
     // Number of evaluations
     uint64_t nbEvaluation = (mode == LearningMode::TRAINING) ? this->params.nbIterationsPerPolicyEvaluation:this->params.nbIterationsPerPolicyValidation;
@@ -65,6 +69,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
 
         // Update results
         result += antLE->getScore();
+        utility += antLE->getUtility();
 
         if(sizeArchive > 0){
 
@@ -84,6 +89,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
     auto evaluationResult =
         std::shared_ptr<MapElitesEvaluationResult>(new MapElitesEvaluationResult(
             result / (double)nbEvaluation,
+            utility / (double)nbEvaluation,
             nbEvaluation,
             all_feet_contact));
 

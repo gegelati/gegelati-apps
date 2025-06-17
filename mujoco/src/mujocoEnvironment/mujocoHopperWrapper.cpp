@@ -32,6 +32,7 @@ void MujocoHopperWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t 
 	this->computeState();
 	this->nbActionsExecuted = 0;
 	this->totalReward = 0.0;
+	this->totalUtility = 0.0;
 }
 
 void MujocoHopperWrapper::doActions(std::vector<double> actionsID)
@@ -39,11 +40,9 @@ void MujocoHopperWrapper::doActions(std::vector<double> actionsID)
 	auto x_pos_before = d_->qpos[0];
 	do_simulation(actionsID, frame_skip_);
 	auto x_pos_after = d_->qpos[0];
-	auto x_vel = (x_pos_after - x_pos_before) / m_->opt.timestep;
+	auto x_vel = (x_pos_after - x_pos_before) / (m_->opt.timestep * frame_skip_);
 	auto forward_reward = forward_reward_weight * x_vel;
 	auto rewards = forward_reward;
-	
-	rewards += healthy_reward();
 
 	auto ctrl_cost = control_cost(actionsID);
 	auto costs = ctrl_cost;
@@ -53,7 +52,8 @@ void MujocoHopperWrapper::doActions(std::vector<double> actionsID)
 	this->computeState();
 
 	// Incremente the reward.
-	this->totalReward += reward;
+	this->totalReward += reward + int(useHealthyReward) * healthy_reward();
+	this->totalUtility += reward + healthy_reward();
 
 	this->nbActionsExecuted++;
 
@@ -73,6 +73,10 @@ Learn::LearningEnvironment* MujocoHopperWrapper::clone() const
 double MujocoHopperWrapper::getScore() const
 {
 	return totalReward;
+}
+double MujocoHopperWrapper::getUtility() const
+{
+	return totalUtility;
 }
 
 bool MujocoHopperWrapper::isTerminal() const

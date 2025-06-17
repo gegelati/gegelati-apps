@@ -38,7 +38,8 @@ void MujocoHalfCheetahWrapper::doActions(std::vector<double> actionsID)
 	auto x_pos_before = d_->qpos[0];
 	do_simulation(actionsID, frame_skip_);
 	auto x_pos_after = d_->qpos[0];
-	auto x_vel = (x_pos_after - x_pos_before) / m_->opt.timestep;
+	auto x_vel = (x_pos_after - x_pos_before) / (m_->opt.timestep * frame_skip_);
+
 
 	auto forward_reward = forward_reward_weight * x_vel;
 	auto rewards = forward_reward;
@@ -71,6 +72,11 @@ double MujocoHalfCheetahWrapper::getScore() const
 {
 	return totalReward;
 }
+double MujocoHalfCheetahWrapper::getUtility() const
+{
+	return totalReward;
+}
+
 
 bool MujocoHalfCheetahWrapper::isTerminal() const
 {

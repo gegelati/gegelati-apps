@@ -20,6 +20,10 @@ double MujocoDoublePendulumWrapper::getScore() const
 {
 	return totalReward;
 }
+double MujocoDoublePendulumWrapper::getUtility() const
+{
+	return totalReward;
+}
 
 void MujocoDoublePendulumWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterationNumber, uint64_t generationNumber)
 {

@@ -33,6 +33,7 @@ void MujocoWalker2DWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_
 	this->computeState();
 	this->nbActionsExecuted = 0;
 	this->totalReward = 0.0;
+	this->totalUtility = 0.0;
 }
 
 void MujocoWalker2DWrapper::doActions(std::vector<double> actionsID)
@@ -40,11 +41,10 @@ void MujocoWalker2DWrapper::doActions(std::vector<double> actionsID)
 	auto x_pos_before = d_->qpos[0];
 	do_simulation(actionsID, frame_skip_);
 	auto x_pos_after = d_->qpos[0];
-	auto x_vel = (x_pos_after - x_pos_before) / m_->opt.timestep;
+	auto x_vel = (x_pos_after - x_pos_before) / (m_->opt.timestep * frame_skip_);
 	auto forward_reward = forward_reward_weight * x_vel;
 	auto rewards = forward_reward;
 	
-	rewards += healthy_reward();
 
 	auto ctrl_cost = control_cost(actionsID);
 	auto costs = ctrl_cost;
@@ -54,7 +54,8 @@ void MujocoWalker2DWrapper::doActions(std::vector<double> actionsID)
 	this->computeState();
 
 	// Incremente the reward.
-	this->totalReward += reward;
+	this->totalReward += reward + int(useHealthyReward) * healthy_reward();
+	this->totalUtility += reward + healthy_reward();
 
 	this->nbActionsExecuted++;
 
@@ -74,6 +75,10 @@ Learn::LearningEnvironment* MujocoWalker2DWrapper::clone() const
 double MujocoWalker2DWrapper::getScore() const
 {
 	return totalReward;
+}
+double MujocoWalker2DWrapper::getUtility() const
+{
+	return totalUtility;
 }
 
 bool MujocoWalker2DWrapper::isTerminal() const

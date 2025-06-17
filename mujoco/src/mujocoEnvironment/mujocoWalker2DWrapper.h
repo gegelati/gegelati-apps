@@ -13,12 +13,14 @@ protected:
 
 	/// Total reward accumulated since the last reset
 	double totalReward = 0.0;
+    double totalUtility = 0.0;
 
 	/// Number of actions since the last reset
 	uint64_t nbActionsExecuted = 0;
 
 
 	const std::string xmlFile;
+	bool useHealthyReward;
 	bool exclude_current_positions_from_observation_ = true;
 	// Parameters
 	double forward_reward_weight = 1.0;
@@ -40,9 +42,9 @@ public:
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoWalker2DWrapper(const char *pXmlFile, bool exclude_current_positions_from_observation = true) :
+	MujocoWalker2DWrapper(const char *pXmlFile, bool useHealthyReward_p=true, bool exclude_current_positions_from_observation = true) :
 		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 17:18), 
-		xmlFile{pXmlFile},
+		xmlFile{pXmlFile}, useHealthyReward{useHealthyReward_p},
 		exclude_current_positions_from_observation_{exclude_current_positions_from_observation}
 		{
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
@@ -56,13 +58,14 @@ public:
     * \brief Copy constructor for the armLearnWrapper.
     */ 
     MujocoWalker2DWrapper(const MujocoWalker2DWrapper &other) : MujocoWrapper(other), 
-	xmlFile{other.xmlFile},
+	xmlFile{other.xmlFile}, useHealthyReward{other.useHealthyReward},
 	exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}
 
 	{
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		healthy_z_range_ = {0.8, 2};
 		healthy_angle_range_ = {-1.0, 1.0};
+		frame_skip_ = 4;
 		initialize_simulation();
     }
 
@@ -113,6 +116,7 @@ public:
 	* \return a double value corresponding to the score.
 	*/
 	virtual double getScore() const override;
+	virtual double getUtility() const override;
 
 	/**
 	* \brief Is the pendulum considered stabilized.

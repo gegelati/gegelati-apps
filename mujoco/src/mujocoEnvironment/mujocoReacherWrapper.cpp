@@ -136,6 +136,10 @@ double MujocoReacherWrapper::getScore() const
 {
 	return totalReward;
 }
+double MujocoReacherWrapper::getUtility() const
+{
+	return totalReward;
+}
 
 bool MujocoReacherWrapper::isTerminal() const
 {
