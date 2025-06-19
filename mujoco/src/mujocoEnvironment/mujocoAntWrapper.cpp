@@ -41,24 +41,24 @@ void MujocoAntWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t ite
 void MujocoAntWrapper::doActions(std::vector<double> actionsID)
 {
 	auto x_pos_before = d_->qpos[0];
+
 	do_simulation(actionsID, frame_skip_);
 	auto x_pos_after = d_->qpos[0];
 	auto x_vel = (x_pos_after - x_pos_before) / (m_->opt.timestep * frame_skip_);
 	auto forward_reward = x_vel * forward_reward_weight;
 	auto rewards = forward_reward;
 	
-	if(use_healthy_reward){
-		rewards += healthy_reward();
-	};
 	auto ctrl_cost = control_cost(actionsID);
 	auto costs = ctrl_cost;
 	auto reward = rewards - costs;
 
 	this->computeState();
 
+	double healthyReward = healthy_reward();
+
 	// Incremente the reward.
-	this->totalReward += reward + int(use_healthy_reward) * healthy_reward();
-	this->totalUtility += reward + healthy_reward();
+	this->totalReward += reward + int(use_healthy_reward) * healthyReward;
+	this->totalUtility += reward + healthyReward;
 
 	this->nbActionsExecuted++;
 
@@ -132,45 +132,28 @@ void MujocoAntWrapper::computeState(){
 }
 
 void MujocoAntWrapper::computeFeetContact() {
-
+    
 	std::set<uint64_t> increasedLegs;
 
-
-	
-	// Look at all the contact founded
     for (int i = 0; i < d_->ncon; ++i) {
         const mjContact& contact = d_->contact[i];
-
-        // get the geom shapes
         int geom1 = contact.geom1;
         int geom2 = contact.geom2;
 
-        // If there is a contact, it is with the ground
-        for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
-            int foot_geom = feet_geom_ids_[j];
-
-            if ((geom1 == foot_geom || geom2 == foot_geom) && increasedLegs.find(j) == increasedLegs.end()) {
-                nb_feet_in_contact_[j]++;
-				increasedLegs.insert(j);
-				break;
-            }
+        // Check if geom1 is a foot
+        auto it1 = footGeomToIndex.find(geom1);
+        if (it1 != footGeomToIndex.end() && increasedLegs.find(it1->second) == increasedLegs.end()) {
+            nb_feet_in_contact_[it1->second]++;
+            increasedLegs.insert(it1->second);
+            continue;
         }
-		
+
+        // Check if geom2 is a foot
+        auto it2 = footGeomToIndex.find(geom2);
+        if (it2 != footGeomToIndex.end() && increasedLegs.find(it2->second) == increasedLegs.end()) {
+            nb_feet_in_contact_[it2->second]++;
+            increasedLegs.insert(it2->second);
+        }
     }
-	
-	/*for (size_t i = 0; i < feet_geom_ids_.size(); ++i) {
-		std::cout << "Foot " << i << " geom ID = " << feet_geom_ids_[i] << " is in contact  "<< feet_in_contact_[i];
-		if(i == 0){
-			std::cout<< "  red"<<std::endl;
-		}
-				if(i == 1){
-			std::cout<< "  yellow"<<std::endl;
-		}
-				if(i == 2){
-			std::cout<< "  purple"<<std::endl;
-		}
-				if(i == 3){
-			std::cout<< "  blue"<<std::endl;
-		}
-	}*/
 }
+

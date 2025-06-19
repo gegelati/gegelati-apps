@@ -10,20 +10,15 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
             LearningEnvironment& le) const
 {
 
-    if(dynamic_cast<MujocoAntWrapper*>(&le) == nullptr){
-        if(sizeArchive > 0){
-            throw std::runtime_error("MapElites only support ant environment for now");
-
-        } else {
-            return Learn::LearningAgent::evaluateJob(tee, job, generationNumber, mode, le);
-        }
-    }
-    if(sizeArchive > 0){
+    if(sizeArchive == 0){
         return Learn::LearningAgent::evaluateJob(tee, job, generationNumber, mode, le);
+    }
+    if(dynamic_cast<MujocoAntWrapper*>(&le) == nullptr){
+        throw std::runtime_error("MapElites only support ant environment for now");
     }
     MujocoAntWrapper* antLE = dynamic_cast<MujocoAntWrapper*>(&le);
 
-    // Only consider the first root of jobs as we are not in adversarial mode
+    // Only consider the first root of jobs
     const TPG::TPGVertex* root = job.getRoot();
 
     // Skip the root evaluation process if enough evaluations were already
@@ -62,7 +57,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
                 tee.executeFromRoot(*root, antLE->getInitActions()).second;
             // Do it
             antLE->doActions(actionsID);
-            
+
             // Count actions
             nbActions++;
         }

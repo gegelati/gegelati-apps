@@ -33,6 +33,7 @@ protected:
 	bool useFeetContact;
 	std::vector<int> feet_geom_ids_; // À initialiser avec les indices MuJoCo des pieds
 	std::vector<bool> feet_in_contact_;
+	std::unordered_map<int, size_t> footGeomToIndex;
 public:
 
 	/**
@@ -50,11 +51,19 @@ public:
 			healthy_z_range_ = {0.2, 1.0};
 			initialize_simulation();
 
-			feet_geom_ids_.clear();
-			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "left_ankle_geom"));
-			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "right_ankle_geom"));
-			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "third_ankle_geom"));
-			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "fourth_ankle_geom"));
+			if(useFeetContact){
+				feet_geom_ids_.clear();
+				feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "left_ankle_geom"));
+				feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "right_ankle_geom"));
+				feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "third_ankle_geom"));
+				feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "fourth_ankle_geom"));
+
+				// Map geom_id to index j
+				for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
+					footGeomToIndex[feet_geom_ids_[j]] = j;
+				}
+			}
+
 		};
 
     /**
@@ -62,19 +71,25 @@ public:
     */ 
     MujocoAntWrapper(const MujocoAntWrapper &other) : MujocoWrapper(other), 
 	xmlFile{other.xmlFile}, use_healthy_reward{other.use_healthy_reward},
-	exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}, useFeetContact{useFeetContact}
+	exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}, useFeetContact{other.useFeetContact}
 	
 	{
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		healthy_z_range_ = {0.2, 1.0};
 		initialize_simulation();
 
-		
-		feet_geom_ids_.clear();
-		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "left_ankle_geom"));
-		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "right_ankle_geom"));
-		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "third_ankle_geom"));
-		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "fourth_ankle_geom"));
+		if(useFeetContact){
+			feet_geom_ids_.clear();
+			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "left_ankle_geom"));
+			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "right_ankle_geom"));
+			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "third_ankle_geom"));
+			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "fourth_ankle_geom"));
+
+			for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
+				footGeomToIndex[feet_geom_ids_[j]] = j;
+			}
+		}
+
     }
 
     ~MujocoAntWrapper() {

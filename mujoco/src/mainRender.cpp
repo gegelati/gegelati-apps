@@ -98,6 +98,18 @@ void InitVisualization(mjModel* task_m, mjData* task_d) {
 
     // initialize visualization data structures
     mjv_defaultCamera(&cam);
+
+    // Select the camera defined in the XML model, e.g., "track"
+    int cam_id = mj_name2id(m, mjOBJ_CAMERA, "track");
+    if (cam_id >= 0) {
+        cam.type = mjCAMERA_FIXED;
+        cam.fixedcamid = cam_id;
+        std::cout << "Using fixed camera: track (id " << cam_id << ")" << std::endl;
+    } else {
+        std::cerr << "Camera named 'track' not found in the model." << std::endl;
+    }
+
+
     mjv_defaultOption(&opt);
     mjv_defaultScene(&scn);
     mjr_defaultContext(&con);
@@ -298,6 +310,10 @@ int main(int argc, char ** argv) {
     TPG::TPGExecutionEngine tee(env, NULL);
 
     mujocoLE->reset(seed, Learn::LearningMode::TESTING);
+
+
+    
+
 
     InitVisualization(mujocoLE->m_, mujocoLE->d_);
     StepVisualization(isRenderVideoSaved, pathRenderVideo);
