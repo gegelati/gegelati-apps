@@ -10,7 +10,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
             LearningEnvironment& le) const
 {
 
-    if(sizeArchive == 0){
+    if(mapEliteArchive.getDimensions().first == 0){
         return Learn::LearningAgent::evaluateJob(tee, job, generationNumber, mode, le);
     }
     if(dynamic_cast<MujocoAntWrapper*>(&le) == nullptr){
@@ -66,7 +66,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
         result += antLE->getScore();
         utility += antLE->getUtility();
 
-        if(sizeArchive > 0){
+        if(mapEliteArchive.getDimensions().first > 0){
 
             // Get feet contact information
             auto feetContact = antLE->getNbFeetContact();
@@ -76,7 +76,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
         }
     }
 
-    for(size_t i = 0; i< all_feet_contact.size() && sizeArchive > 0; i++){
+    for(size_t i = 0; i< all_feet_contact.size() && mapEliteArchive.getDimensions().first > 0; i++){
         all_feet_contact[i] /= nbEvaluation;
     } 
 
@@ -102,7 +102,7 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
 
 
 
-    if(sizeArchive == 0){
+    if(mapEliteArchive.getDimensions().first == 0){
         Learn::LearningAgent::decimateWorstRoots(results);
         return;
     }
@@ -123,7 +123,7 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
         const TPG::TPGVertex* root = results.begin()->second;
 
         // Get the saved evaluation and root
-        const std::pair<std::shared_ptr<EvaluationResult>, const TPG::TPGVertex*>& pairSaved = getArchiveFromDescriptors(castEval->getFeetContact());
+        const std::pair<std::shared_ptr<EvaluationResult>, const TPG::TPGVertex*>& pairSaved = mapEliteArchive.getArchiveFromDescriptors(castEval->getFeetContact());
         
         
         // The value saved in the archive is better than the current root
@@ -157,7 +157,7 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
             }
 
             // Saving
-            this->setArchiveFromDescriptors(root, eval, castEval->getFeetContact());
+            this->mapEliteArchive.setArchiveFromDescriptors(root, eval, castEval->getFeetContact());
             
             // Preserved the root
             preservedRoots.insert(*results.begin()); // Root are presevered if they are override in this same generation !
@@ -174,63 +174,6 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
 
 }
 
-void Learn::MujocoMapEliteLearningAgent::initCSVarchive(std::string path)
-{
-    std::ofstream outFile(path);
-    if (!outFile.is_open()) {
-        std::cerr << "Archive file could not be created " << path << std::endl;
-        return;
-    }
-
-    outFile << "generation";
-    for (size_t i = 0; i < sizeArchive; ++i) {
-        for (size_t k = 0; k < sizeArchive; ++k) {
-            for (size_t j = 0; j < sizeArchive; ++j) {
-                for (size_t l = 0; l < sizeArchive; ++l) {
-                    std::string key = std::to_string(i) + "_" + std::to_string(k) + "_" + std::to_string(j) + "_" + std::to_string(l);
-                    outFile << "," << key;
-                }
-            }
-        }
-    }
-    outFile << "," << "archiveRange\n";
-    outFile.close();
-}
-void Learn::MujocoMapEliteLearningAgent::updateCSVArchive(std::string path, size_t generationNumber)
-{
-   std::ofstream outFile(path, std::ios::app); // append mode
-    if (!outFile.is_open()) {
-        std::cerr << "Archive file not found " << path << std::endl;
-        return;
-    }
-
-    outFile << generationNumber;
-    for (size_t i = 0; i < sizeArchive; ++i) {
-        for (size_t k = 0; k < sizeArchive; ++k) {
-            for (size_t j = 0; j < sizeArchive; ++j) {
-                for (size_t l = 0; l < sizeArchive; ++l) {
-                    const auto& elem = getArchiveAt(i,k,j,l);
-
-                    if (elem.second != nullptr) {
-                        outFile << "," << elem.first->getResult();
-                    } else {
-                        outFile << ",nan";
-                    }
-                }
-            }
-        }
-    }
-
-    if(generationNumber == 0){
-        outFile<<",";
-        for(double l: archiveLimits){
-            outFile <<l<< ";" ;
-        }
-    }
-
-    outFile << "\n";
-    outFile.close();
-}
 
 void Learn::MujocoMapEliteLearningAgent::updateEvaluationRecords(
             const std::multimap<std::shared_ptr<EvaluationResult>,
@@ -277,49 +220,9 @@ void Learn::MujocoMapEliteLearningAgent::updateEvaluationRecords(
     }
 }
 
-uint64_t Learn::MujocoMapEliteLearningAgent::getIndexArchive(double value)
+
+
+const MapEliteArchive& Learn::MujocoMapEliteLearningAgent::getMapElitesArchive()
 {
-    size_t idx = 0;
-    while(value > archiveLimits[idx]){
-        idx++;
-    }
-    return idx;
-}
-
-
-const std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>& Learn::MujocoMapEliteLearningAgent::getArchiveAt(size_t i, size_t j, size_t k, size_t l) {
-    return archive[i * sizeArchive * sizeArchive * sizeArchive +
-                   j * sizeArchive * sizeArchive +
-                   k * sizeArchive +
-                   l];
-}
-
-const std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>& Learn::MujocoMapEliteLearningAgent::getArchiveFromDescriptors(
-    const std::vector<double>& descriptors)
-{
-    return getArchiveAt(
-        getIndexArchive(descriptors[0]),
-        getIndexArchive(descriptors[1]),
-        getIndexArchive(descriptors[2]),
-        getIndexArchive(descriptors[3])
-    );
-}
-
-void Learn::MujocoMapEliteLearningAgent::setArchiveAt(const TPG::TPGVertex* vertex, std::shared_ptr<Learn::EvaluationResult> eval, size_t i, size_t j, size_t k, size_t l) {
-    archive[i * sizeArchive * sizeArchive * sizeArchive +
-            j * sizeArchive * sizeArchive +
-            k * sizeArchive +
-            l] = std::make_pair(eval, vertex);
-} 
-
-void Learn::MujocoMapEliteLearningAgent::setArchiveFromDescriptors(const TPG::TPGVertex* vertex, std::shared_ptr<Learn::EvaluationResult> eval, const std::vector<double>& descriptors)
-{
-
-    setArchiveAt(
-        vertex, eval,
-        getIndexArchive(descriptors[0]),
-        getIndexArchive(descriptors[1]),
-        getIndexArchive(descriptors[2]),
-        getIndexArchive(descriptors[3])
-    );
+    return mapEliteArchive;
 }

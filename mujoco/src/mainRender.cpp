@@ -227,7 +227,6 @@ int main(int argc, char ** argv) {
 	File::ParametersParser::loadParametersFromJson(paramFile, params);
 
 
-	std::cout << "Start Mujoco Rendering application with seed " << seed<<"." << std::endl;
 
 	// Instantiate the LearningEnvironment
 	MujocoWrapper* mujocoLE = nullptr;
@@ -294,7 +293,7 @@ int main(int argc, char ** argv) {
     strcat(clearDot, ".clear.dot");
     File::TPGGraphDotExporter dotExporter(clearDot, *la.getTPGGraph());
     dotExporter.print();
-    std::cout<<"Save cleared root in "<<clearDot<<std::endl;
+    std::cout<<"Save cleared root in "<<clearDot<<" --- ";
 
     // Print graph
     std::string codeGenPath = "logs/codeGen/";
@@ -309,15 +308,16 @@ int main(int argc, char ** argv) {
     tpggen->generateTPGGraph();
     TPG::TPGExecutionEngine tee(env, NULL);
 
-    mujocoLE->reset(seed, Learn::LearningMode::TESTING);
 
 
-    
+    double frameDuration = mujocoLE->m_->opt.timestep * mujocoLE->frame_skip_; // en secondes
+    int frameDelayMs = static_cast<int>(frameDuration * 1000); // en millisecondes
 
 
     InitVisualization(mujocoLE->m_, mujocoLE->d_);
     StepVisualization(isRenderVideoSaved, pathRenderVideo);
 
+    mujocoLE->reset(seed, Learn::LearningMode::TESTING);
     std::vector<double> actions(mujocoLE->getNbActions(), 0);
     uint64_t nbActions = 0;
     while (!mujocoLE->isTerminal() && nbActions < params.maxNbActionsPerEval) {
@@ -325,38 +325,34 @@ int main(int argc, char ** argv) {
         // Get the actions
         std::vector<double> actionsID =
             tee.executeFromRoot(*tpg.getRootVertices()[0]).second;
-        
-        /*if((nbActions / 5 )%2 == 0){
-        actionsID = {0.0, 0.0, 0.0, -0.5, 0.0, 0.0,0.0,0.0};
-        } else {
-            
-        actionsID = {0.0, 0.0, 0.0, 0.5,0.0,0.0,0.0,0.0};
-        }*/
 
 
         // Do it
         mujocoLE->doActions(actionsID);
         StepVisualization(isRenderVideoSaved, pathRenderVideo);
-        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        if(!isRenderVideoSaved){
+            std::this_thread::sleep_for(std::chrono::milliseconds(frameDelayMs));
 
-        std::cout<<"Action "<<nbActions<<":";
-        int i = 0;
-        for(auto act: actionsID){
-            std::cout<<act<<"-";
-            actions[i] += abs(act);
-            i++;
-        }std::cout<<std::endl;
-        if(nbActions > 2000){
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            std::cout<<"Action "<<nbActions<<":";
+            int i = 0;
+            for(auto act: actionsID){
+                std::cout<<act<<" | ";
+                actions[i] += abs(act);
+                i++;
+            }std::cout<<std::endl;
         }
         
 
         // Count actions
         nbActions++;
 
+
     }
+
+
+
     
-    std::cout<<"Score: "<<mujocoLE->getScore()<<std::endl;;
+    std::cout<<"Score: "<<mujocoLE->getUtility()<<std::endl;;
     std::cout<<"Summup actions: ";
     for(auto act: actions){
         std::cout<<act/(double)nbActions<<"-";
@@ -365,6 +361,9 @@ int main(int argc, char ** argv) {
 
 
     if(isRenderVideoSaved){
+        int fps = static_cast<int>(1.0 / frameDuration);
+        std::string dotFileName = std::filesystem::path(dotPath).stem().string();
+
         // Change size of images and save
         std::string resizeCommand = "ffmpeg -i " + std::string(pathRenderVideo) + "/frame_%04d.png -vf \"scale=1200:844\" " + std::string(pathRenderVideo) + "/resized_frame_%04d.png";
         std::cout << "Executing: " << resizeCommand << std::endl;
@@ -373,7 +372,11 @@ int main(int argc, char ** argv) {
             std::cerr << "Error executing resize command: " << result << std::endl;
         }
 
-        std::string videoCommand = "ffmpeg -y -r 60 -f image2 -s 1200:844 -i " + std::string(pathRenderVideo) + "/resized_frame_%04d.png -vcodec libx264 -crf 25 -pix_fmt yuv420p " + std::string(pathRenderVideo) + "/render_" + std::string(usecase) + "_s" + std::to_string(mujocoLE->getScore()) + ".mp4";
+        std::string videoCommand = "ffmpeg -y -r " + std::to_string(fps) + " -f image2 -s 1200x844 -i " +
+            std::string(pathRenderVideo) + "/resized_frame_%04d.png -vcodec libx264 -crf 25 -pix_fmt yuv420p " +
+            std::string(pathRenderVideo) + "/render_" + dotFileName + "_s" +
+            std::to_string((uint64_t)std::round(mujocoLE->getScore())) + ".mp4";
+        
         std::cout << "Executing: " << videoCommand << std::endl;
         result = system(videoCommand.c_str());
         if (result != 0) {

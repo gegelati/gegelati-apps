@@ -14,6 +14,41 @@
 #include "mujocoMapEliteAgent.h"
 #include "instructions.h"
 
+void exportIndividual(const TPG::TPGVertex* vertex,
+                      const std::string& basePathDots,
+                      const std::string& basePathStats,
+                      const std::vector<size_t>& indices,
+                      uint64_t seed,
+                      int indexParam,
+                      const std::string& usecase,
+                      std::shared_ptr<TPG::TPGGraph> graph,
+                      File::TPGGraphDotExporter& dotExporter) {
+
+    char dotFile[300];
+    std::ostringstream suffix;
+    for (const auto& idx : indices) {
+        suffix << "_" << idx;
+    }
+
+    sprintf(dotFile, "%s/out_best%s.%" PRIu64 ".p%d.%s.dot",
+            basePathDots.c_str(), suffix.str().c_str(), seed, indexParam, usecase.c_str());
+    dotExporter.setNewFilePath(dotFile);
+    dotExporter.printSubGraph(vertex);
+
+    TPG::PolicyStats ps;
+    ps.setEnvironment(graph->getEnvironment());
+    ps.analyzePolicy(vertex);
+
+    char statsFile[300];
+    sprintf(statsFile, "%s/out_best_stats%s.%" PRIu64 ".p%d.%s.md",
+            basePathStats.c_str(), suffix.str().c_str(), seed, indexParam, usecase.c_str());
+    std::ofstream statsOut(statsFile);
+    statsOut << ps;
+    statsOut.close();
+}
+
+
+
 int main(int argc, char ** argv) {
 
     char option;
@@ -24,13 +59,14 @@ int main(int argc, char ** argv) {
 	char usecase[150];
 	bool useHealthyReward = 1;
 	bool useContactForce = 0;
+	bool saveAllGenerationsDots = 1;
 	std::string archiveValuesStr = "";
 
     strcpy(logsFolder, "logs");
     strcpy(paramFile, "params_0.json");
 	strcpy(usecase, "ant");
     strcpy(xmlFile, "none");
-    while((option = getopt(argc, argv, "s:p:l:x:h:c:u:a:")) != -1){
+    while((option = getopt(argc, argv, "s:p:l:x:h:c:u:a:g:")) != -1){
         switch (option) {
             case 's': seed= atoi(optarg); break;
             case 'p': strcpy(paramFile, optarg); break;
@@ -40,7 +76,8 @@ int main(int argc, char ** argv) {
 			case 'c': useContactForce = atoi(optarg); break;
             case 'x': strcpy(xmlFile, optarg); break;
 			case 'a': archiveValuesStr = optarg; break;
-            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-logs logs Folder\'  \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\' \'-a sizeArchive\'." << std::endl; exit(1);
+			case 'g': saveAllGenerationsDots = atoi(optarg); break;
+            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-logs logs Folder\'  \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\' \'-a sizeArchive\' \'-g saveAllGenDotFiles\'." << std::endl; exit(1);
         }
     }
 	if(strcmp(xmlFile, "none") == 0){
@@ -49,8 +86,6 @@ int main(int argc, char ** argv) {
 
 	char dotGen[160];
 	snprintf(dotGen, sizeof(dotGen), "%s/dotFiles", logsFolder);
-	char archiveDots[160];
-	snprintf(archiveDots, sizeof(archiveDots), "%s/archiveDots", logsFolder);
 
 	// Create log folder if needed
 	if (!std::filesystem::exists(logsFolder)) {
@@ -60,11 +95,13 @@ int main(int argc, char ** argv) {
 	if (!std::filesystem::exists(dotGen)) {
 		std::filesystem::create_directory(dotGen);
 	}
-	// Create archiveDots logs folder if needed
-	if (!std::filesystem::exists(archiveDots)) {
-		std::filesystem::create_directory(archiveDots);
-	}
 
+
+	
+	char archiveDots[160];
+	snprintf(archiveDots, sizeof(archiveDots), "%s/archiveDots", logsFolder);
+	char archiveStats[160];
+	snprintf(archiveStats, sizeof(archiveStats), "%s/archiveStats", logsFolder);
 	std::vector<double> archiveValues;
 	if (!archiveValuesStr.empty()) {
 		std::stringstream ss(archiveValuesStr);
@@ -76,6 +113,16 @@ int main(int argc, char ** argv) {
 				std::cerr << "Valeur invalide dans -a : " << token << std::endl;
 				exit(1);
 			}
+		}
+
+
+		
+		// Create archiveDots logs folder if needed
+		if (!std::filesystem::exists(archiveDots)) {
+			std::filesystem::create_directory(archiveDots);
+		}
+		if (!std::filesystem::exists(archiveStats)) {
+			std::filesystem::create_directory(archiveStats);
 		}
 	}
 
@@ -173,12 +220,16 @@ int main(int argc, char ** argv) {
 	char archivePath[250];
 	if(archiveValues.size() > 0){
 		sprintf(archivePath, "%s/archive.%" PRIu64 ".p%d.%s.csv", logsFolder, seed, indexParam, usecase);
-		la.initCSVarchive(archivePath);
+		la.getMapElitesArchive().initCSVarchive(archivePath);
 	}
 
 	// Create an exporter for all graphs
     char dotPath[400];
-    sprintf(dotPath, "%s/out_lastGen.%" PRIu64 ".0.p%d.%s.dot", dotGen, seed, indexParam, usecase);
+	if(saveAllGenerationsDots){
+    	sprintf(dotPath, "%s/out_lastGen.%" PRIu64 ".0.p%d.%s.dot", dotGen, seed, indexParam, usecase);
+	} else {
+    	sprintf(dotPath, "%s/out_lastGen.%" PRIu64 ".p%d.%s.dot", dotGen, seed, indexParam, usecase);	
+	}
 	File::TPGGraphDotExporter dotExporter(dotPath, *la.getTPGGraph());
 
 	// Logging best policy stat.
@@ -193,66 +244,51 @@ int main(int argc, char ** argv) {
 
 	// Train for params.nbGenerations generations
 	for (uint64_t i = 0; i < params.nbGenerations && !exitProgram; i++) {
-#define PRINT_ALL_DOT 1
-#if PRINT_ALL_DOT
-		if(i % 1 == 0){
-			char buff[250];
+
+		char buff[250];
+		if(saveAllGenerationsDots){
 			sprintf(buff, "%s/out_lastGen.%" PRIu64 ".%" PRIu64 ".p%d.%s.dot", dotGen, i, seed, indexParam, usecase);
-			dotExporter.setNewFilePath(buff);
-			dotExporter.print();
+		} else {
+			sprintf(buff, "%s/out_lastGen.%" PRIu64 ".p%d.%s.dot", dotGen, seed, indexParam, usecase);
 		}
-
-#endif
-
+		dotExporter.setNewFilePath(buff);
+		dotExporter.print();
 
 		la.trainOneGeneration(i);
 
 		if(archiveValues.size() > 0){
 			// Update the archive CSV file
-			la.updateCSVArchive(archivePath, i);
+			la.getMapElitesArchive().updateCSVArchive(archivePath, i);
 		}
 	}
 
 	
-	//la.getTPGGraph()->clearProgramIntrons();
+	la.getTPGGraph()->clearProgramIntrons();
 
-	if(archiveValues.size() > 0){
+	if (!archiveValues.empty()) {
+		std::vector<size_t> indices(la.getMapElitesArchive().getDimensions().second, 0);
+		size_t total = std::pow(archiveValues.size(), la.getMapElitesArchive().getDimensions().second);
 
-		for (size_t i = 0; i < archiveValues.size(); ++i) {
-			for (size_t k = 0; k < archiveValues.size(); ++k) {
-				for (size_t j = 0; j < archiveValues.size(); ++j) {
-					for (size_t l = 0; l < archiveValues.size(); ++l) {
-						const auto& elem = la.getArchiveAt(i,k,j,l);
+		for (size_t count = 0; count < total; ++count) {
+			const auto& elem = la.getMapElitesArchive().getArchiveAt(indices);
+			if (elem.second != nullptr) {
+				exportIndividual(elem.second, archiveDots, archiveStats, indices, seed, indexParam, usecase,
+								la.getTPGGraph(), dotExporter);
+			}
 
-						if(elem.second != nullptr){
-							char bestDot[300];
-							// Export the graph
-							sprintf(bestDot, "%s/out_best_%zu_%zu_%zu_%zu.%" PRIu64 ".p%d.%s.dot", archiveDots, i, k, j, l, seed, indexParam, usecase);
-							dotExporter.setNewFilePath(bestDot);
-							dotExporter.printSubGraph(elem.second);
-						}
-					}
-				}
+			for (int i = la.getMapElitesArchive().getDimensions().second - 1; i >= 0; --i) {
+				if (++indices[i] < archiveValues.size()) break;
+				indices[i] = 0;
 			}
 		}
 	} else {
-		char bestDot[250];
-		// Export the graph
-		sprintf(bestDot, "%s/out_best.%" PRIu64 ".p%d.%s.dot", logsFolder, seed, indexParam, usecase);
-		dotExporter.setNewFilePath(bestDot);
-		dotExporter.print();
+		la.keepBestPolicy();
+		const auto* best = la.getBestRoot().first;
+		std::vector<size_t> emptyIndices;
+		exportIndividual(best, logsFolder, logsFolder, emptyIndices, seed, indexParam, usecase,
+						la.getTPGGraph(), dotExporter);
 	}
 
-
-	TPG::PolicyStats ps;
-	ps.setEnvironment(la.getTPGGraph()->getEnvironment());
-	ps.analyzePolicy(la.getBestRoot().first);
-	std::ofstream bestStats;
-    sprintf(bestPolicyStatsPath, "%s/out_best_stats.%" PRIu64 ".p%d.%s.md", logsFolder, seed, indexParam, usecase);
-	bestStats.open(bestPolicyStatsPath);
-	bestStats << ps;
-	bestStats.close();
-	stats.close();
 
 	// cleanup
 	for (unsigned int i = 0; i < set.getNbInstructions(); i++) {
