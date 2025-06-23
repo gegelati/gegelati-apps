@@ -13,8 +13,6 @@
 #include <glfw3.h>
 #include <filesystem>
 
-#include "mujocoMapEliteAgent.h"
-
 // keyboard callback
 void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods) {
     // backspace: reset simulation
@@ -251,7 +249,7 @@ int main(int argc, char ** argv) {
 	}
 
 	// Instantiate and init the learning agent
-	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, params);
+	Learn::ParallelLearningAgent la(*mujocoLE, set, params);
 	la.init(seed);
 
     auto &tpg = *la.getTPGGraph();
