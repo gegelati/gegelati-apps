@@ -26,6 +26,7 @@ class MapElitesArchive {
 
         std::pair<uint64_t, uint64_t> getDimensions() const;
 
+        const std::vector<std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>>& getAllArchive() const;
 
         const std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>& 
             getArchiveAt(const std::vector<uint64_t>& indices) const;

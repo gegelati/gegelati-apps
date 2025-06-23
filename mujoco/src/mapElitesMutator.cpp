@@ -172,7 +172,69 @@ void Mutator::MapElitesMutator::mutateTPGAction(
 
 }
 
+std::pair<std::set<std::vector<size_t>>, std::vector<std::vector<size_t>>> 
+    Mutator::MapElitesMutator::getValidAndWeightedIndices(
+        const MapElitesArchive& mapElitesArchive, bool usePonderationSelection)
+{
+    std::vector<std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex *>> copiedArchive;
+    std::map<const TPG::TPGVertex *, double> weightPerIndices;
 
+    std::set<std::vector<size_t>> validIndices;
+    std::pair<uint64_t, uint64_t> dim = mapElitesArchive.getDimensions();
+
+    std::vector<std::vector<size_t>> weightedIndices;
+    std::vector<size_t> indices(dim.second, 0);
+
+
+    if(usePonderationSelection){
+        for (const auto& entry : mapElitesArchive.getAllArchive()) {
+            if (entry.second != nullptr) {
+                copiedArchive.push_back(entry);
+            }
+        }
+
+        std::sort(
+            copiedArchive.begin(),
+            copiedArchive.end(),
+            [](const auto& a, const auto& b) {
+                return a.first->getResult() < b.first->getResult();
+            }
+        );
+
+        size_t idx = 1;
+        for(const auto& entry: copiedArchive){
+            weightPerIndices.insert(std::make_pair(entry.second, idx++));
+        }
+    }
+
+
+    for (size_t flatIndex = 0; flatIndex < mapElitesArchive.size(); ++flatIndex) {
+        size_t idx = flatIndex;
+
+        // Calcul des indices multidimensionnels à partir de l’index linéaire
+        for (int d = dim.second - 1; d >= 0; --d) {
+            indices[d] = idx % dim.first;   // modulo par taille de chaque dimension
+            idx /= dim.first;
+        }
+
+
+        // Récupération de l’élément dans l’archive
+        const auto& elem = mapElitesArchive.getArchiveAt(indices);
+        if (elem.second != nullptr) {
+            validIndices.insert(indices);
+            // Add the element n time if ponderation selection is used
+            if(usePonderationSelection){
+                for(size_t idx = 0; idx < weightPerIndices.at(elem.second); idx++){
+                    weightedIndices.push_back(indices);
+                }
+            } else {
+                weightedIndices.push_back(indices);
+            }
+        }
+    }
+
+    return std::make_pair(validIndices, weightedIndices);
+}
 
 void Mutator::MapElitesMutator::populateTPG(TPG::TPGGraph& graph,
                                       const Archive& archive,
@@ -193,32 +255,9 @@ void Mutator::MapElitesMutator::populateTPG(TPG::TPGGraph& graph,
 
     uint64_t nbRootsToCreate = params.tpg.nbRoots;
 
-    std::set<std::vector<size_t>> validIndices;
-    std::pair<uint64_t, uint64_t> dim = mapElitesArchive.getDimensions();
-
-
-    std::vector<size_t> indices(dim.second, 0);  // dim.second = nombre de dimensions
-
-    for (size_t flatIndex = 0; flatIndex < mapElitesArchive.size(); ++flatIndex) {
-        size_t idx = flatIndex;
-
-        // Calcul des indices multidimensionnels à partir de l’index linéaire
-        for (int d = dim.second - 1; d >= 0; --d) {
-            indices[d] = idx % dim.first;   // modulo par taille de chaque dimension
-            idx /= dim.first;
-        }
-
-
-        // Récupération de l’élément dans l’archive
-        const auto& elem = mapElitesArchive.getArchiveAt(indices);
-        if (elem.second != nullptr) {
-            validIndices.insert(indices);
-        }
-    }
-
-    if (validIndices.empty()) {
-        throw std::runtime_error("No non-empty elements in map elites archive.");
-    }
+    auto pair = getValidAndWeightedIndices(mapElitesArchive, usePonderationSelection);
+    std::set<std::vector<size_t>> validIndices = pair.first;
+    std::vector<std::vector<size_t>> weightedIndices = pair.second ;
 
 
 
@@ -227,9 +266,7 @@ void Mutator::MapElitesMutator::populateTPG(TPG::TPGGraph& graph,
     while (nbRootsCreated < nbRootsToCreate) {
 
         // Select a random existing root in the archive
-        auto it= validIndices.begin();
-        std::advance(it, rng.getUnsignedInt64(0, validIndices.size() - 1));
-        std::vector<uint64_t> indicesCloned = *it;
+        std::vector<uint64_t> indicesCloned = weightedIndices.at(rng.getUnsignedInt64(0, weightedIndices.size() - 1));
 
         // Clone the agent
         const TPG::TPGAction* child = (const TPG::TPGAction*)(&graph.cloneVertex(

@@ -27,6 +27,9 @@ namespace Mutator {
                 const Mutator::MutationParameters& params, Mutator::RNG& rng,
                 bool useOnlyCloseAddEdges);
 
+            std::pair<std::set<std::vector<size_t>>, std::vector<std::vector<size_t>>> 
+                getValidAndWeightedIndices(const MapElitesArchive& mapElitesArchive, bool usePonderationSelection);
+
             void populateTPG(
                 TPG::TPGGraph& graph, const Archive& archive,
                 const MapElitesArchive& mapElitesArchive,

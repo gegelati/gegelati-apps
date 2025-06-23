@@ -11,6 +11,10 @@ std::pair<uint64_t, uint64_t> MapElitesArchive::getDimensions() const
     return std::make_pair(dim1, dim2);
 }
 
+const std::vector<std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>>& MapElitesArchive::getAllArchive() const
+{
+    return archive;
+}
 
 uint64_t MapElitesArchive::getIndexArchive(double value) const
 {
