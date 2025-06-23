@@ -65,6 +65,11 @@ bool MujocoHopperWrapper::isCopyable() const
 	return true;
 }
 
+bool MujocoHopperWrapper::isUsingUtility() const
+{
+	return !useHealthyReward;
+}
+
 Learn::LearningEnvironment* MujocoHopperWrapper::clone() const
 {
 	return new MujocoHopperWrapper(*this);

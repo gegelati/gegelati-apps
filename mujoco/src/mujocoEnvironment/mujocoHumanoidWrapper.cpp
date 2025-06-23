@@ -90,6 +90,11 @@ bool MujocoHumanoidWrapper::isCopyable() const
     return true;
 }
 
+bool MujocoHumanoidWrapper::isUsingUtility() const
+{
+	return !use_healthy_reward;
+}
+
 Learn::LearningEnvironment* MujocoHumanoidWrapper::clone() const
 {
     return new MujocoHumanoidWrapper(*this);

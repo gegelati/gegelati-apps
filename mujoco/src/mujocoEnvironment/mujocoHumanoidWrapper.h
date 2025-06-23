@@ -69,7 +69,12 @@ public:
 
     virtual void reset(size_t seed = 0, Learn::LearningMode mode = Learn::LearningMode::TRAINING, uint16_t iterationNumber = 0, uint64_t generationNumber = 0) override;
     virtual void doActions(std::vector<double> actionsID) override;
+
     virtual bool isCopyable() const override;
+
+    /// Inherited via LearningEnvironment
+	virtual bool isUsingUtility() const override;
+
     virtual LearningEnvironment* clone() const override;
     virtual double getScore() const override;
 	virtual double getUtility() const override;

@@ -119,6 +119,9 @@ public:
 	virtual bool isCopyable() const override;
 
 	/// Inherited via LearningEnvironment
+	virtual bool isUsingUtility() const override;
+
+	/// Inherited via LearningEnvironment
 	virtual LearningEnvironment* clone() const;
 
 	/**

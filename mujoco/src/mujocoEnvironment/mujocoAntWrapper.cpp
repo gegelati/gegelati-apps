@@ -73,6 +73,11 @@ bool MujocoAntWrapper::isCopyable() const
 	return true;
 }
 
+bool MujocoAntWrapper::isUsingUtility() const
+{
+	return !use_healthy_reward;
+}
+
 Learn::LearningEnvironment* MujocoAntWrapper::clone() const
 {
 	return new MujocoAntWrapper(*this);

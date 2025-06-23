@@ -97,6 +97,8 @@ public:
 	/// Inherited via LearningEnvironment
 	virtual LearningEnvironment* clone() const;
 
+	/// Inherited via LearningEnvironment
+	virtual bool isUsingUtility() const override;
 	/**
 	* \brief Get a score for the pendulum stabilization.
 	*

@@ -67,6 +67,11 @@ bool MujocoWalker2DWrapper::isCopyable() const
 	return true;
 }
 
+bool MujocoWalker2DWrapper::isUsingUtility() const
+{
+	return !useHealthyReward;
+}
+
 Learn::LearningEnvironment* MujocoWalker2DWrapper::clone() const
 {
 	return new MujocoWalker2DWrapper(*this);
