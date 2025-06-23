@@ -60,13 +60,15 @@ int main(int argc, char ** argv) {
 	bool useHealthyReward = 1;
 	bool useContactForce = 0;
 	bool saveAllGenerationsDots = 1;
+	bool usePonderationSelection = 0;
+	bool useOnlyCloseAddEdges = 0;
 	std::string archiveValuesStr = "";
 
     strcpy(logsFolder, "logs");
     strcpy(paramFile, "params_0.json");
 	strcpy(usecase, "ant");
     strcpy(xmlFile, "none");
-    while((option = getopt(argc, argv, "s:p:l:x:h:c:u:a:g:")) != -1){
+    while((option = getopt(argc, argv, "s:p:l:x:h:c:u:a:g:w:o:")) != -1){
         switch (option) {
             case 's': seed= atoi(optarg); break;
             case 'p': strcpy(paramFile, optarg); break;
@@ -77,7 +79,9 @@ int main(int argc, char ** argv) {
             case 'x': strcpy(xmlFile, optarg); break;
 			case 'a': archiveValuesStr = optarg; break;
 			case 'g': saveAllGenerationsDots = atoi(optarg); break;
-            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-logs logs Folder\'  \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\' \'-a sizeArchive\' \'-g saveAllGenDotFiles\'." << std::endl; exit(1);
+			case 'w': usePonderationSelection = atoi(optarg); break;
+			case 'o': useOnlyCloseAddEdges = atoi(optarg); break;
+            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-logs logs Folder\'  \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\' \'-a sizeArchive\' \'-g saveAllGenDotFiles\' \'-w usePonderationSelection\' \'-o useOnlyCloseAddEdges\'." << std::endl; exit(1);
         }
     }
 	if(strcmp(xmlFile, "none") == 0){
@@ -197,7 +201,7 @@ int main(int argc, char ** argv) {
 	std::cout << "Number of threads: " << params.nbThreads << std::endl;
 
 	// Instantiate and init the learning agent
-	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, params, archiveValues);
+	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, params, archiveValues, usePonderationSelection, useOnlyCloseAddEdges);
 	la.init(seed);
 
 

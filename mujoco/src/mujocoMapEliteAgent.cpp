@@ -1,7 +1,66 @@
 
 #include "mujocoMapEliteAgent.h"
+#include "mapElitesMutator.h"
 #include "mapEliteEvalRes.h"
 #include "mujocoEnvironment/mujocoAntWrapper.h"
+
+void Learn::MujocoMapEliteLearningAgent::trainOneGeneration(uint64_t generationNumber)
+{
+    for (auto logger : loggers) {
+        logger.get().logNewGeneration(generationNumber);
+    }
+
+    // Populate Sequentially
+    if(mapEliteArchive.size() > 0){
+        Mutator::MapElitesMutator::populateTPG(
+            *this->tpg, this->archive, this->mapEliteArchive, this->params.mutation, this->rng,
+            generationNumber, maxNbThreads, usePonderationSelection, useOnlyCloseAddEdges);
+    } else {
+        Mutator::TPGMutator::populateTPG(
+            *this->tpg, this->archive, this->params.mutation, this->rng,
+            generationNumber, maxNbThreads);
+    }
+
+    for (auto logger : loggers) {
+        logger.get().logAfterPopulateTPG();
+    }
+
+    // Evaluate
+    auto results =
+        this->evaluateAllRoots(generationNumber, LearningMode::TRAINING);
+    for (auto logger : loggers) {
+        logger.get().logAfterEvaluate(results);
+    }
+
+    // Save the best score of this generation
+    this->updateBestScoreLastGen(results);
+
+    // Remove worst performing roots
+    decimateWorstRoots(results);
+    // Update the best
+    this->updateEvaluationRecords(results);
+
+    for (auto logger : loggers) {
+        logger.get().logAfterDecimate();
+    }
+
+    // Does a validation or not according to the parameter doValidation
+    if (params.doValidation) {
+        std::multimap<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*> validationResults;
+
+        if(generationNumber % params.stepValidation == 0 || generationNumber == params.nbGenerations - 1){
+            validationResults = evaluateAllRoots(generationNumber, Learn::LearningMode::VALIDATION);
+        }
+        for (auto logger : loggers) {
+            logger.get().logAfterValidate(validationResults);
+        }
+    }
+
+    for (auto logger : loggers) {
+        logger.get().logEndOfTraining();
+    }
+}
+
 
 
 std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::evaluateJob(
@@ -44,7 +103,9 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
     for (size_t iterationNumber = 0; iterationNumber < nbEvaluation; iterationNumber++) {
         // Compute a Hash
         Data::Hash<uint64_t> hasher;
-        uint64_t hash = hasher(generationNumber) ^ hasher(iterationNumber);
+        
+        // Same seed at each generation for map elites
+        uint64_t hash = hasher(10000) ^ hasher(iterationNumber);
 
         // Reset the learning Environment
         antLE->reset(hash, mode, iterationNumber, generationNumber);
@@ -222,7 +283,7 @@ void Learn::MujocoMapEliteLearningAgent::updateEvaluationRecords(
 
 
 
-const MapEliteArchive& Learn::MujocoMapEliteLearningAgent::getMapElitesArchive()
+const MapElitesArchive& Learn::MujocoMapEliteLearningAgent::getMapElitesArchive()
 {
     return mapEliteArchive;
 }

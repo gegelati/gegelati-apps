@@ -188,6 +188,7 @@ int main(int argc, char ** argv) {
 	char usecase[150];
     uint64_t seed=0;
 	bool useHealthyReward = 1;
+	bool fastVisu = 0;
 	bool useContactForce = 0;
     
     strcpy(dotPath, "logs/out_best.0.p0.dot");
@@ -195,7 +196,7 @@ int main(int argc, char ** argv) {
     strcpy(pathRenderVideo, "../logs/render");
 	strcpy(usecase, "ant");
     strcpy(xmlFile, "none");
-    while((option = getopt(argc, argv, "s:p:d:f:g:x:h:c:u:")) != -1){
+    while((option = getopt(argc, argv, "s:p:d:f:g:x:h:c:u:v:")) != -1){
         switch (option) {
             case 's': seed= atoi(optarg); break;
             case 'p': strcpy(paramFile, optarg); break;
@@ -205,8 +206,9 @@ int main(int argc, char ** argv) {
 			case 'u': strcpy(usecase, optarg); break;
 			case 'h': useHealthyReward = atoi(optarg); break;
 			case 'c': useContactForce = atoi(optarg); break;
+			case 'v': fastVisu = atoi(optarg); break;
             case 'x': strcpy(xmlFile, optarg); break;
-            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-d dot path\' \'-f save or not video\' \'-g path for video saved\' \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\'." << std::endl; exit(1);
+            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-d dot path\' \'-f save or not video\' \'-g path for video saved\' \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\' \'-v fastVisu\'." << std::endl; exit(1);
         }
     }
     if(strcmp(xmlFile, "none") == 0){
@@ -331,7 +333,9 @@ int main(int argc, char ** argv) {
         mujocoLE->doActions(actionsID);
         StepVisualization(isRenderVideoSaved, pathRenderVideo);
         if(!isRenderVideoSaved){
-            std::this_thread::sleep_for(std::chrono::milliseconds(frameDelayMs));
+            if(!fastVisu){
+                std::this_thread::sleep_for(std::chrono::milliseconds(frameDelayMs));
+            }
 
             std::cout<<"Action "<<nbActions<<":";
             int i = 0;

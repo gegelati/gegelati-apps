@@ -5,7 +5,7 @@
 
 #include <gegelati.h>
 
-class MapEliteArchive {
+class MapElitesArchive {
     protected:
 
     
@@ -16,15 +16,15 @@ class MapEliteArchive {
 
     public:
 
-        MapEliteArchive(std::vector<double>& archiveLimits, uint64_t dim2)
+        MapElitesArchive(std::vector<double>& archiveLimits, uint64_t dim2)
             : archiveLimits{archiveLimits}, dim1{archiveLimits.size()}, dim2{dim2}
         {
             archive.resize(std::pow(dim1, dim2));
         }
 
-        double size() const;
+        uint64_t size() const;
 
-        std::pair<double, double> getDimensions() const;
+        std::pair<uint64_t, uint64_t> getDimensions() const;
 
 
         const std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>& 
