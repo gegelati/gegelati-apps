@@ -298,20 +298,23 @@ int main(int argc, char ** argv) {
     std::cout<<"Save cleared root in "<<clearDot<<" --- ";
 
     // Print graph
-    std::string codeGenPath = "logs/codeGen/";
-    std::cout<<codeGenPath<<std::endl;
-    if(!std::filesystem::exists(codeGenPath)){
-        std::filesystem::create_directory(codeGenPath);
+    bool printCodeGen = false;
+    if(printCodeGen){
+        std::string codeGenPath = "logs/codeGen/";
+        std::cout<<codeGenPath<<std::endl;
+        if(!std::filesystem::exists(codeGenPath)){
+            std::filesystem::create_directory(codeGenPath);
+        }
+
+        std::cout << "Printing C code." << std::endl;
+        CodeGen::TPGGenerationEngineFactory factory(CodeGen::TPGGenerationEngineFactory::switchMode);
+        std::unique_ptr<CodeGen::TPGGenerationEngine> tpggen = factory.create("codeGenMujoco", tpg, codeGenPath);
+        tpggen->generateTPGGraph();
     }
 
-    std::cout << "Printing C code." << std::endl;
-	CodeGen::TPGGenerationEngineFactory factory(CodeGen::TPGGenerationEngineFactory::switchMode);
-    std::unique_ptr<CodeGen::TPGGenerationEngine> tpggen = factory.create("codeGenMujoco", tpg, codeGenPath);
-    tpggen->generateTPGGraph();
-    TPG::TPGExecutionEngine tee(env, NULL);
 
 
-
+    std::cout<<mujocoLE->m_->opt.timestep<<" "<<mujocoLE->frame_skip_<<std::endl;
     double frameDuration = mujocoLE->m_->opt.timestep * mujocoLE->frame_skip_; // en secondes
     int frameDelayMs = static_cast<int>(frameDuration * 1000); // en millisecondes
 
@@ -322,6 +325,7 @@ int main(int argc, char ** argv) {
     mujocoLE->reset(seed, Learn::LearningMode::TESTING);
     std::vector<double> actions(mujocoLE->getNbActions(), 0);
     uint64_t nbActions = 0;
+    TPG::TPGExecutionEngine tee(env, NULL);
     while (!mujocoLE->isTerminal() && nbActions < params.maxNbActionsPerEval) {
 
         // Get the actions
@@ -365,7 +369,7 @@ int main(int argc, char ** argv) {
 
 
     if(isRenderVideoSaved){
-        int fps = static_cast<int>(1.0 / frameDuration);
+        int fps = static_cast<int>(1.0 / frameDuration / 2.0);
         std::string dotFileName = std::filesystem::path(dotPath).stem().string();
 
         // Change size of images and save

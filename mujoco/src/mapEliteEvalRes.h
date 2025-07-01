@@ -41,10 +41,8 @@ namespace Learn {
         MapElitesEvaluationResult(
             const double& res, const double& uti, const size_t& nbEval,
             const std::vector<double>& feetContact)
-            : EvaluationResult(res, uti, nbEval), feetContact{feetContact}
-              
-        {
-        };
+            : EvaluationResult(res, nbEval, uti), feetContact{feetContact}
+        {}
 
         /**
          * \brief Get a const ref to the scorePerClass attribute.
