@@ -85,6 +85,9 @@ public:
     virtual LearningEnvironment* clone() const override;
     virtual double getScore() const override;
 	virtual double getUtility() const override;
+
+	/// Inherited via LearningEnvironment
+	virtual bool isUsingUtility() const override;
     virtual bool isTerminal() const override;
 
     double healthy_reward();

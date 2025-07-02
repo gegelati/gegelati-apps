@@ -88,6 +88,10 @@ double MujocoWalker2DWrapper::getUtility() const
 {
 	return totalUtility;
 }
+bool MujocoWalker2DWrapper::isUsingUtility() const
+{
+	return !useHealthyReward;
+}
 
 bool MujocoWalker2DWrapper::isTerminal() const
 {

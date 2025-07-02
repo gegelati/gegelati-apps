@@ -86,6 +86,10 @@ double MujocoHopperWrapper::getUtility() const
 {
 	return totalUtility;
 }
+bool MujocoHopperWrapper::isUsingUtility() const
+{
+	return !useHealthyReward;
+}
 
 bool MujocoHopperWrapper::isTerminal() const
 {

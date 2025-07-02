@@ -111,6 +111,10 @@ double MujocoHumanoidWrapper::getUtility() const
 {
     return totalUtility;
 }
+bool MujocoHumanoidWrapper::isUsingUtility() const
+{
+	return !use_healthy_reward;
+}
 
 bool MujocoHumanoidWrapper::isTerminal() const
 {

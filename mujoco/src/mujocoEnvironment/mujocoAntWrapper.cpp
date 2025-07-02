@@ -90,6 +90,11 @@ double MujocoAntWrapper::getUtility() const
 	return totalUtility;
 }
 
+bool MujocoAntWrapper::isUsingUtility() const
+{
+	return !use_healthy_reward;
+}
+
 bool MujocoAntWrapper::isTerminal() const
 {
 	return (terminate_when_unhealthy_ && !is_healthy());

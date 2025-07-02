@@ -128,6 +128,9 @@ public:
 	virtual double getScore() const override;
 	virtual double getUtility() const override;
 
+	/// Inherited via LearningEnvironment
+	virtual bool isUsingUtility() const override;
+
 	/**
 	* \brief Is the pendulum considered stabilized.
 	*
