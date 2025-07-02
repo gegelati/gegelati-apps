@@ -94,6 +94,11 @@ void MujocoReacherWrapper::computeState() {
     for (double dist_val : dist_diff) {
         currentState.setDataAt(typeid(double), index++, dist_val);
     }
+
+	// Reset descriptors
+	if(descriptorType_ != DescriptorType::Unused){
+		std::fill(descriptors.begin(), descriptors.end(), 0.0);
+	}
 }
 
 
@@ -119,6 +124,9 @@ void MujocoReacherWrapper::doActions(std::vector<double> actionsID)
 	this->nbActionsExecuted++;
 
 
+	if(descriptorType_ != DescriptorType::Unused){
+		computeDescriptors(actionsID);
+	}
 }
 
 

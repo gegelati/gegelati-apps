@@ -72,10 +72,10 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
     if(mapEliteArchive.getDimensions().first == 0){
         return Learn::LearningAgent::evaluateJob(tee, job, generationNumber, mode, le);
     }
-    if(dynamic_cast<MujocoAntWrapper*>(&le) == nullptr){
-        throw std::runtime_error("MapElites only support ant environment for now");
+    if(dynamic_cast<MujocoWrapper*>(&le) == nullptr){
+        throw std::runtime_error("MapElites only support mujoco environments for now");
     }
-    MujocoAntWrapper* antLE = dynamic_cast<MujocoAntWrapper*>(&le);
+    MujocoWrapper* mujocoLE = dynamic_cast<MujocoWrapper*>(&le);
 
     // Only consider the first root of jobs
     const TPG::TPGVertex* root = job.getRoot();
@@ -95,9 +95,8 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
     // Number of evaluations
     uint64_t nbEvaluation = (mode == LearningMode::TRAINING) ? this->params.nbIterationsPerPolicyEvaluation:this->params.nbIterationsPerPolicyValidation;
 
-    std::vector<double> all_feet_contact = {0.0, 0.0, 0.0, 0.0};
-    std::vector<std::vector<double>> feets;
-    std::vector<uint64_t> act;
+    // Vector of size of descriptors and initialized to 0
+    std::vector<double> descriptors = std::vector<double>(mujocoLE->getDescriptors().size(), 0.0);
 
     // Evaluate nbIteration times
     for (size_t iterationNumber = 0; iterationNumber < nbEvaluation; iterationNumber++) {
@@ -108,46 +107,47 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
         uint64_t hash = hasher(10000) ^ hasher(iterationNumber);
 
         // Reset the learning Environment
-        antLE->reset(hash, mode, iterationNumber, generationNumber);
+        mujocoLE->reset(hash, mode, iterationNumber, generationNumber);
 
         uint64_t nbActions = 0;
-        while (!antLE->isTerminal() &&
+        while (!mujocoLE->isTerminal() &&
                nbActions < this->params.maxNbActionsPerEval) {
             // Get the actions
             std::vector<double> actionsID =
-                tee.executeFromRoot(*root, antLE->getInitActions()).second;
+                tee.executeFromRoot(*root, mujocoLE->getInitActions()).second;
             // Do it
-            antLE->doActions(actionsID);
+            mujocoLE->doActions(actionsID);
 
             // Count actions
             nbActions++;
         }
 
         // Update results
-        result += antLE->getScore();
-        utility += antLE->getUtility();
+        result += mujocoLE->getScore();
+        utility += mujocoLE->getUtility();
 
         if(mapEliteArchive.getDimensions().first > 0){
 
             // Get feet contact information
-            auto feetContact = antLE->getNbFeetContact();
-            for(size_t i = 0; i< feetContact.size(); i++){
-                all_feet_contact[i] += feetContact[i] / nbActions;
+            auto currentDescriptor = mujocoLE->getDescriptors();
+            for(size_t i = 0; i< currentDescriptor.size(); i++){
+                descriptors[i] += currentDescriptor[i] / nbActions;
             }
         }
     }
 
-    for(size_t i = 0; i< all_feet_contact.size() && mapEliteArchive.getDimensions().first > 0; i++){
-        all_feet_contact[i] /= nbEvaluation;
+    // Get the average value
+    for(size_t i = 0; i< descriptors.size() && mapEliteArchive.getDimensions().first > 0; i++){
+        descriptors[i] /= nbEvaluation;
     } 
 
     // Create the EvaluationResult
     auto evaluationResult =
         std::shared_ptr<MapElitesEvaluationResult>(new MapElitesEvaluationResult(
             result / (double)nbEvaluation,
-            utility / (double)nbEvaluation,
             nbEvaluation,
-            all_feet_contact));
+            utility / (double)nbEvaluation,
+            descriptors));
 
     // Combine it with previous one if any
     if (previousEval != nullptr) {
@@ -168,6 +168,7 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
         return;
     }
 
+
     std::multimap<std::shared_ptr<EvaluationResult>, const TPG::TPGVertex*>
         preservedRoots;
 
@@ -184,7 +185,7 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
         const TPG::TPGVertex* root = results.begin()->second;
 
         // Get the saved evaluation and root
-        const std::pair<std::shared_ptr<EvaluationResult>, const TPG::TPGVertex*>& pairSaved = mapEliteArchive.getArchiveFromDescriptors(castEval->getFeetContact());
+        const std::pair<std::shared_ptr<EvaluationResult>, const TPG::TPGVertex*>& pairSaved = mapEliteArchive.getArchiveFromDescriptors(castEval->getDescriptors());
         
         
         // The value saved in the archive is better than the current root
@@ -218,7 +219,7 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
             }
 
             // Saving
-            this->mapEliteArchive.setArchiveFromDescriptors(root, eval, castEval->getFeetContact());
+            this->mapEliteArchive.setArchiveFromDescriptors(root, eval, castEval->getDescriptors());
             
             // Preserved the root
             preservedRoots.insert(*results.begin()); // Root are presevered if they are override in this same generation !
@@ -231,8 +232,6 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
     
     // Restore root actions
     results.insert(preservedRoots.begin(), preservedRoots.end());
-
-
 }
 
 

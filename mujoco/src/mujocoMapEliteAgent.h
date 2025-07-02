@@ -23,7 +23,7 @@ namespace Learn {
                 const LearningParameters& p, std::vector<double> archiveLimits={},
                 bool usePonderationSelection = false, bool useOnlyCloseAddEdges = false,
                 const TPG::TPGFactory& factory = TPG::TPGFactory())
-                : ParallelLearningAgent(le, iSet, p, factory), mapEliteArchive(archiveLimits, 4),
+                : ParallelLearningAgent(le, iSet, p, factory), mapEliteArchive(archiveLimits, le.getNbDescriptors()),
                 usePonderationSelection{usePonderationSelection}, useOnlyCloseAddEdges{useOnlyCloseAddEdges}
             {
 

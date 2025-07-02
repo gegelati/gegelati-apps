@@ -16,6 +16,7 @@ std::vector<std::reference_wrapper<const Data::DataHandler>> MujocoWrapper::getD
 
 
 void MujocoWrapper::initialize_simulation() {
+
 	// Load and compile model
 	char error[1000] = "Could not load binary model";
 	m_ = mj_loadXML(model_path_.c_str(), 0, error, 1000);
@@ -106,6 +107,20 @@ std::string MujocoWrapper::ExpandEnvVars(const std::string &str) {
 	return result;
 }
 
-const std::vector<double>& MujocoWrapper::getNbFeetContact() {
-	return nb_feet_in_contact_;
+
+void  MujocoWrapper::initialize_descriptors()
+{
+	descriptors.resize(this->getNbActions(), 0.0);
+}
+
+const size_t MujocoWrapper::getNbDescriptors()
+{
+	return descriptors.size();
+}
+
+void  MujocoWrapper::computeDescriptors(std::vector<double>& actionsID)
+{
+	for(size_t i = 0; i < actionsID.size(); ++i) {
+		descriptors[i] += std::abs(actionsID[i]);
+	}
 }

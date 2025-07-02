@@ -29,13 +29,18 @@ public:
 
 
 
-	MujocoHalfCheetahWrapper(const char *pXmlFile, bool exclude_current_positions_from_observation = true) :
-		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 17:18), xmlFile{pXmlFile},
+	MujocoHalfCheetahWrapper(const char *pXmlFile, std::string descriptorType = "unused", bool exclude_current_positions_from_observation = true) :
+		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 17:18, descriptorType), xmlFile{pXmlFile},
 		exclude_current_positions_from_observation_{exclude_current_positions_from_observation}
 		{
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
 			initialize_simulation();
-
+			if(descriptorType_ == DescriptorType::FeetContact){
+				throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoalfCheetahWrapper.");
+			} else if(descriptorType_ == DescriptorType::ActionValues){
+				// Initialize the descriptors
+				initialize_descriptors();
+			}
 		};
 
     /**
@@ -46,6 +51,12 @@ public:
 	{   
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		initialize_simulation();
+		if(other.descriptorType_ == DescriptorType::FeetContact){
+			throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoHalfCheetahWrapper.");
+		} else if(other.descriptorType_ == DescriptorType::ActionValues){
+			// Initialize the descriptors
+			initialize_descriptors();
+		}
     }
 
     ~MujocoHalfCheetahWrapper() {

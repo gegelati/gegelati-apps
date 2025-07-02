@@ -18,10 +18,10 @@ namespace Learn {
     {
       protected:
         /**
-         * \brief Vector storing a double score per class (i.e. per Action) of
+         * \brief Vector storing a double value per descriptor (i.e. per Action) of
          * a classification LearningEnvironment.
          */
-        std::vector<double> feetContact;
+        std::vector<double> descriptors;
 
       public:
         /**
@@ -39,15 +39,15 @@ namespace Learn {
          * number of evaluations.
          */
         MapElitesEvaluationResult(
-            const double& res, const double& uti, const size_t& nbEval,
-            const std::vector<double>& feetContact)
-            : EvaluationResult(res, nbEval, uti), feetContact{feetContact}
+            const double& res, const size_t& nbEval, const double& uti,
+            const std::vector<double>& descriptors)
+            : EvaluationResult(res, nbEval, uti), descriptors{descriptors}
         {}
 
         /**
          * \brief Get a const ref to the scorePerClass attribute.
          */
-        const std::vector<double>& getFeetContact() const;
+        const std::vector<double>& getDescriptors() const;
 
         /**
          * \brief Override from EvaluationResult

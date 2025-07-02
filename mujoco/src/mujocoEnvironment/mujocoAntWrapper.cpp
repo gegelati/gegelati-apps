@@ -34,8 +34,11 @@ void MujocoAntWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t ite
 	this->totalUtility = 0.0;
 
 
-	// Reset feet in contact
-	nb_feet_in_contact_ = {0.0, 0.0, 0.0, 0.0};
+	// Reset descriptors
+	if(descriptorType_ != DescriptorType::Unused){
+		std::fill(descriptors.begin(), descriptors.end(), 0.0);
+	}
+
 }
 
 void MujocoAntWrapper::doActions(std::vector<double> actionsID)
@@ -62,8 +65,8 @@ void MujocoAntWrapper::doActions(std::vector<double> actionsID)
 
 	this->nbActionsExecuted++;
 
-	if(useFeetContact){
-		computeFeetContact();
+	if(descriptorType_ != DescriptorType::Unused){
+		computeDescriptors(actionsID);
 	}
 
 }
@@ -143,7 +146,7 @@ void MujocoAntWrapper::computeFeetContact() {
         // Check if geom1 is a foot
         auto it1 = footGeomToIndex.find(geom1);
         if (it1 != footGeomToIndex.end() && increasedLegs.find(it1->second) == increasedLegs.end()) {
-            nb_feet_in_contact_[it1->second]++;
+            descriptors[it1->second]++;
             increasedLegs.insert(it1->second);
             continue;
         }
@@ -151,9 +154,36 @@ void MujocoAntWrapper::computeFeetContact() {
         // Check if geom2 is a foot
         auto it2 = footGeomToIndex.find(geom2);
         if (it2 != footGeomToIndex.end() && increasedLegs.find(it2->second) == increasedLegs.end()) {
-            nb_feet_in_contact_[it2->second]++;
+            descriptors[it2->second]++;
             increasedLegs.insert(it2->second);
         }
     }
 }
 
+void MujocoAntWrapper::initialize_descriptors() {
+
+	// Initialize values for feet contact
+	if(descriptorType_ == DescriptorType::FeetContact){
+		feet_geom_ids_.clear();
+		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "left_ankle_geom"));
+		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "right_ankle_geom"));
+		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "third_ankle_geom"));
+		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "fourth_ankle_geom"));
+
+		for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
+			footGeomToIndex[feet_geom_ids_[j]] = j;
+		}
+		descriptors.resize(feet_geom_ids_.size(), 0.0);
+	} else if (descriptorType_ == DescriptorType::ActionValues){
+		MujocoWrapper::initialize_descriptors();
+	}
+}
+
+void MujocoAntWrapper::computeDescriptors(std::vector<double>& actionsID) {
+	if(descriptorType_ == DescriptorType::FeetContact){
+		//std::cout<<descriptors.size()<<" Compute."<<std::endl;
+		computeFeetContact();
+	} else if (descriptorType_ == DescriptorType::ActionValues) {
+		MujocoWrapper::computeDescriptors(actionsID);
+	}
+}

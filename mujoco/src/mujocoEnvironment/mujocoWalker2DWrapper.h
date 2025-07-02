@@ -42,8 +42,8 @@ public:
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoWalker2DWrapper(const char *pXmlFile, bool useHealthyReward_p=true, bool exclude_current_positions_from_observation = true) :
-		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 17:18), 
+	MujocoWalker2DWrapper(const char *pXmlFile, std::string descriptorType = "unused", bool useHealthyReward_p=true, bool exclude_current_positions_from_observation = true) :
+		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 17:18, descriptorType), 
 		xmlFile{pXmlFile}, useHealthyReward{useHealthyReward_p},
 		exclude_current_positions_from_observation_{exclude_current_positions_from_observation}
 		{
@@ -52,6 +52,13 @@ public:
 			healthy_angle_range_ = {-1.0, 1.0};
 			frame_skip_ = 4;
 			initialize_simulation();
+
+			if(descriptorType_ == DescriptorType::FeetContact){
+				throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoWalker2DWrapper.");
+			} else if(descriptorType_ == DescriptorType::ActionValues){
+				// Initialize the descriptors
+				initialize_descriptors();
+			}
 		};
 
     /**
@@ -67,6 +74,12 @@ public:
 		healthy_angle_range_ = {-1.0, 1.0};
 		frame_skip_ = 4;
 		initialize_simulation();
+		if(descriptorType_ == DescriptorType::FeetContact){
+			throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoWalker2DWrapper.");
+		} else if(descriptorType_ == DescriptorType::ActionValues){
+			// Initialize the descriptors
+			initialize_descriptors();
+		}
     }
 
     ~MujocoWalker2DWrapper() {

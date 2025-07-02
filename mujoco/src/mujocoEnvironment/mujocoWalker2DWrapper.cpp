@@ -34,6 +34,11 @@ void MujocoWalker2DWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_
 	this->nbActionsExecuted = 0;
 	this->totalReward = 0.0;
 	this->totalUtility = 0.0;
+
+	// Reset descriptors
+	if(descriptorType_ != DescriptorType::Unused){
+		std::fill(descriptors.begin(), descriptors.end(), 0.0);
+	}
 }
 
 void MujocoWalker2DWrapper::doActions(std::vector<double> actionsID)
@@ -60,6 +65,9 @@ void MujocoWalker2DWrapper::doActions(std::vector<double> actionsID)
 	this->nbActionsExecuted++;
 
 
+	if(descriptorType_ != DescriptorType::Unused){
+		computeDescriptors(actionsID);
+	}
 }
 
 bool MujocoWalker2DWrapper::isCopyable() const

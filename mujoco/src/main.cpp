@@ -63,12 +63,13 @@ int main(int argc, char ** argv) {
 	bool usePonderationSelection = 0;
 	bool useOnlyCloseAddEdges = 0;
 	std::string archiveValuesStr = "";
+	std::string descriptorType = "";
 
     strcpy(logsFolder, "logs");
     strcpy(paramFile, "params_0.json");
 	strcpy(usecase, "ant");
     strcpy(xmlFile, "none");
-    while((option = getopt(argc, argv, "s:p:l:x:h:c:u:a:g:w:o:")) != -1){
+    while((option = getopt(argc, argv, "s:p:l:x:h:c:u:a:g:w:o:d:")) != -1){
         switch (option) {
             case 's': seed= atoi(optarg); break;
             case 'p': strcpy(paramFile, optarg); break;
@@ -81,7 +82,8 @@ int main(int argc, char ** argv) {
 			case 'g': saveAllGenerationsDots = atoi(optarg); break;
 			case 'w': usePonderationSelection = atoi(optarg); break;
 			case 'o': useOnlyCloseAddEdges = atoi(optarg); break;
-            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-logs logs Folder\'  \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\' \'-a sizeArchive\' \'-g saveAllGenDotFiles\' \'-w usePonderationSelection\' \'-o useOnlyCloseAddEdges\'." << std::endl; exit(1);
+			case 'd': descriptorType = optarg; break;
+            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-logs logs Folder\'  \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\' \'-a sizeArchive\' \'-g saveAllGenDotFiles\' \'-w usePonderationSelection\' \'-o useOnlyCloseAddEdges\' \'-d descriptorType\'." << std::endl; exit(1);
         }
     }
 	if(strcmp(xmlFile, "none") == 0){
@@ -108,6 +110,11 @@ int main(int argc, char ** argv) {
 	snprintf(archiveStats, sizeof(archiveStats), "%s/archiveStats", logsFolder);
 	std::vector<double> archiveValues;
 	if (!archiveValuesStr.empty()) {
+
+		if(descriptorType.empty() || descriptorType == "unused") {
+			throw std::runtime_error("Descriptor type must be specified when using archive values.");
+		}
+
 		std::stringstream ss(archiveValuesStr);
 		std::string token;
 		while (std::getline(ss, token, ',')) {
@@ -130,9 +137,6 @@ int main(int argc, char ** argv) {
 		}
 	}
 
-
-    std::cout << "SELECTED SEED : " << seed << std::endl;
-    std::cout << "SELECTED PARAMS FILE: " << paramFile << std::endl;
 
 
     // Save the index of the parameter file.
@@ -160,17 +164,6 @@ int main(int argc, char ** argv) {
 	Learn::LearningParameters params;
 	File::ParametersParser::loadParametersFromJson(paramFile, params);
 
-	std::cout << "SELECTION METHOD :";
-	if(archiveValues.size() > 0){
-		std::cout<<" MAP ELITES"<<std::endl;
-	} else if(params.useTournamentSelection){
-		std::cout<<" TOURNAMENT SELECTION"<<std::endl;
-	} else {
-		std::cout<<" STANDARD SELECTION"<<std::endl;
-	}
-
-
-	std::cout << "START MUJOCO APPLICATION WITH ENVIRONMENT "<< usecase << std::endl;
 
 	// Export parameters before starting training.
 	// These may differ from imported parameters because of LE or machine specific
@@ -181,28 +174,46 @@ int main(int argc, char ** argv) {
 	// Instantiate the LearningEnvironment
 	MujocoWrapper* mujocoLE = nullptr;
 	if(strcmp(usecase, "humanoid") == 0){
-		mujocoLE = new MujocoHumanoidWrapper(xmlFile, useHealthyReward, useContactForce);
+		mujocoLE = new MujocoHumanoidWrapper(xmlFile, descriptorType, useHealthyReward, useContactForce);
 	} else if (strcmp(usecase, "half_cheetah") == 0) {
-		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile);
+		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile, descriptorType);
 	} else if (strcmp(usecase, "hopper") == 0) {
-		mujocoLE = new MujocoHopperWrapper(xmlFile, useHealthyReward);
+		mujocoLE = new MujocoHopperWrapper(xmlFile, descriptorType, useHealthyReward);
 	} else if (strcmp(usecase, "walker2d") == 0) {
-		mujocoLE = new MujocoWalker2DWrapper(xmlFile, useHealthyReward);
+		mujocoLE = new MujocoWalker2DWrapper(xmlFile, descriptorType, useHealthyReward);
 	} else if (strcmp(usecase, "inverted_double_pendulum") == 0) {
-		mujocoLE = new MujocoDoublePendulumWrapper(xmlFile);
+		mujocoLE = new MujocoDoublePendulumWrapper(xmlFile, descriptorType);
 	} else if (strcmp(usecase, "reacher") == 0) {
-		mujocoLE = new MujocoReacherWrapper(xmlFile);
+		mujocoLE = new MujocoReacherWrapper(xmlFile, descriptorType);
 	} else if (strcmp(usecase, "ant") == 0) {
-		mujocoLE = new MujocoAntWrapper(xmlFile, archiveValues.size() > 0, useHealthyReward, useContactForce);
+		mujocoLE = new MujocoAntWrapper(xmlFile, descriptorType, useHealthyReward, useContactForce);
 	} else {
 		throw std::runtime_error("Use case not found");
 	}
 
-	std::cout << "Number of threads: " << params.nbThreads << std::endl;
 
 	// Instantiate and init the learning agent
 	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, params, archiveValues, usePonderationSelection, useOnlyCloseAddEdges);
 	la.init(seed);
+
+
+    std::cout << "SELECTED SEED : " << seed << std::endl;
+    std::cout << "SELECTED PARAMS FILE: " << paramFile << std::endl;
+	std::cout << "SELECTION METHOD :";
+	if(archiveValues.size() > 0){
+		std::cout<<" MAP ELITES";
+
+		auto dims = la.getMapElitesArchive().getDimensions();
+		std::cout<<" with a "<<dims.first<<"-dimensional archive with "<<dims.second<<" dimensions resulting in size "<< (uint64_t)std::pow(dims.first, dims.second) <<std::endl;
+
+	} else if(params.useTournamentSelection){
+		std::cout<<" TOURNAMENT SELECTION"<<std::endl;
+	} else {
+		std::cout<<" STANDARD SELECTION"<<std::endl;
+	}
+	std::cout << "START MUJOCO APPLICATION WITH ENVIRONMENT "<< usecase << std::endl;
+	std::cout << "NUMBER OF THREADS " << params.nbThreads << std::endl;
+
 
 
 	std::atomic<bool> exitProgram = false; // (set to false by other thread) 
@@ -245,6 +256,8 @@ int main(int argc, char ** argv) {
 
 
 	File::ParametersParser::writeParametersToJson(jsonFilePath, params);
+
+
 
 	// Train for params.nbGenerations generations
 	for (uint64_t i = 0; i < params.nbGenerations && !exitProgram; i++) {

@@ -20,16 +20,27 @@ protected:
 
 public:
 
+	enum class DescriptorType { FeetContact, ActionValues, Unused };
 
 	/**
 	* \brief Default constructor.
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoWrapper(uint64_t nbActions, uint64_t stateSize) :
+	MujocoWrapper(uint64_t nbActions, uint64_t stateSize, std::string descriptorType="unused") :
 		LearningEnvironment(nbActions, false),
 		currentState{ stateSize }, stateSize{stateSize}
-	{};
+	{
+		if(descriptorType == "feetContact"){
+			descriptorType_ = DescriptorType::FeetContact;
+		} else if (descriptorType == "actionValues"){
+			descriptorType_ = DescriptorType::ActionValues;
+		} else if (descriptorType == "unused" || descriptorType.empty()){
+			descriptorType_ = DescriptorType::Unused;
+		} else {
+			throw std::runtime_error("Unknown descriptor type: " + descriptorType + ". Valid types are: feetContact and actionValues, 'unused' or nothing should be used to disable it .");
+		}	
+	};
 
 	/**
 	* \brief Copy constructor for the MujocoWrapper.
@@ -37,7 +48,7 @@ public:
 	* Default copy constructor since all attributes are trivially copyable.
 	*/
 	MujocoWrapper(const MujocoWrapper& other) : LearningEnvironment(other.nbActions, false),
-		currentState{other.currentState}, stateSize{other.stateSize} {}
+		currentState{other.currentState}, stateSize{other.stateSize}, descriptorType_{other.descriptorType_} {}
 	
 
 	/// Inherited via LearningEnvironment
@@ -58,13 +69,15 @@ public:
     int frame_skip_ = 5;  // Number of frames per simlation step
     int obs_size_;  // Number of variables in observation vector
 
-	std::vector<double> nb_feet_in_contact_; // Number of feets in contact with the ground
+	std::vector<double> descriptors; // Descriptors
+	DescriptorType descriptorType_ = DescriptorType::Unused;
 
     void initialize_simulation();
 
     void set_state(std::vector<double>& qpos, std::vector<double>& qvel);
 
     void do_simulation(std::vector<double>& ctrl, int n_frames);
+
 
 	Data::PrimitiveTypeArray<double>& getCurrentState();
 	uint64_t getStateSize(){
@@ -73,9 +86,12 @@ public:
 
 	std::string ExpandEnvVars(const std::string &str);
 
-	
-
-	const std::vector<double>& getNbFeetContact();
+	virtual void initialize_descriptors();
+	const size_t getNbDescriptors();
+	virtual void computeDescriptors(std::vector<double>& actionsID);
+	virtual const std::vector<double>& getDescriptors() const {
+		return descriptors;
+	}
 
 };
 

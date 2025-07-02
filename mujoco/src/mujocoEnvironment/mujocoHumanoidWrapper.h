@@ -27,11 +27,11 @@ protected:
 public:
 
     // Constructeur
-    MujocoHumanoidWrapper(const char *pXmlFile, 
+    MujocoHumanoidWrapper(const char *pXmlFile, std::string descriptorType = "unused", 
                           bool useHealthyReward = true, 
                           bool useContactForce = false,
                           bool excludeCurrentPositionsFromObservation = true) :
-        MujocoWrapper(17, excludeCurrentPositionsFromObservation ? 376 : 378),
+        MujocoWrapper(17, excludeCurrentPositionsFromObservation ? 376 : 378, descriptorType),
         xmlFile{pXmlFile},
         use_healthy_reward{useHealthyReward},
         use_contact_forces_{useContactForce},
@@ -39,6 +39,12 @@ public:
     {
         model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
         initialize_simulation();
+        if(descriptorType_ == DescriptorType::FeetContact){
+            throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoHumanoidWrapper.");
+        } else if(descriptorType_ == DescriptorType::ActionValues){
+            // Initialize the descriptors
+            initialize_descriptors();
+        }
     }
 
     MujocoHumanoidWrapper(const MujocoHumanoidWrapper &other) :
@@ -56,6 +62,12 @@ public:
     {
         model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
         initialize_simulation();
+        if(descriptorType_ == DescriptorType::FeetContact){
+            throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoHumanoidWrapper.");
+        } else if(descriptorType_ == DescriptorType::ActionValues){
+            // Initialize the descriptors
+            initialize_descriptors();
+		}
     }
 
 

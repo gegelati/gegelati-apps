@@ -41,8 +41,8 @@ public:
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoAntWrapper(const char *pXmlFile, bool useFeetContact = false, bool useHealthyReward=true, bool p_exclude_current_positions_from_observation = true) :
-		MujocoWrapper(8, (p_exclude_current_positions_from_observation) ? 27:29), 
+	MujocoAntWrapper(const char *pXmlFile, std::string descriptorType = "unused", bool useHealthyReward=true, bool p_exclude_current_positions_from_observation = true) :
+		MujocoWrapper(8, (p_exclude_current_positions_from_observation) ? 27:29, descriptorType), 
 		xmlFile{pXmlFile}, use_healthy_reward{useHealthyReward},
 		exclude_current_positions_from_observation_{p_exclude_current_positions_from_observation},
 		useFeetContact{useFeetContact}
@@ -51,18 +51,8 @@ public:
 			healthy_z_range_ = {0.2, 1.0};
 			initialize_simulation();
 
-			if(useFeetContact){
-				feet_geom_ids_.clear();
-				feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "left_ankle_geom"));
-				feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "right_ankle_geom"));
-				feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "third_ankle_geom"));
-				feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "fourth_ankle_geom"));
-
-				// Map geom_id to index j
-				for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
-					footGeomToIndex[feet_geom_ids_[j]] = j;
-				}
-			}
+			// Initialize the descriptors
+			initialize_descriptors();
 
 		};
 
@@ -77,19 +67,8 @@ public:
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		healthy_z_range_ = {0.2, 1.0};
 		initialize_simulation();
-
-		if(useFeetContact){
-			feet_geom_ids_.clear();
-			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "left_ankle_geom"));
-			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "right_ankle_geom"));
-			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "third_ankle_geom"));
-			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "fourth_ankle_geom"));
-
-			for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
-				footGeomToIndex[feet_geom_ids_[j]] = j;
-			}
-		}
-
+		// Initialize the descriptors
+		initialize_descriptors();
     }
 
     ~MujocoAntWrapper() {
@@ -162,6 +141,8 @@ public:
     bool is_healthy() const;
 
 	void computeFeetContact();
+	virtual void initialize_descriptors() override;
+	virtual void computeDescriptors(std::vector<double>& actionsID) override;
 
 };
 

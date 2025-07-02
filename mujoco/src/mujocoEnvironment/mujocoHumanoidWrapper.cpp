@@ -45,6 +45,11 @@ void MujocoHumanoidWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_
     this->nbActionsExecuted = 0;
     this->totalReward = 0.0;
 	this->totalUtility = 0.0;
+
+	// Reset descriptors
+	if(descriptorType_ != DescriptorType::Unused){
+		std::fill(descriptors.begin(), descriptors.end(), 0.0);
+	}
 }
 
 void MujocoHumanoidWrapper::doActions(std::vector<double> actionsID)
@@ -82,6 +87,9 @@ void MujocoHumanoidWrapper::doActions(std::vector<double> actionsID)
     this->nbActionsExecuted++;
 
 
+	if(descriptorType_ != DescriptorType::Unused){
+		computeDescriptors(actionsID);
+	}
 }
 
 

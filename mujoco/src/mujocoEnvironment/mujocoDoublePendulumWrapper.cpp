@@ -54,6 +54,12 @@ void MujocoDoublePendulumWrapper::reset(size_t seed, Learn::LearningMode mode, u
 	this->computeState();
 	this->nbActionsExecuted = 0;
 	this->totalReward = 0.0;
+
+	// Reset descriptors
+	if(descriptorType_ != DescriptorType::Unused){
+		std::fill(descriptors.begin(), descriptors.end(), 0.0);
+	}
+
 }
 
 void MujocoDoublePendulumWrapper::doActions(std::vector<double> actionsID)
@@ -84,6 +90,9 @@ void MujocoDoublePendulumWrapper::doActions(std::vector<double> actionsID)
 	this->nbActionsExecuted++;
 
 
+	if(descriptorType_ != DescriptorType::Unused){
+		computeDescriptors(actionsID);
+	}
 }
 
 

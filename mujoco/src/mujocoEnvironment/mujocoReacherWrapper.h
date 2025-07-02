@@ -34,12 +34,17 @@ public:
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoReacherWrapper(const char *pXmlFile) :
-		MujocoWrapper(2, 10), xmlFile{pXmlFile}
+	MujocoReacherWrapper(const char *pXmlFile, std::string descriptorType = "unused") :
+		MujocoWrapper(2, 10, descriptorType), xmlFile{pXmlFile}
 		{
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
 			initialize_simulation();
-
+			if(descriptorType_ == DescriptorType::FeetContact){
+				throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoReacherWrapper.");
+			} else if(descriptorType_ == DescriptorType::ActionValues){
+				// Initialize the descriptors
+				initialize_descriptors();
+			}
 		};
 
     /**
@@ -49,6 +54,12 @@ public:
 	{   
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		initialize_simulation();
+		if(descriptorType_ == DescriptorType::FeetContact){
+			throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoReacherWrapper.");
+		} else if(descriptorType_ == DescriptorType::ActionValues){
+			// Initialize the descriptors
+			initialize_descriptors();
+		}
     }
 
     ~MujocoReacherWrapper() {
