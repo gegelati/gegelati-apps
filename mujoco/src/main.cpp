@@ -117,12 +117,32 @@ int main(int argc, char ** argv) {
 
 		std::stringstream ss(archiveValuesStr);
 		std::string token;
+		std::vector<std::string> tokens;
 		while (std::getline(ss, token, ',')) {
+			if (!token.empty()) tokens.push_back(token);
+		}
+
+		if (tokens.size() == 1) {
+			// Uniform range
 			try {
-				archiveValues.push_back(std::stod(token));
+				int n = std::stoi(tokens[0]);
+				if (n <= 0) throw std::invalid_argument("n doit être > 0");
+				for (int i = 1; i <= n; ++i) {
+					archiveValues.push_back(static_cast<double>(i) / n);
+				}
 			} catch (const std::invalid_argument& e) {
-				std::cerr << "Valeur invalide dans -a : " << token << std::endl;
+				std::cerr << "Invalid value in -a : " << tokens[0] << std::endl;
 				exit(1);
+			}
+		} else {
+			// Custom ranges
+			for (const auto& t : tokens) {
+				try {
+					archiveValues.push_back(std::stod(t));
+				} catch (const std::invalid_argument& e) {
+					std::cerr << "Invalid value in a -a : " << t << std::endl;
+					exit(1);
+				}
 			}
 		}
 
@@ -204,7 +224,13 @@ int main(int argc, char ** argv) {
 		std::cout<<" MAP ELITES";
 
 		auto dims = la.getMapElitesArchive().getDimensions();
-		std::cout<<" with a "<<dims.first<<"-dimensional archive with "<<dims.second<<" dimensions resulting in size "<< (uint64_t)std::pow(dims.first, dims.second) <<std::endl;
+		std::cout<<" with a "<<dims.first<<"-dimensional archive with "<<dims.second<<" dimensions resulting in size "<< (uint64_t)std::pow(dims.first, dims.second);
+		std::cout<<" Used range are [0; ";
+		for(size_t i = 0; i < archiveValues.size() - 1; i++){
+			double value = round(archiveValues[i] * 100) / 100;
+			std::cout<<value << "], ["<<value<<"; ";
+		} 
+		std::cout<<round(archiveValues[archiveValues.size() - 1]*100)/100<<"]."<<std::endl;
 
 	} else if(params.useTournamentSelection){
 		std::cout<<" TOURNAMENT SELECTION"<<std::endl;
@@ -276,6 +302,26 @@ int main(int argc, char ** argv) {
 		if(archiveValues.size() > 0){
 			// Update the archive CSV file
 			la.getMapElitesArchive().updateCSVArchive(archivePath, i);
+		}
+
+		if(i % params.stepValidation && params.doValidation){
+			if (!archiveValues.empty()) {
+				std::vector<size_t> indices(la.getMapElitesArchive().getDimensions().second, 0);
+				size_t total = std::pow(archiveValues.size(), la.getMapElitesArchive().getDimensions().second);
+
+				for (size_t count = 0; count < total; ++count) {
+					const auto& elem = la.getMapElitesArchive().getArchiveAt(indices);
+					if (elem.second != nullptr) {
+						exportIndividual(elem.second, archiveDots, archiveStats, indices, seed, indexParam, usecase,
+										la.getTPGGraph(), dotExporter);
+					}
+
+					for (int i = la.getMapElitesArchive().getDimensions().second - 1; i >= 0; --i) {
+						if (++indices[i] < archiveValues.size()) break;
+						indices[i] = 0;
+					}
+				}
+			}
 		}
 	}
 

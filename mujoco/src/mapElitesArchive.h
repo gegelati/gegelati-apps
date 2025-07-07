@@ -19,7 +19,9 @@ class MapElitesArchive {
         MapElitesArchive(std::vector<double>& archiveLimits, uint64_t dim2)
             : archiveLimits{archiveLimits}, dim1{archiveLimits.size()}, dim2{dim2}
         {
-            archive.resize(std::pow(dim1, dim2));
+            if(dim1 > 0 && dim2 > 0){
+                archive.resize(std::pow(dim1, dim2));
+            }
         }
 
         uint64_t size() const;
@@ -48,6 +50,8 @@ class MapElitesArchive {
 
         uint64_t getIndexArchive(double value) const;
         uint64_t computeLinearIndex(const std::vector<uint64_t>& indices) const;
+        std::vector<uint64_t> getIndicesFromDescriptors(const std::vector<double>& descriptors) const;
+
 
         virtual void initCSVarchive(std::string path) const ;
         virtual void updateCSVArchive(std::string path, uint64_t generationNumber) const;

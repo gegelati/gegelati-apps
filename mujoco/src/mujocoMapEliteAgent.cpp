@@ -104,7 +104,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
         Data::Hash<uint64_t> hasher;
         
         // Same seed at each generation for map elites
-        uint64_t hash = hasher(10000) ^ hasher(iterationNumber);
+        uint64_t hash = hasher(generationNumber) ^ hasher(iterationNumber);
 
         // Reset the learning Environment
         mujocoLE->reset(hash, mode, iterationNumber, generationNumber);
@@ -172,6 +172,7 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
     std::multimap<std::shared_ptr<EvaluationResult>, const TPG::TPGVertex*>
         preservedRoots;
 
+    size_t numberNewValues = 0;
 
     while(results.size() > 0){
 
@@ -216,6 +217,8 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
                 if(it != preservedRoots.end() && it->second == pairSaved.second){
                     preservedRoots.erase(it);
                 }
+            } else {
+                numberNewValues++;
             }
 
             // Saving
@@ -228,6 +231,8 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
         results.erase(results.begin());
 
     }
+
+    std::cout<<"  nv "<<numberNewValues<<"  ";
 
     
     // Restore root actions

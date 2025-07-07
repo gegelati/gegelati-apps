@@ -38,14 +38,18 @@ uint64_t MapElitesArchive::computeLinearIndex(const std::vector<uint64_t>& indic
     return index;
 }
 
-const std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>& 
-MapElitesArchive::getArchiveFromDescriptors(const std::vector<double>& descriptors) const
+std::vector<uint64_t> MapElitesArchive::getIndicesFromDescriptors(const std::vector<double>& descriptors) const
 {
     std::vector<uint64_t> indices;
     for (uint64_t i = 0; i < dim2; ++i) {
         indices.push_back(getIndexArchive(descriptors[i]));
     }
+}
 
+const std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>& 
+MapElitesArchive::getArchiveFromDescriptors(const std::vector<double>& descriptors) const
+{
+    std::vector<uint64_t> indices = getIndicesFromDescriptors(descriptors);
     return archive[computeLinearIndex(indices)];
 }
 
@@ -54,11 +58,7 @@ void MapElitesArchive::setArchiveFromDescriptors(
     std::shared_ptr<Learn::EvaluationResult> eval,
     const std::vector<double>& descriptors)
 {
-    std::vector<uint64_t> indices;
-    for (uint64_t i = 0; i < dim2; ++i) {
-        indices.push_back(getIndexArchive(descriptors[i]));
-    }
-
+    std::vector<uint64_t> indices = getIndicesFromDescriptors(descriptors);
     archive[computeLinearIndex(indices)] = std::make_pair(eval, vertex);
 }
 
@@ -110,7 +110,7 @@ void MapElitesArchive::initCSVarchive(std::string path) const {
     outFile.close();
 }
 
-void MapElitesArchive::updateCSVArchive(std::string path, size_t generationNumber) const {
+void MapElitesArchive::updateCSVArchive(std::string path, uint64_t generationNumber) const {
     std::ofstream outFile(path, std::ios::app);
     if (!outFile.is_open()) {
         std::cerr << "Archive file not found " << path << std::endl;
