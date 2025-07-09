@@ -9,14 +9,7 @@
 
 void MujocoHopperWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterationNumber, uint64_t generationNumber)
 {
-	// Create seed from seed and mode
-	size_t hash_seed = Data::Hash<size_t>()(seed) ^ Data::Hash<Learn::LearningMode>()(mode);
-	if(mode == Learn::LearningMode::VALIDATION){
-		hash_seed = 6416846135168433+iterationNumber;
-	}
-
-	// Reset the RNG
-	this->rng.setSeed(hash_seed);
+	MujocoWrapper::reset(seed, mode, iterationNumber, generationNumber);
 
 
 	std::vector<double> qpos(m_->nq);
@@ -30,18 +23,12 @@ void MujocoHopperWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t 
 	mj_resetData(m_, d_);
 	set_state(qpos, qvel);
 	this->computeState();
-	this->nbActionsExecuted = 0;
-	this->totalReward = 0.0;
-	this->totalUtility = 0.0;
-
-	// Reset descriptors
-	if(descriptorType_ != DescriptorType::Unused){
-		std::fill(descriptors.begin(), descriptors.end(), 0.0);
-	}
 }
 
 void MujocoHopperWrapper::doActions(std::vector<double> actionsID)
 {
+    this->registerStateAndAction(actionsID);
+
 	auto x_pos_before = d_->qpos[0];
 	do_simulation(actionsID, frame_skip_);
 	auto x_pos_after = d_->qpos[0];
@@ -143,7 +130,7 @@ void MujocoHopperWrapper::computeState(){
 	}
 	for (int i = 0; i < m_->nv; i++) 
 	{
-		currentState.setDataAt(typeid(double), index, std::clamp((int)d_->qvel[i], -10, 10));
+		currentState.setDataAt(typeid(double), index, std::clamp((double)d_->qvel[i], -10.0, 10.0));
 		index++;
 	}
 }

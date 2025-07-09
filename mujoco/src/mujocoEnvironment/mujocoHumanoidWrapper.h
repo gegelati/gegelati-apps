@@ -7,10 +7,6 @@
 class MujocoHumanoidWrapper : public MujocoWrapper
 {
 protected:
-    Mutator::RNG rng;
-    double totalReward = 0.0;
-    double totalUtility = 0.0;
-    uint64_t nbActionsExecuted = 0;
     const std::string xmlFile;
 
     bool use_healthy_reward;

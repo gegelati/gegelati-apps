@@ -217,9 +217,8 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
                 if(it != preservedRoots.end() && it->second == pairSaved.second){
                     preservedRoots.erase(it);
                 }
-            } else {
-                numberNewValues++;
             }
+            numberNewValues++;
 
             // Saving
             this->mapEliteArchive.setArchiveFromDescriptors(root, eval, castEval->getDescriptors());

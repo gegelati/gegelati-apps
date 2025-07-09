@@ -8,16 +8,6 @@ class MujocoAntWrapper : public MujocoWrapper
 {
 protected:
 
-	/// Randomness control
-	Mutator::RNG rng;
-
-	/// Total reward accumulated since the last reset
-	double totalReward = 0.0;
-    double totalUtility = 0.0;
-
-	/// Number of actions since the last reset
-	uint64_t nbActionsExecuted = 0;
-
 	const std::string xmlFile;
 	bool use_healthy_reward;
     bool exclude_current_positions_from_observation_;

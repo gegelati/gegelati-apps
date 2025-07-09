@@ -25,11 +25,8 @@ std::array<double, 2> MujocoHumanoidWrapper::massCenter() const
 
 void MujocoHumanoidWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterationNumber, uint64_t generationNumber)
 {
-    size_t hash_seed = Data::Hash<size_t>()(seed) ^ Data::Hash<Learn::LearningMode>()(mode);
-    if(mode == Learn::LearningMode::VALIDATION) {
-        hash_seed = 6416846135168433 + iterationNumber;
-    }
-    this->rng.setSeed(hash_seed);
+	MujocoWrapper::reset(seed, mode, iterationNumber, generationNumber);
+
 
     std::vector<double> qpos(m_->nq);
     for (size_t i = 0; i < qpos.size(); i++) {
@@ -42,18 +39,13 @@ void MujocoHumanoidWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_
     mj_resetData(m_, d_);
     set_state(qpos, qvel);
     this->computeState();
-    this->nbActionsExecuted = 0;
-    this->totalReward = 0.0;
-	this->totalUtility = 0.0;
 
-	// Reset descriptors
-	if(descriptorType_ != DescriptorType::Unused){
-		std::fill(descriptors.begin(), descriptors.end(), 0.0);
-	}
 }
 
 void MujocoHumanoidWrapper::doActions(std::vector<double> actionsID)
 {
+    this->registerStateAndAction(actionsID);
+
     // Record the initial center of mass position before the action
     auto com_before = massCenter();
     

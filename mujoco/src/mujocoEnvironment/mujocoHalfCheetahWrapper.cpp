@@ -8,14 +8,8 @@
 
 void MujocoHalfCheetahWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterationNumber, uint64_t generationNumber)
 {
-	// Create seed from seed and mode
-	size_t hash_seed = Data::Hash<size_t>()(seed) ^ Data::Hash<Learn::LearningMode>()(mode);
-	if(mode == Learn::LearningMode::VALIDATION){
-		hash_seed = 6416846135168433+iterationNumber;
-	}
+	MujocoWrapper::reset(seed, mode, iterationNumber, generationNumber);
 
-	// Reset the RNG
-	this->rng.setSeed(hash_seed);
 
 
 	std::vector<double> qpos(m_->nq);
@@ -29,18 +23,12 @@ void MujocoHalfCheetahWrapper::reset(size_t seed, Learn::LearningMode mode, uint
 	mj_resetData(m_, d_);
 	set_state(qpos, qvel);
 	this->computeState();
-	this->nbActionsExecuted = 0;
-	this->totalReward = 0.0;
-
-
-	// Reset descriptors
-	if(descriptorType_ != DescriptorType::Unused){
-		std::fill(descriptors.begin(), descriptors.end(), 0.0);
-	}
 }
 
 void MujocoHalfCheetahWrapper::doActions(std::vector<double> actionsID)
 {
+    this->registerStateAndAction(actionsID);
+
 	auto x_pos_before = d_->qpos[0];
 	do_simulation(actionsID, frame_skip_);
 	auto x_pos_after = d_->qpos[0];

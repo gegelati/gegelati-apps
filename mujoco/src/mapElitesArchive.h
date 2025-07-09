@@ -50,7 +50,6 @@ class MapElitesArchive {
 
         uint64_t getIndexArchive(double value) const;
         uint64_t computeLinearIndex(const std::vector<uint64_t>& indices) const;
-        std::vector<uint64_t> getIndicesFromDescriptors(const std::vector<double>& descriptors) const;
 
 
         virtual void initCSVarchive(std::string path) const ;

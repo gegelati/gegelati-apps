@@ -214,7 +214,8 @@ int main(int argc, char ** argv) {
     if(strcmp(xmlFile, "none") == 0){
     	snprintf(xmlFile, sizeof(xmlFile), "mujoco_models/%s.xml", usecase);
 	}
-
+    std::string dotFileName = std::filesystem::path(dotPath).stem().string();
+    std::string dotDir = std::filesystem::path(dotPath).parent_path().string();
 
 	std::cout << "Start Mujoco Rendering application with seed " << seed<<"." << std::endl;
     // Create the instruction set for programs
@@ -357,6 +358,11 @@ int main(int argc, char ** argv) {
 
     }
 
+    
+	char actionAndStateData[250];
+    sprintf(actionAndStateData, "%s/stateAndActionData.csv", dotDir);
+    mujocoLE->printStateAndAction(actionAndStateData);
+
 
 
     
@@ -370,7 +376,6 @@ int main(int argc, char ** argv) {
 
     if(isRenderVideoSaved){
         int fps = static_cast<int>(1.0 / frameDuration / 2.0);
-        std::string dotFileName = std::filesystem::path(dotPath).stem().string();
 
         // Change size of images and save
         std::string resizeCommand = "ffmpeg -i " + std::string(pathRenderVideo) + "/frame_%04d.png -vf \"scale=1200:844\" " + std::string(pathRenderVideo) + "/resized_frame_%04d.png";

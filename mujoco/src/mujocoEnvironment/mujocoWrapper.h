@@ -15,8 +15,21 @@ class MujocoWrapper : public Learn::LearningEnvironment
 {
 protected:
 
+	/// Randomness control
+	Mutator::RNG rng;
+
+	/// Total reward accumulated since the last reset
+	double totalReward = 0.0;
+    double totalUtility = 0.0;
+
+	/// Number of actions since the last reset
+	uint64_t nbActionsExecuted = 0;
+
 	Data::PrimitiveTypeArray<double> currentState;
 	uint64_t stateSize;
+
+	std::vector<std::vector<double>> stateData;
+	std::vector<std::vector<double>> actionData;
 
 public:
 
@@ -48,8 +61,13 @@ public:
 	* Default copy constructor since all attributes are trivially copyable.
 	*/
 	MujocoWrapper(const MujocoWrapper& other) : LearningEnvironment(other.nbActions, false),
-		currentState{other.currentState}, stateSize{other.stateSize}, descriptorType_{other.descriptorType_} {}
+		currentState{other.currentState}, stateSize{other.stateSize}, 
+		descriptorType_{other.descriptorType_} {}
 	
+
+	/// Inherited via LearningEnvironment
+	virtual void reset(size_t seed = 0, Learn::LearningMode mode = Learn::LearningMode::TRAINING,
+					   uint16_t iterationNumber = 0, uint64_t generationNumber = 0) override;
 
 	/// Inherited via LearningEnvironment
 	virtual std::vector<std::reference_wrapper<const Data::DataHandler>> getDataSources() override;
@@ -92,6 +110,9 @@ public:
 	virtual const std::vector<double>& getDescriptors() const {
 		return descriptors;
 	}
+
+	virtual void registerStateAndAction(const std::vector<double>& actionsID);
+	virtual void printStateAndAction(std::string path) const;
 
 };
 

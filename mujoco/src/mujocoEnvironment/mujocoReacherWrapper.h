@@ -8,16 +8,6 @@ class MujocoReacherWrapper : public MujocoWrapper
 {
 protected:
 
-	/// Randomness control
-	Mutator::RNG rng;
-
-	/// Total reward accumulated since the last reset
-	double totalReward = 0.0;
-    double totalUtility = 0.0;
-
-	/// Number of actions since the last reset
-	uint64_t nbActionsExecuted = 0;
-
 	const std::string xmlFile;
 
     // Parameters
