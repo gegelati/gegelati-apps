@@ -39,7 +39,7 @@ void fillInstructionSet(Instructions::Set& set) {
         set.add(*(new Instructions::LambdaInstruction<double>(cos, "$0 = cos($1);")));
         set.add(*(new Instructions::LambdaInstruction<double>(sin, "$0 = sin($1);")));
         set.add(*(new Instructions::LambdaInstruction<double>(tan, "$0 = tan($1);")));
-        set.add(*(new Instructions::LambdaInstruction<double, double>(modulo, "$0 = $1 % $2;")));
+        set.add(*(new Instructions::LambdaInstruction<double, double>(modulo, "$0 = fmod($1, $2);")));
 
         /*set.add(*(new Instructions::LambdaInstruction<double, double>(min)));
         set.add(*(new Instructions::LambdaInstruction<double>(absolute)));
@@ -68,16 +68,16 @@ void fillInstructionSet(Instructions::Set& set) {
             //auto pi = [](double a, Data::Constant c) -> double { return M_PI*(double)c; };
             //auto multByConst = [](double a, Data::Constant c) -> double { return a * (double)c / 10.0; };
 
-            set.add(*(new Instructions::LambdaInstruction<double, double, Data::Constant, Data::Constant>(minusC, "$0 = $1 - $2;")));
-            set.add(*(new Instructions::LambdaInstruction<double, double, Data::Constant, Data::Constant>(addC, "$0 = $1 + $2;")));
-            set.add(*(new Instructions::LambdaInstruction<double, double, Data::Constant>(multC, "$0 = $1 * $2;")));
-            set.add(*(new Instructions::LambdaInstruction<double, double, Data::Constant>(divC, "$0 = $1 / $2;")));
+            set.add(*(new Instructions::LambdaInstruction<double, double, Data::Constant, Data::Constant>(minusC, "$0 = $1 * %0 - $2 * %1;")));
+            set.add(*(new Instructions::LambdaInstruction<double, double, Data::Constant, Data::Constant>(addC, "$0 = $1 * %0 + $2 * %1;")));
+            set.add(*(new Instructions::LambdaInstruction<double, double, Data::Constant>(multC, "$0 = $1 * $2 * %0;")));
+            set.add(*(new Instructions::LambdaInstruction<double, double, Data::Constant>(divC, "$0 = $1 / $2 * %0;")));
             //set.add(*(new Instructions::LambdaInstruction<double, double>(max, "$0 = (($1) < ($2)) ? ($2) : ($1);")));
-            set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(expC, "$0 = exp($1);")));
-            set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(lnC, "$0 = log($1);")));
-            set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(cosC, "$0 = cos($1);")));
-            set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(sinC, "$0 = sin($1);")));
-            set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(tanC, "$0 = tan($1);")));
+            set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(expC, "$0 = exp($1 * %0);")));
+            set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(lnC, "$0 = log($1 * %0);")));
+            set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(cosC, "$0 = cos($1 * %0);")));
+            set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(sinC, "$0 = sin($1 * %0);")));
+            set.add(*(new Instructions::LambdaInstruction<double, Data::Constant>(tanC, "$0 = tan($1 * %0);")));
         }
 
 }

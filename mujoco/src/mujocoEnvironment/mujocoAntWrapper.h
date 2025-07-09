@@ -8,16 +8,6 @@ class MujocoAntWrapper : public MujocoWrapper
 {
 protected:
 
-	/// Randomness control
-	Mutator::RNG rng;
-
-	/// Total reward accumulated since the last reset
-	double totalReward = 0.0;
-    double totalUtility = 0.0;
-
-	/// Number of actions since the last reset
-	uint64_t nbActionsExecuted = 0;
-
 	const std::string xmlFile;
 	bool use_healthy_reward;
     bool exclude_current_positions_from_observation_;
@@ -41,7 +31,7 @@ public:
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoAntWrapper(const char *pXmlFile, bool useFeetContact = false, bool useHealthyReward=true, bool p_exclude_current_positions_from_observation = true) :
+	MujocoAntWrapper(const char *pXmlFile, bool useHealthyReward=true, bool p_exclude_current_positions_from_observation = true) :
 		MujocoWrapper(8, (p_exclude_current_positions_from_observation) ? 27:29), 
 		xmlFile{pXmlFile}, use_healthy_reward{useHealthyReward},
 		exclude_current_positions_from_observation_{p_exclude_current_positions_from_observation},
@@ -51,18 +41,6 @@ public:
 			healthy_z_range_ = {0.2, 1.0};
 			initialize_simulation();
 
-			if(useFeetContact){
-				feet_geom_ids_.clear();
-				feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "left_ankle_geom"));
-				feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "right_ankle_geom"));
-				feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "third_ankle_geom"));
-				feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "fourth_ankle_geom"));
-
-				// Map geom_id to index j
-				for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
-					footGeomToIndex[feet_geom_ids_[j]] = j;
-				}
-			}
 
 		};
 
@@ -77,19 +55,6 @@ public:
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		healthy_z_range_ = {0.2, 1.0};
 		initialize_simulation();
-
-		if(useFeetContact){
-			feet_geom_ids_.clear();
-			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "left_ankle_geom"));
-			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "right_ankle_geom"));
-			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "third_ankle_geom"));
-			feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "fourth_ankle_geom"));
-
-			for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
-				footGeomToIndex[feet_geom_ids_[j]] = j;
-			}
-		}
-
     }
 
     ~MujocoAntWrapper() {
@@ -119,9 +84,6 @@ public:
 	virtual bool isCopyable() const override;
 
 	/// Inherited via LearningEnvironment
-	virtual bool isUsingUtility() const override;
-
-	/// Inherited via LearningEnvironment
 	virtual LearningEnvironment* clone() const;
 
 	/**
@@ -144,6 +106,9 @@ public:
 	virtual double getScore() const override;
 	virtual double getUtility() const override;
 
+	/// Inherited via LearningEnvironment
+	virtual bool isUsingUtility() const override;
+
 	/**
 	* \brief Is the pendulum considered stabilized.
 	*
@@ -163,8 +128,6 @@ public:
 	void computeState();
 
     bool is_healthy() const;
-
-	void computeFeetContact();
 
 };
 

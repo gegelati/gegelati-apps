@@ -8,14 +8,7 @@
 
 void MujocoAntWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterationNumber, uint64_t generationNumber)
 {
-	// Create seed from seed and mode
-	size_t hash_seed = Data::Hash<size_t>()(seed) ^ Data::Hash<Learn::LearningMode>()(mode);
-	if(mode == Learn::LearningMode::VALIDATION){
-		hash_seed = 6416846135168433+iterationNumber;
-	}
-
-	// Reset the RNG
-	this->rng.setSeed(hash_seed);
+	MujocoWrapper::reset(seed, mode, iterationNumber, generationNumber);
 
 
 	std::vector<double> qpos(m_->nq);
@@ -29,17 +22,14 @@ void MujocoAntWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t ite
 	mj_resetData(m_, d_);
 	set_state(qpos, qvel);
 	this->computeState();
-	this->nbActionsExecuted = 0;
-	this->totalReward = 0.0;
-	this->totalUtility = 0.0;
 
 
-	// Reset feet in contact
-	nb_feet_in_contact_ = {0.0, 0.0, 0.0, 0.0};
 }
 
 void MujocoAntWrapper::doActions(std::vector<double> actionsID)
 {
+    this->registerStateAndAction(actionsID);
+
 	auto x_pos_before = d_->qpos[0];
 
 	do_simulation(actionsID, frame_skip_);
@@ -62,20 +52,11 @@ void MujocoAntWrapper::doActions(std::vector<double> actionsID)
 
 	this->nbActionsExecuted++;
 
-	if(useFeetContact){
-		computeFeetContact();
-	}
-
 }
 
 bool MujocoAntWrapper::isCopyable() const
 {
 	return true;
-}
-
-bool MujocoAntWrapper::isUsingUtility() const
-{
-	return !use_healthy_reward;
 }
 
 Learn::LearningEnvironment* MujocoAntWrapper::clone() const
@@ -90,6 +71,11 @@ double MujocoAntWrapper::getScore() const
 double MujocoAntWrapper::getUtility() const
 {
 	return totalUtility;
+}
+
+bool MujocoAntWrapper::isUsingUtility() const
+{
+	return !use_healthy_reward;
 }
 
 bool MujocoAntWrapper::isTerminal() const
@@ -135,30 +121,3 @@ void MujocoAntWrapper::computeState(){
 		index++;
 	}
 }
-
-void MujocoAntWrapper::computeFeetContact() {
-    
-	std::set<uint64_t> increasedLegs;
-
-    for (int i = 0; i < d_->ncon; ++i) {
-        const mjContact& contact = d_->contact[i];
-        int geom1 = contact.geom1;
-        int geom2 = contact.geom2;
-
-        // Check if geom1 is a foot
-        auto it1 = footGeomToIndex.find(geom1);
-        if (it1 != footGeomToIndex.end() && increasedLegs.find(it1->second) == increasedLegs.end()) {
-            nb_feet_in_contact_[it1->second]++;
-            increasedLegs.insert(it1->second);
-            continue;
-        }
-
-        // Check if geom2 is a foot
-        auto it2 = footGeomToIndex.find(geom2);
-        if (it2 != footGeomToIndex.end() && increasedLegs.find(it2->second) == increasedLegs.end()) {
-            nb_feet_in_contact_[it2->second]++;
-            increasedLegs.insert(it2->second);
-        }
-    }
-}
-

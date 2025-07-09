@@ -187,7 +187,6 @@ int main(int argc, char ** argv) {
     uint64_t seed=0;
 	bool useHealthyReward = 1;
 	bool fastVisu = 0;
-	bool useContactForce = 0;
     
     strcpy(dotPath, "logs/out_best.0.p0.dot");
     strcpy(paramFile, "params_0.json");
@@ -203,15 +202,16 @@ int main(int argc, char ** argv) {
             case 'f': isRenderVideoSaved= atoi(optarg); break;
 			case 'u': strcpy(usecase, optarg); break;
 			case 'h': useHealthyReward = atoi(optarg); break;
-			case 'c': useContactForce = atoi(optarg); break;
 			case 'v': fastVisu = atoi(optarg); break;
             case 'x': strcpy(xmlFile, optarg); break;
-            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-d dot path\' \'-f save or not video\' \'-g path for video saved\' \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\' \'-v fastVisu\'." << std::endl; exit(1);
+            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-d dot path\' \'-f save or not video\' \'-g path for video saved\' \'-x xmlFile\' \'-h useHealthyReward\' \'-v fastVisu\'." << std::endl; exit(1);
         }
     }
     if(strcmp(xmlFile, "none") == 0){
     	snprintf(xmlFile, sizeof(xmlFile), "mujoco_models/%s.xml", usecase);
 	}
+    std::string dotFileName = std::filesystem::path(dotPath).stem().string();
+    std::string dotDir = std::filesystem::path(dotPath).parent_path().string();
 
 
 	std::cout << "Start Mujoco Rendering application with seed " << seed<<"." << std::endl;
@@ -231,19 +231,19 @@ int main(int argc, char ** argv) {
 	// Instantiate the LearningEnvironment
 	MujocoWrapper* mujocoLE = nullptr;
 	if(strcmp(usecase, "humanoid") == 0){
-		mujocoLE = new MujocoHumanoidWrapper(xmlFile, useHealthyReward, useContactForce);
+		mujocoLE = new MujocoHumanoidWrapper(xmlFile, useHealthyReward);
 	} else if (strcmp(usecase, "half_cheetah") == 0) {
 		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile);
 	} else if (strcmp(usecase, "hopper") == 0) {
 		mujocoLE = new MujocoHopperWrapper(xmlFile, useHealthyReward);
 	} else if (strcmp(usecase, "walker2d") == 0) {
 		mujocoLE = new MujocoWalker2DWrapper(xmlFile, useHealthyReward);
-	} else if (strcmp(usecase, "reacher") == 0) {
-		mujocoLE = new MujocoReacherWrapper(xmlFile);
 	} else if (strcmp(usecase, "inverted_double_pendulum") == 0) {
 		mujocoLE = new MujocoDoublePendulumWrapper(xmlFile);
+	} else if (strcmp(usecase, "reacher") == 0) {
+		mujocoLE = new MujocoReacherWrapper(xmlFile);
 	} else if (strcmp(usecase, "ant") == 0) {
-		mujocoLE = new MujocoAntWrapper(xmlFile, false, useHealthyReward, useContactForce);
+		mujocoLE = new MujocoAntWrapper(xmlFile, useHealthyReward);
 	} else {
 		throw std::runtime_error("Use case not found");
 	}
@@ -256,6 +256,8 @@ int main(int argc, char ** argv) {
     Environment env(set, params, mujocoLE->getDataSources(), mujocoLE->getNbActions());
 
     File::TPGGraphDotImporter dotImporter(dotPath, env, tpg);
+
+    std::cout<<tpg.getNbRootVertices()<<" "<<tpg.getEdges().size()<<std::endl;;
 
     if(tpg.getNbRootVertices() > 1){
         
@@ -296,19 +298,19 @@ int main(int argc, char ** argv) {
     std::cout<<"Save cleared root in "<<clearDot<<" --- ";
 
     // Print graph
-    std::string codeGenPath = "logs/codeGen/";
-    std::cout<<codeGenPath<<std::endl;
-    if(!std::filesystem::exists(codeGenPath)){
-        std::filesystem::create_directory(codeGenPath);
+    bool printCodeGen = false;
+    if(printCodeGen){
+        std::string codeGenPath = "logs/codeGen/";
+        std::cout<<codeGenPath<<std::endl;
+        if(!std::filesystem::exists(codeGenPath)){
+            std::filesystem::create_directory(codeGenPath);
+        }
+
+        std::cout << "Printing C code." << std::endl;
+        CodeGen::TPGGenerationEngineFactory factory(CodeGen::TPGGenerationEngineFactory::switchMode);
+        std::unique_ptr<CodeGen::TPGGenerationEngine> tpggen = factory.create("codeGenMujoco", tpg, codeGenPath);
+        tpggen->generateTPGGraph();
     }
-
-    std::cout << "Printing C code." << std::endl;
-	CodeGen::TPGGenerationEngineFactory factory(CodeGen::TPGGenerationEngineFactory::switchMode);
-    std::unique_ptr<CodeGen::TPGGenerationEngine> tpggen = factory.create("codeGenMujoco", tpg, codeGenPath);
-    tpggen->generateTPGGraph();
-    TPG::TPGExecutionEngine tee(env, NULL);
-
-
 
     double frameDuration = mujocoLE->m_->opt.timestep * mujocoLE->frame_skip_; // en secondes
     int frameDelayMs = static_cast<int>(frameDuration * 1000); // en millisecondes
@@ -320,12 +322,12 @@ int main(int argc, char ** argv) {
     mujocoLE->reset(seed, Learn::LearningMode::TESTING);
     std::vector<double> actions(mujocoLE->getNbActions(), 0);
     uint64_t nbActions = 0;
+    TPG::TPGExecutionEngine tee(env, NULL);
     while (!mujocoLE->isTerminal() && nbActions < params.maxNbActionsPerEval) {
 
         // Get the actions
         std::vector<double> actionsID =
             tee.executeFromRoot(*tpg.getRootVertices()[0]).second;
-
 
         // Do it
         mujocoLE->doActions(actionsID);
@@ -343,18 +345,15 @@ int main(int argc, char ** argv) {
                 i++;
             }std::cout<<std::endl;
         }
-        
-
         // Count actions
         nbActions++;
-
-
     }
 
-
-
     
-    std::cout<<"Score: "<<mujocoLE->getUtility()<<std::endl;;
+	std::string actionAndStateData = dotDir + "/stateAndActionData.csv";
+    mujocoLE->printStateAndAction(actionAndStateData);
+    
+    std::cout<<"Score: "<<mujocoLE->getUtility() << " with "<<nbActions<<" actions taken"<<std::endl;;
     std::cout<<"Summup actions: ";
     for(auto act: actions){
         std::cout<<act/(double)nbActions<<"-";
@@ -364,7 +363,6 @@ int main(int argc, char ** argv) {
 
     if(isRenderVideoSaved){
         int fps = static_cast<int>(1.0 / frameDuration);
-        std::string dotFileName = std::filesystem::path(dotPath).stem().string();
 
         // Change size of images and save
         std::string resizeCommand = "ffmpeg -i " + std::string(pathRenderVideo) + "/frame_%04d.png -vf \"scale=1200:844\" " + std::string(pathRenderVideo) + "/resized_frame_%04d.png";

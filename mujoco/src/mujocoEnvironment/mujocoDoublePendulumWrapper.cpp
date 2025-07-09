@@ -27,15 +27,7 @@ double MujocoDoublePendulumWrapper::getUtility() const
 
 void MujocoDoublePendulumWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterationNumber, uint64_t generationNumber)
 {
-	// Create seed from seed and mode
-	size_t hash_seed = Data::Hash<size_t>()(seed) ^ Data::Hash<Learn::LearningMode>()(mode);
-	if(mode == Learn::LearningMode::VALIDATION){
-		hash_seed = 6416846135168433+iterationNumber;
-	}
-
-	// Reset the RNG
-	this->rng.setSeed(hash_seed);
-
+	MujocoWrapper::reset(seed, mode, iterationNumber, generationNumber);
 
 	std::vector<double> qpos(m_->nq);
 	for (size_t i = 0; i < qpos.size(); i++) {
@@ -52,12 +44,13 @@ void MujocoDoublePendulumWrapper::reset(size_t seed, Learn::LearningMode mode, u
 	mj_resetData(m_, d_);
 	set_state(qpos, qvel);
 	this->computeState();
-	this->nbActionsExecuted = 0;
-	this->totalReward = 0.0;
+
 }
 
 void MujocoDoublePendulumWrapper::doActions(std::vector<double> actionsID)
 {
+    this->registerStateAndAction(actionsID);
+
 	do_simulation(actionsID, frame_skip_);
 	this->computeState();
 
@@ -82,7 +75,6 @@ void MujocoDoublePendulumWrapper::doActions(std::vector<double> actionsID)
 	this->totalReward += reward;
 
 	this->nbActionsExecuted++;
-
 
 }
 

@@ -15,11 +15,24 @@ class MujocoWrapper : public Learn::LearningEnvironment
 {
 protected:
 
+	/// Randomness control
+	Mutator::RNG rng;
+
+	/// Total reward accumulated since the last reset
+	double totalReward = 0.0;
+    double totalUtility = 0.0;
+
+	/// Number of actions since the last reset
+	uint64_t nbActionsExecuted = 0;
+
 	Data::PrimitiveTypeArray<double> currentState;
 	uint64_t stateSize;
 
-public:
+	std::vector<std::vector<double>> stateData;
+	std::vector<std::vector<double>> actionData;
+	bool saveStateAndAction;
 
+public:
 
 	/**
 	* \brief Default constructor.
@@ -41,6 +54,10 @@ public:
 	
 
 	/// Inherited via LearningEnvironment
+	virtual void reset(size_t seed = 0, Learn::LearningMode mode = Learn::LearningMode::TRAINING,
+					   uint16_t iterationNumber = 0, uint64_t generationNumber = 0) override;
+
+	/// Inherited via LearningEnvironment
 	virtual std::vector<std::reference_wrapper<const Data::DataHandler>> getDataSources() override;
 
 	// MuJoCo data structures
@@ -58,13 +75,12 @@ public:
     int frame_skip_ = 5;  // Number of frames per simlation step
     int obs_size_;  // Number of variables in observation vector
 
-	std::vector<double> nb_feet_in_contact_; // Number of feets in contact with the ground
-
     void initialize_simulation();
 
     void set_state(std::vector<double>& qpos, std::vector<double>& qvel);
 
     void do_simulation(std::vector<double>& ctrl, int n_frames);
+
 
 	Data::PrimitiveTypeArray<double>& getCurrentState();
 	uint64_t getStateSize(){
@@ -73,9 +89,9 @@ public:
 
 	std::string ExpandEnvVars(const std::string &str);
 
-	
 
-	const std::vector<double>& getNbFeetContact();
+	virtual void registerStateAndAction(const std::vector<double>& actionsID);
+	virtual void printStateAndAction(std::string path) const;
 
 };
 

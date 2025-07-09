@@ -8,15 +8,6 @@ class MujocoHopperWrapper : public MujocoWrapper
 {
 protected:
 
-	/// Randomness control
-	Mutator::RNG rng;
-
-	/// Total reward accumulated since the last reset
-	double totalReward = 0.0;
-    double totalUtility = 0.0;
-
-	/// Number of actions since the last reset
-	uint64_t nbActionsExecuted = 0;
 
 
 	const std::string xmlFile;
@@ -50,7 +41,6 @@ public:
 			healthy_angle_range_ = {-0.2, 0.2};
 			frame_skip_ = 4;
 			initialize_simulation();
-			
 		};
 
     /**
@@ -97,8 +87,6 @@ public:
 	/// Inherited via LearningEnvironment
 	virtual LearningEnvironment* clone() const;
 
-	/// Inherited via LearningEnvironment
-	virtual bool isUsingUtility() const override;
 	/**
 	* \brief Get a score for the pendulum stabilization.
 	*
@@ -118,6 +106,9 @@ public:
 	*/
 	virtual double getScore() const override;
 	virtual double getUtility() const override;
+
+	/// Inherited via LearningEnvironment
+	virtual bool isUsingUtility() const override;
 
 	/**
 	* \brief Is the pendulum considered stabilized.

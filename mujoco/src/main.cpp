@@ -212,7 +212,6 @@ int main(int argc, char ** argv) {
 		la.trainOneGeneration(i);
 	}
 
-	
 	la.getTPGGraph()->clearProgramIntrons();
 
 
@@ -223,6 +222,20 @@ int main(int argc, char ** argv) {
 					la.getTPGGraph(), dotExporter);
 
 
+    bool printCodeGen = true;
+    if(printCodeGen){
+		char codeGen[160];
+		snprintf(codeGen, sizeof(codeGen), "%s/codeGen/", logsFolder);
+    
+        if(!std::filesystem::exists(codeGen)){
+            std::filesystem::create_directory(codeGen);
+        }
+
+        std::cout << "Printing C code." << std::endl;
+        CodeGen::TPGGenerationEngineFactory factory(CodeGen::TPGGenerationEngineFactory::switchMode);
+        std::unique_ptr<CodeGen::TPGGenerationEngine> tpggen = factory.create("codeGen", *la.getTPGGraph(), codeGen);
+        tpggen->generateTPGGraph();
+    }
 
 	// cleanup
 	for (unsigned int i = 0; i < set.getNbInstructions(); i++) {

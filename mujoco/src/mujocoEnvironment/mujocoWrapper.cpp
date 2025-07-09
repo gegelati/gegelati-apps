@@ -11,11 +11,29 @@ std::vector<std::reference_wrapper<const Data::DataHandler>> MujocoWrapper::getD
 	return result;
 }
 
+void MujocoWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterationNumber, uint64_t generationNumber)
+{
+	// Create seed from seed and mode
+	size_t hash_seed = Data::Hash<size_t>()(seed) ^ Data::Hash<Learn::LearningMode>()(mode);
+	if(mode == Learn::LearningMode::VALIDATION || mode == Learn::LearningMode::TESTING){
+		hash_seed = 6416846135168433+iterationNumber;
+	}
+
+	saveStateAndAction = mode == Learn::LearningMode::TESTING;
+
+	// Reset the RNG
+	this->rng.setSeed(hash_seed);
+	this->nbActionsExecuted = 0;
+	this->totalReward = 0.0;
+	this->totalUtility = 0.0;
+}
+
 
 
 
 
 void MujocoWrapper::initialize_simulation() {
+
 	// Load and compile model
 	char error[1000] = "Could not load binary model";
 	m_ = mj_loadXML(model_path_.c_str(), 0, error, 1000);
@@ -106,6 +124,57 @@ std::string MujocoWrapper::ExpandEnvVars(const std::string &str) {
 	return result;
 }
 
-const std::vector<double>& MujocoWrapper::getNbFeetContact() {
-	return nb_feet_in_contact_;
+void MujocoWrapper::registerStateAndAction(const std::vector<double>& actionsID)
+{
+	if(saveStateAndAction){
+		actionData.push_back(actionsID);
+
+		std::vector<double> state;
+		for(size_t i = 0; i < stateSize; i++){
+			state.push_back(*this->currentState.getDataAt(typeid(double), i).getSharedPointer<const double>());
+		}
+		stateData.push_back(state);
+	}
+}
+
+void MujocoWrapper::printStateAndAction(std::string path) const
+{
+	if(saveStateAndAction){
+
+		std::ofstream outFile(path);
+		if (!outFile.is_open()) {
+			std::cerr << "Archive file could not be created " << path << std::endl;
+			return;
+		} else if (actionData.size() == 0 ||stateData.size() == 0 || actionData.size() != stateData.size()){
+			throw std::runtime_error("Action or state data is empty, or don't have the same size");
+		}
+		size_t nbActionData = actionData[0].size();
+		size_t nbStateData = stateData[0].size();
+
+		// Header
+		outFile << "step,";
+		for(size_t i = 0; i < nbActionData; i++){
+			outFile << "action"<<i<<",";
+		}
+		for(size_t i = 0; i < nbStateData; i++){
+			outFile << "state"<<i<<",";
+		}
+		outFile<<"\n";
+
+		for(size_t step = 0; step < actionData.size(); step++){
+			outFile<<step<<",";
+
+			for(size_t i = 0; i < nbActionData; i++){
+				outFile << actionData[step][i]<<",";
+			}
+			for(size_t i = 0; i < nbStateData; i++){
+				outFile << stateData[step][i]<<",";
+			}
+			outFile<<"\n";
+		}
+		outFile.close();
+	} else {
+		throw std::runtime_error("saveStateAndAction should be true");
+	}
+
 }
