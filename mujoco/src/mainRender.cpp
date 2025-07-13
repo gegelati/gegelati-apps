@@ -186,7 +186,8 @@ int main(int argc, char ** argv) {
 	char usecase[150];
     uint64_t seed=0;
 	bool useHealthyReward = 1;
-	bool fastVisu = 0;
+	bool saveCodeGen = 0;
+	size_t fastVisu = 0;
     
     strcpy(dotPath, "logs/out_best.0.p0.dot");
     strcpy(paramFile, "params_0.json");
@@ -203,8 +204,9 @@ int main(int argc, char ** argv) {
 			case 'u': strcpy(usecase, optarg); break;
 			case 'h': useHealthyReward = atoi(optarg); break;
 			case 'v': fastVisu = atoi(optarg); break;
+			case 'c': saveCodeGen = atoi(optarg); break;
             case 'x': strcpy(xmlFile, optarg); break;
-            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-d dot path\' \'-f save or not video\' \'-g path for video saved\' \'-x xmlFile\' \'-h useHealthyReward\' \'-v fastVisu\'." << std::endl; exit(1);
+            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-d dot path\' \'-f save or not video\' \'-g path for video saved\' \'-x xmlFile\' \'-h useHealthyReward\' \'-v fastVisu\' \'-c Save codeGen\'." << std::endl; exit(1);
         }
     }
     if(strcmp(xmlFile, "none") == 0){
@@ -243,7 +245,7 @@ int main(int argc, char ** argv) {
 	} else if (strcmp(usecase, "reacher") == 0) {
 		mujocoLE = new MujocoReacherWrapper(xmlFile);
 	} else if (strcmp(usecase, "ant") == 0) {
-		mujocoLE = new MujocoAntWrapper(xmlFile, useHealthyReward);
+		mujocoLE = new MujocoAntWrapper(xmlFile, useHealthyReward, false);
 	} else {
 		throw std::runtime_error("Use case not found");
 	}
@@ -256,8 +258,6 @@ int main(int argc, char ** argv) {
     Environment env(set, params, mujocoLE->getDataSources(), mujocoLE->getNbActions());
 
     File::TPGGraphDotImporter dotImporter(dotPath, env, tpg);
-
-    std::cout<<tpg.getNbRootVertices()<<" "<<tpg.getEdges().size()<<std::endl;;
 
     if(tpg.getNbRootVertices() > 1){
         
@@ -298,31 +298,31 @@ int main(int argc, char ** argv) {
     std::cout<<"Save cleared root in "<<clearDot<<" --- ";
 
     // Print graph
-    bool printCodeGen = false;
-    if(printCodeGen){
-        std::string codeGenPath = "logs/codeGen/";
-        std::cout<<codeGenPath<<std::endl;
+    if(saveCodeGen){
+        std::string codeGenPath = dotDir + "/codeGen/";
         if(!std::filesystem::exists(codeGenPath)){
             std::filesystem::create_directory(codeGenPath);
         }
 
         std::cout << "Printing C code." << std::endl;
         CodeGen::TPGGenerationEngineFactory factory(CodeGen::TPGGenerationEngineFactory::switchMode);
-        std::unique_ptr<CodeGen::TPGGenerationEngine> tpggen = factory.create("codeGenMujoco", tpg, codeGenPath);
+        std::unique_ptr<CodeGen::TPGGenerationEngine> tpggen = factory.create(dotFileName, tpg, codeGenPath);
         tpggen->generateTPGGraph();
     }
 
     double frameDuration = mujocoLE->m_->opt.timestep * mujocoLE->frame_skip_; // en secondes
     int frameDelayMs = static_cast<int>(frameDuration * 1000); // en millisecondes
 
-
-    InitVisualization(mujocoLE->m_, mujocoLE->d_);
-    StepVisualization(isRenderVideoSaved, pathRenderVideo);
+    if(fastVisu != 2){
+        InitVisualization(mujocoLE->m_, mujocoLE->d_);
+        StepVisualization(isRenderVideoSaved, pathRenderVideo);
+    }
 
     mujocoLE->reset(seed, Learn::LearningMode::TESTING);
     std::vector<double> actions(mujocoLE->getNbActions(), 0);
     uint64_t nbActions = 0;
     TPG::TPGExecutionEngine tee(env, NULL);
+
     while (!mujocoLE->isTerminal() && nbActions < params.maxNbActionsPerEval) {
 
         // Get the actions
@@ -331,35 +331,22 @@ int main(int argc, char ** argv) {
 
         // Do it
         mujocoLE->doActions(actionsID);
-        StepVisualization(isRenderVideoSaved, pathRenderVideo);
+        if(fastVisu != 2){
+            StepVisualization(isRenderVideoSaved, pathRenderVideo);
+        }
         if(!isRenderVideoSaved){
-            if(!fastVisu){
+            if(fastVisu == 0){
                 std::this_thread::sleep_for(std::chrono::milliseconds(frameDelayMs));
             }
-
-            std::cout<<"Action "<<nbActions<<":";
-            int i = 0;
-            for(auto act: actionsID){
-                std::cout<<act<<" | ";
-                actions[i] += abs(act);
-                i++;
-            }std::cout<<std::endl;
         }
         // Count actions
         nbActions++;
     }
 
-    
-	std::string actionAndStateData = dotDir + "/stateAndActionData.csv";
+	std::string actionAndStateData = dotDir + "/stateAndActionData" + dotFileName + + "." + std::to_string(seed) + ".csv";
     mujocoLE->printStateAndAction(actionAndStateData);
     
     std::cout<<"Score: "<<mujocoLE->getUtility() << " with "<<nbActions<<" actions taken"<<std::endl;;
-    std::cout<<"Summup actions: ";
-    for(auto act: actions){
-        std::cout<<act/(double)nbActions<<"-";
-    }std::cout<<std::endl;
-
-
 
     if(isRenderVideoSaved){
         int fps = static_cast<int>(1.0 / frameDuration);

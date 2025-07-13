@@ -30,7 +30,7 @@ protected:
 
 	std::vector<std::vector<double>> stateData;
 	std::vector<std::vector<double>> actionData;
-	bool saveStateAndAction;
+	bool saveStateAndAction = false;
 
 public:
 
