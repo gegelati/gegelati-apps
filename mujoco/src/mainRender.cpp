@@ -295,7 +295,7 @@ int main(int argc, char ** argv) {
     strcat(clearDot, ".clear.dot");
     File::TPGGraphDotExporter dotExporter(clearDot, *la.getTPGGraph());
     dotExporter.print();
-    std::cout<<"Save cleared root in "<<clearDot<<" --- ";
+    std::cout<<"Save cleared root in "<<dotPath<<" --- ";
 
     // Print graph
     if(saveCodeGen){
