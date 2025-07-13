@@ -1,55 +1,58 @@
 #!/bin/bash
 
 # Update and install wget and unzip if necessary
+echo "Updating system packages (requires sudo)..."
 sudo apt update
 sudo apt install -y wget unzip
 
-# Create the directory for the project
+# Working directory
 LIB_DIR=$(pwd)
 
 # MuJoCo version
 MUJOCO_VERSION=210
+MUJOCO_FOLDER="mujoco${MUJOCO_VERSION}"
+MUJOCO_ARCHIVE="${MUJOCO_FOLDER}-linux-x86_64.tar.gz"
+MUJOCO_URL="https://mujoco.org/download/${MUJOCO_ARCHIVE}"
 
 # Download MuJoCo
 echo "Downloading MuJoCo..."
-MUJOCO_URL="https://mujoco.org/download/mujoco${MUJOCO_VERSION}-linux-x86_64.tar.gz"
-wget -O mujoco${MUJOCO_VERSION}-linux-x86_64.tar.gz "$MUJOCO_URL"
+wget -O "$MUJOCO_ARCHIVE" "$MUJOCO_URL"
 
-# Check if the download was successful
 if [ $? -ne 0 ]; then
     echo "Error: Failed to download MuJoCo."
     exit 1
 fi
 
-# Extract the downloaded file
+# Extract MuJoCo
 echo "Extracting MuJoCo..."
-tar -xzf mujoco${MUJOCO_VERSION}-linux-x86_64.tar.gz
+tar -xzf "$MUJOCO_ARCHIVE"
 
-# Check if the extraction was successful
 if [ $? -ne 0 ]; then
     echo "Error: Failed to extract MuJoCo."
-    rm mujoco${MUJOCO_VERSION}-linux-x86_64.tar.gz
+    rm "$MUJOCO_ARCHIVE"
     exit 1
 fi
 
-# Remove the archive file
-echo "Cleaning up temporary files..."
-rm mujoco${MUJOCO_VERSION}-linux-x86_64.tar.gz
+# Remove the archive
+echo "Cleaning up archive..."
+rm "$MUJOCO_ARCHIVE"
 
-# Move MuJoCo to the lib directory
-echo "Moving MuJoCo to the lib directory..."
-if [ ! -d "$LIB_DIR/mujoco${MUJOCO_VERSION}" ]; then
-    mkdir -p "$LIB_DIR/mujoco${MUJOCO_VERSION}"
-fi
-mv mujoco210 "mujoco"
+# Copy the folder instead of moving it (to avoid permission issues in /mnt/c)
+echo "Copying MuJoCo to the lib directory (using cp -r)..."
+mkdir -p "$LIB_DIR/mujoco"
+cp -r "$MUJOCO_FOLDER"/* "$LIB_DIR/mujoco"
 
-# Verify that MuJoCo was installed correctly
+# Clean up the extracted folder
+echo "Cleaning up temporary extracted folder..."
+rm -rf "$MUJOCO_FOLDER"
+
+# Verify installation
 echo "Verifying MuJoCo installation..."
-if [ -d "$LIB_DIR/mujoco" ]; then
-    echo "MuJoCo has been successfully installed in $LIB_DIR/mujoco/."
+if [ -d "$LIB_DIR/mujoco/bin" ]; then
+    echo "MuJoCo has been successfully installed in $LIB_DIR/mujoco/"
 else
-    echo "Error: MuJoCo directory does not exist."
+    echo "Error: MuJoCo directory or content missing."
     exit 1
 fi
 
-echo "You can now configure your CMake project."
+echo "Setup complete. You can now configure your CMake project."
