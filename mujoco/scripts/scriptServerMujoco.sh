@@ -1,25 +1,35 @@
 #!/bin/bash
 
-
-# Récupérer le répertoire où se trouve le script (sous forme WSL)
+# Get the directory where the script is located (in WSL format)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Convertir le chemin du fichier config.xlaunch en chemin Windows
+# Convert the config.xlaunch path to Windows format
 CONFIG_XLAUNCH_WIN_PATH=$(wslpath -w "$SCRIPT_DIR/config.xlaunch")
 
-# Vérifier si le fichier config.xlaunch existe
+# Function to check if VcXsrv is already running
+is_vcxsrv_running() {
+    # Use Windows tasklist to check for vcxsrv.exe
+    tasklist.exe | grep -i "vcxsrv.exe" > /dev/null
+    return $?
+}
+
+# Check if the config.xlaunch file exists
 if [ -f "$SCRIPT_DIR/config.xlaunch" ]; then
-    echo "Launching VcXsrv with config.xlaunch..."
-    # Exécuter le fichier .xlaunch avec vcxsrv (chemin Windows)
-    cmd.exe /c "$CONFIG_XLAUNCH_WIN_PATH"
+    if is_vcxsrv_running; then
+        echo "VcXsrv is already running. Skipping launch."
+    else
+        echo "Launching VcXsrv with config.xlaunch..."
+        # Run the .xlaunch file with VcXsrv (Windows path)
+        cmd.exe /c "$CONFIG_XLAUNCH_WIN_PATH"
+    fi
 else
     echo "Error: config.xlaunch not found in the script's directory."
     exit 1
 fi
 
-# Exporter la variable DISPLAY
+# Export the DISPLAY variable
 export DISPLAY=:0
 echo "DISPLAY set to :0 with export DISPLAY=:0"
 
-# Message indiquant que le script est terminé
-echo "X server launched and DISPLAY is set."
+# Final message
+echo "X server check complete and DISPLAY is set."

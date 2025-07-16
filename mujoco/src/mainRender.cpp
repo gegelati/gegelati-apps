@@ -343,7 +343,7 @@ int main(int argc, char ** argv) {
         nbActions++;
     }
 
-	std::string actionAndStateData = dotDir + "/stateAndActionData" + dotFileName + + "." + std::to_string(seed) + ".csv";
+	std::string actionAndStateData = dotDir + "/stateAndActionData_" + dotFileName + "." + std::to_string(seed) + ".csv";
     mujocoLE->printStateAndAction(actionAndStateData);
     
     std::cout<<"Score: "<<mujocoLE->getUtility() << " with "<<nbActions<<" actions taken"<<std::endl;;

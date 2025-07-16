@@ -15,7 +15,7 @@ void MujocoWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterat
 {
 	// Create seed from seed and mode
 	size_t hash_seed = Data::Hash<size_t>()(seed) ^ Data::Hash<Learn::LearningMode>()(mode);
-	if(mode == Learn::LearningMode::VALIDATION || mode == Learn::LearningMode::TESTING){
+	if(mode == Learn::LearningMode::VALIDATION){
 		hash_seed = 6416846135168433+iterationNumber;
 	}
 
