@@ -245,7 +245,7 @@ int main(int argc, char ** argv) {
 	} else if (strcmp(usecase, "reacher") == 0) {
 		mujocoLE = new MujocoReacherWrapper(xmlFile);
 	} else if (strcmp(usecase, "ant") == 0) {
-		mujocoLE = new MujocoAntWrapper(xmlFile, useHealthyReward, false);
+		mujocoLE = new MujocoAntWrapper(xmlFile, useHealthyReward);
 	} else {
 		throw std::runtime_error("Use case not found");
 	}
