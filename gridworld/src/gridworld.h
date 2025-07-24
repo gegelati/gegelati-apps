@@ -51,7 +51,7 @@ class GridWorld : public Learn::LearningEnvironment{
         bool positionAvailable(int pos_x, int pos_y);
 
         /// Inherited via LearningEnvironment
-        virtual void doAction(uint64_t actionID) override;
+        virtual void doAction(double actionID) override;
 
         /// Inherited via LearningEnvironment
         virtual double getScore() const override;
