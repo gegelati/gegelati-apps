@@ -77,7 +77,7 @@ void Pendulum::doAction(double actionID)
 
 	// Compute current reward
 	double angleToUpward = fmod((angle + M_PI), (2.f * M_PI)) - M_PI;
-	double reward = -((angleToUpward * angleToUpward) + 0.1f * (velocity * velocity) + 0.001f * (currentAction * currentAction));
+	double reward = -((angleToUpward * angleToUpward) + 0.2f * (velocity * velocity) + 0.01f * (currentAction * currentAction));
 
 	// Store and accumulate reward
 	this->rewardHistory[this->nbActionsExecuted % REWARD_HISTORY_SIZE] = reward;
