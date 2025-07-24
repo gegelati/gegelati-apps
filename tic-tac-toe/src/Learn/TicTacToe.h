@@ -89,7 +89,7 @@ public:
   virtual void play(uint64_t actionID, double symbolOfPlayer);
 
   /// Inherited via LearningEnvironment
-  virtual void doAction(uint64_t actionID) override;
+  virtual void doAction(double actionID) override;
 
   /// Inherited via LearningEnvironment
   virtual void

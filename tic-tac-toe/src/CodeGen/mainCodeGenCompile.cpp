@@ -6,10 +6,11 @@
 #include "environment.h"
 #include "file/tpgGraphDotExporter.h"
 #include "instructions/lambdaInstruction.h"
-#include "code_gen/ProgramGenerationEngine.h"
-#include "code_gen/TpgGenerationEngine.h"
+#include "codeGen/ProgramGenerationEngine.h"
+#include "codeGen/TpgGenerationEngine.h"
 #include "file/tpgGraphDotImporter.h"
 #include "float.h"
+#include <codeGen/tpgGenerationEngineFactory.h>
 
 int main(){
 
@@ -42,15 +43,16 @@ int main(){
     std::vector<std::reference_wrapper<const Data::DataHandler>> data = {currentState};
     Learn::LearningParameters params;
     File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json", params);
-    Environment dotEnv(set, data, params.nbRegisters);
+    Environment dotEnv(set, params, data);
 
     TPG::TPGGraph dotGraph(dotEnv);
     std::string filename(path+"TicTacToe_out_best.dot");
     File::TPGGraphDotImporter dot(filename.c_str(), dotEnv, dotGraph);
     dot.importGraph();
 
-    CodeGen::TPGGenerationEngine tpggen("TicTacToe", dotGraph, "src/");
-    tpggen.generateTPGGraph();
+    CodeGen::TPGGenerationEngineFactory factory(CodeGen::TPGGenerationEngineFactory::switchMode);
+    std::unique_ptr<CodeGen::TPGGenerationEngine> tpggen = factory.create("TicTacToe", dotGraph, "src/");
+    tpggen->generateTPGGraph();
 
     return 0;
 

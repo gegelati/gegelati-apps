@@ -30,7 +30,7 @@ void TicTacToe::play(uint64_t actionID, double symbolOfPlayer) {
     }
 }
 
-void TicTacToe::doAction(uint64_t actionID) {
+void TicTacToe::doAction(double actionID) {
     bool &forbiddenMove =
             (currentTurn % 2 == 0 ? forbiddenMovePlayer1 : forbiddenMovePlayer2);
 
@@ -51,7 +51,7 @@ void TicTacToe::doAction(uint64_t actionID) {
             this->randomPlay(symbOfPlayer);
         } else {
             // update state
-            this->board.setDataAt(typeid(double), actionID, symbOfPlayer);
+            this->board.setDataAt(typeid(double), (size_t)actionID, symbOfPlayer);
         }
 
         this->currentTurn++;

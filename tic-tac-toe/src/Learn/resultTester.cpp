@@ -38,8 +38,11 @@ int agentTest() {
     // Instantiate the LearningEnvironment
     auto le = TicTacToe();
 
+    Learn::LearningParameters params;
+    File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json", params);
+
     // Instantiate the environment that will embed the LearningEnvironment
-    Environment env(set, le.getDataSources(), 8);
+    Environment env(set, params, le.getDataSources());
 
     // Instantiate the TPGGraph that we will loead
     auto tpg = TPG::TPGGraph(env);
@@ -60,7 +63,7 @@ int agentTest() {
     // let's play, the only way to leave this loop is to enter -1
     while(x!=-1){
         // gets the action the TPG would decide in this situation (the result can only be between 0 and 8 included)
-        uint64_t action=((const TPG::TPGAction *) tee.executeFromRoot(* root).back())->getActionID();
+        uint64_t action=((const TPG::TPGAction *) tee.executeFromRoot(* root).first.back())->getActionID();
         std::cout<<"TPG : "<<action<<std::endl;
         le.play(action,0);
 
