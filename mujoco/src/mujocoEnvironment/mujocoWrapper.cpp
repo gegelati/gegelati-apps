@@ -156,6 +156,7 @@ void MujocoWrapper::registerStateAndAction(const std::vector<double>& actionsID)
 		for(size_t i = 0; i < stateSize; i++){
 			state.push_back(*this->currentState.getDataAt(typeid(double), i).getSharedPointer<const double>());
 		}
+		stateData.push_back(state);
 	}
 }
 

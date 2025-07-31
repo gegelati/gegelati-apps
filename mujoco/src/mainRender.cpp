@@ -189,6 +189,7 @@ int main(int argc, char ** argv) {
     uint64_t seed=0;
 	bool useHealthyReward = 1;
 	bool fastVisu = 0;
+	bool saveCodeGen = 0;
 	bool useContactForce = 0;
     
     strcpy(dotPath, "logs/out_best.0.p0.dot");
@@ -205,10 +206,10 @@ int main(int argc, char ** argv) {
             case 'f': isRenderVideoSaved= atoi(optarg); break;
 			case 'u': strcpy(usecase, optarg); break;
 			case 'h': useHealthyReward = atoi(optarg); break;
-			case 'c': useContactForce = atoi(optarg); break;
+			case 'c': saveCodeGen = atoi(optarg); break;
 			case 'v': fastVisu = atoi(optarg); break;
             case 'x': strcpy(xmlFile, optarg); break;
-            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-d dot path\' \'-f save or not video\' \'-g path for video saved\' \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\' \'-v fastVisu\'." << std::endl; exit(1);
+            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-d dot path\' \'-f save or not video\' \'-g path for video saved\' \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\' \'-v fastVisu\' \'-c Save codeGen\'." << std::endl; exit(1);
         }
     }
     if(strcmp(xmlFile, "none") == 0){
@@ -216,6 +217,8 @@ int main(int argc, char ** argv) {
 	}
     std::string dotFileName = std::filesystem::path(dotPath).stem().string();
     std::string dotDir = std::filesystem::path(dotPath).parent_path().string();
+
+    std::cout<<"\n"<<dotDir<<"  "<<dotFileName<<std::endl;
 
 	std::cout << "Start Mujoco Rendering application with seed " << seed<<"." << std::endl;
     // Create the instruction set for programs
@@ -299,17 +302,15 @@ int main(int argc, char ** argv) {
     std::cout<<"Save cleared root in "<<clearDot<<" --- ";
 
     // Print graph
-    bool printCodeGen = false;
-    if(printCodeGen){
-        std::string codeGenPath = "logs/codeGen/";
-        std::cout<<codeGenPath<<std::endl;
+    if(saveCodeGen){
+        std::string codeGenPath = dotDir + "/codeGen/";
         if(!std::filesystem::exists(codeGenPath)){
             std::filesystem::create_directory(codeGenPath);
         }
 
         std::cout << "Printing C code." << std::endl;
         CodeGen::TPGGenerationEngineFactory factory(CodeGen::TPGGenerationEngineFactory::switchMode);
-        std::unique_ptr<CodeGen::TPGGenerationEngine> tpggen = factory.create("codeGenMujoco", tpg, codeGenPath);
+        std::unique_ptr<CodeGen::TPGGenerationEngine> tpggen = factory.create(dotFileName, tpg, codeGenPath);
         tpggen->generateTPGGraph();
     }
 
@@ -341,14 +342,6 @@ int main(int argc, char ** argv) {
             if(!fastVisu){
                 std::this_thread::sleep_for(std::chrono::milliseconds(frameDelayMs));
             }
-
-            std::cout<<"Action "<<nbActions<<":";
-            int i = 0;
-            for(auto act: actionsID){
-                std::cout<<act<<" | ";
-                actions[i] += abs(act);
-                i++;
-            }std::cout<<std::endl;
         }
         
 
@@ -359,8 +352,7 @@ int main(int argc, char ** argv) {
     }
 
     
-	char actionAndStateData[250];
-    sprintf(actionAndStateData, "%s/stateAndActionData.csv", dotDir);
+	std::string actionAndStateData = dotDir + "/stateAndActionData" + dotFileName + ".csv";
     mujocoLE->printStateAndAction(actionAndStateData);
 
 

@@ -28,28 +28,28 @@ class MapElitesArchive {
 
         std::pair<uint64_t, uint64_t> getDimensions() const;
 
-        const std::vector<std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>>& getAllArchive() const;
+        virtual const std::vector<std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>>& getAllArchive() const;
 
-        const std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>& 
+        virtual const std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>& 
             getArchiveAt(const std::vector<uint64_t>& indices) const;
 
 
 
-        const std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>& getArchiveFromDescriptors(
+        virtual const std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>& getArchiveFromDescriptors(
             const std::vector<double>& descriptors) const; 
 
-        void setArchiveAt(
+        virtual void setArchiveAt(
             const TPG::TPGVertex* vertex,
             std::shared_ptr<Learn::EvaluationResult> eval,
             const std::vector<uint64_t>& indices);
     
-        void setArchiveFromDescriptors(
+        virtual void setArchiveFromDescriptors(
             const TPG::TPGVertex* vertex, 
             std::shared_ptr<Learn::EvaluationResult> eval, 
             const std::vector<double>& descriptors);  
 
-        uint64_t getIndexArchive(double value) const;
-        uint64_t computeLinearIndex(const std::vector<uint64_t>& indices) const;
+        virtual uint64_t getIndexArchive(double value) const;
+        virtual uint64_t computeLinearIndex(const std::vector<uint64_t>& indices) const;
 
 
         virtual void initCSVarchive(std::string path) const ;
