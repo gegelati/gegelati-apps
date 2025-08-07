@@ -55,7 +55,13 @@ class MapElitesArchive {
         virtual void initCSVarchive(std::string path) const ;
         virtual void updateCSVArchive(std::string path, uint64_t generationNumber) const;
 
-};
+        virtual bool containsRoot(const TPG::TPGVertex* root) const;
 
+        virtual void removeRootFromArchiveIfNotComplete(const TPG::TPGVertex* root, size_t maxNbEvaluation);
+        virtual void removeRootFromArchive(const TPG::TPGVertex* root, size_t maxNbEvaluation);
+
+
+    };
+    
 
 #endif

@@ -137,6 +137,7 @@ public:
 	virtual void initialize_descriptors() override;
 	virtual void computeDescriptors(std::vector<double>& actionsID) override;
 
+	virtual const size_t getNbDescriptors();
 };
 
 #endif // !MUJOCOANTWRAPPER_H

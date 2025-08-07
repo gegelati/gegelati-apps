@@ -4,6 +4,27 @@
 #include "mapEliteEvalRes.h"
 #include "mujocoEnvironment/mujocoAntWrapper.h"
 
+void Learn::MujocoMapEliteLearningAgent::init(uint64_t seed){
+    
+    ParallelLearningAgent::init(seed);
+
+    if(dynamic_cast<MujocoWrapper*>(&learningEnvironment) == nullptr){
+        throw std::runtime_error("MapElites only support mujoco environments for now");
+    }
+
+    // Compute the number of descriptors analysed
+    nbDescriptorsAnalysis = useMeanDescriptor + useMedianDescriptor +
+        useAbsMeanDescriptor + useQuantileDescriptor * 2 + useMinMaxDescriptor * 2;
+
+    if(!useCVT){
+        mapEliteArchive = new MapElitesArchive(archiveLimits, dynamic_cast<MujocoWrapper*>(&learningEnvironment)->getNbDescriptors() * nbDescriptorsAnalysis);
+    } else {
+        mapEliteArchive = new CvtMapElitesArchive(
+            archiveLimits, dynamic_cast<MujocoWrapper*>(&learningEnvironment)->getNbDescriptors() * nbDescriptorsAnalysis, sizeCVT, this->rng);
+    }
+    //
+}
+
 void Learn::MujocoMapEliteLearningAgent::trainOneGeneration(uint64_t generationNumber)
 {
     for (auto logger : loggers) {
@@ -14,7 +35,7 @@ void Learn::MujocoMapEliteLearningAgent::trainOneGeneration(uint64_t generationN
     if(mapEliteArchive->size() > 0){
         Mutator::MapElitesMutator::populateTPG(
             *this->tpg, this->archive, *this->mapEliteArchive, this->params.mutation, this->rng,
-            generationNumber, maxNbThreads, usePonderationSelection, useOnlyCloseAddEdges);
+            generationNumber, maxNbThreads, useOnlyCloseAddEdges);
     } else {
         Mutator::TPGMutator::populateTPG(
             *this->tpg, this->archive, this->params.mutation, this->rng,
@@ -94,9 +115,10 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
 
     // Number of evaluations
     uint64_t nbEvaluation = (mode == LearningMode::TRAINING) ? this->params.nbIterationsPerPolicyEvaluation:this->params.nbIterationsPerPolicyValidation;
+    
 
     // Vector of size of descriptors and initialized to 0
-    std::vector<double> descriptors = std::vector<double>(mujocoLE->getDescriptors().size(), 0.0);
+    std::vector<double> descriptors = std::vector<double>(mujocoLE->getNbDescriptors() * nbDescriptorsAnalysis, 0.0);
 
     // Evaluate nbIteration times
     for (size_t iterationNumber = 0; iterationNumber < nbEvaluation; iterationNumber++) {
@@ -105,10 +127,8 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
         
         // Same seed at each generation for map elites
         uint64_t hash = hasher(generationNumber) ^ hasher(iterationNumber);
-
         // Reset the learning Environment
         mujocoLE->reset(hash, mode, iterationNumber, generationNumber);
-
         uint64_t nbActions = 0;
         while (!mujocoLE->isTerminal() &&
                nbActions < this->params.maxNbActionsPerEval) {
@@ -127,11 +147,57 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
         utility += mujocoLE->getUtility();
 
         if(mapEliteArchive->getDimensions().first > 0){
+            auto& currentDescriptor = mujocoLE->getDescriptors();
+            for(size_t idx1 = 0; idx1 < mujocoLE->getNbDescriptors(); idx1++){
+                
 
-            // Get feet contact information
-            auto currentDescriptor = mujocoLE->getDescriptors();
-            for(size_t i = 0; i< currentDescriptor.size(); i++){
-                descriptors[i] += currentDescriptor[i] / nbActions;
+                size_t descriptorIndex = 0;
+                if(useAbsMeanDescriptor){
+                    
+                    for(size_t idx2 = 0; idx2 < currentDescriptor.size(); idx2++){
+                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] 
+                            += std::abs(currentDescriptor[idx2][idx1]);
+                    }
+                    
+                    descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] /= currentDescriptor.size();
+                    descriptorIndex += 1;
+                }
+
+                if(useMeanDescriptor){
+                    for(size_t idx2 = 0; idx2 < currentDescriptor.size(); idx2++){
+                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] 
+                            += currentDescriptor[idx2][idx1];
+                    }
+                    descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] /= currentDescriptor.size();
+                    descriptorIndex += 1;
+                }
+
+                if(useMedianDescriptor || useQuantileDescriptor || useMinMaxDescriptor){
+                    std::vector<double> currentDescriptorValues;
+                    for(size_t idx2 = 0; idx2 < currentDescriptor.size(); idx2++){
+                        currentDescriptorValues.push_back(currentDescriptor[idx2][idx1]);
+                    }
+                    std::sort(currentDescriptorValues.begin(), currentDescriptorValues.end());
+
+                    if(useMedianDescriptor){
+                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] = currentDescriptorValues[currentDescriptorValues.size() / 2];
+                        descriptorIndex += 1;
+                    }
+                    if(useQuantileDescriptor){
+                        // 25% quantile
+                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] = currentDescriptorValues[currentDescriptorValues.size() / 4];
+                        descriptorIndex += 1;
+                        // 75% quantile
+                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] = currentDescriptorValues[3 * currentDescriptorValues.size() / 4];
+                        descriptorIndex += 1;
+                    }
+                    if(useMinMaxDescriptor){
+                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] = currentDescriptorValues.front();
+                        descriptorIndex += 1;
+                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] = currentDescriptorValues.back();
+                        descriptorIndex += 1;
+                    }
+                }
             }
         }
     }
@@ -162,44 +228,48 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
 {
 
 
-
     if(mapEliteArchive->getDimensions().first == 0){
         Learn::LearningAgent::decimateWorstRoots(results);
         return;
     }
-
 
     std::multimap<std::shared_ptr<EvaluationResult>, const TPG::TPGVertex*>
         preservedRoots;
 
     size_t numberNewValues = 0;
 
+    for(auto it = results.begin(); it != results.end(); it++){
+        // The root is already in the archive
+        if(this->mapEliteArchive->containsRoot(it->second)){
+            // The root has been reevaluated, delete it from the archive if it has not been evaluated enough times
+            this->mapEliteArchive->removeRootFromArchiveIfNotComplete(it->second, params.maxNbEvaluationPerPolicy);
+        }
+    }
+
     while(results.size() > 0){
 
+        // Utilise l'élément avec le plus grand score (fin du multimap)
+        auto it = --results.end();
 
         // Get the evaluation (casted) and root
-        std::shared_ptr<EvaluationResult> eval = results.begin()->first;
+        std::shared_ptr<EvaluationResult> eval = it->first;
         if(dynamic_cast<MapElitesEvaluationResult*>(eval.get()) == nullptr){
             throw std::runtime_error("Evalresult should be castable in mapElites eval results");
         }
         MapElitesEvaluationResult* castEval = dynamic_cast<MapElitesEvaluationResult*>(eval.get());
-        const TPG::TPGVertex* root = results.begin()->second;
+        const TPG::TPGVertex* root = it->second;
 
         // Get the saved evaluation and root
         const std::pair<std::shared_ptr<EvaluationResult>, const TPG::TPGVertex*>& pairSaved = mapEliteArchive->getArchiveFromDescriptors(castEval->getDescriptors());
-        
-        
+
         // The value saved in the archive is better than the current root
         // There is also a verification that the root is not the same
-
         if(pairSaved.second != nullptr && pairSaved.second != root && pairSaved.first->getResult() > castEval->getResult()){
-
 
             // Delete the root
             tpg->removeVertex(*root);
             // Removed stored result (if any)
             this->resultsPerRoot.erase(root);
-
 
         // The current root is better than the values saved
         } else if (pairSaved.second != root) {
@@ -210,25 +280,22 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
             // Removed stored result (if any)
             this->resultsPerRoot.erase(pairSaved.second);
 
-
             if(pairSaved.second != nullptr){
                 // Erase it from preserved roots too if the value is in it
-                auto it = preservedRoots.find(pairSaved.first);
-                if(it != preservedRoots.end() && it->second == pairSaved.second){
-                    preservedRoots.erase(it);
+                auto itPreserved = preservedRoots.find(pairSaved.first);
+                if(itPreserved != preservedRoots.end() && itPreserved->second == pairSaved.second){
+                    preservedRoots.erase(itPreserved);
                 }
             }
             numberNewValues++;
 
             // Saving
             this->mapEliteArchive->setArchiveFromDescriptors(root, eval, castEval->getDescriptors());
-            
+
             // Preserved the root
-            preservedRoots.insert(*results.begin()); // Root are presevered if they are override in this same generation !
-
+            preservedRoots.insert(*it); // Root are preserved if they are override in this same generation !
         }
-        results.erase(results.begin());
-
+        results.erase(it);
     }
 
     std::cout<<"  nv "<<numberNewValues<<"  ";

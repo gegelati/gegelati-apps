@@ -87,7 +87,7 @@ void MujocoReacherWrapper::computeState() {
 
 	// Reset descriptors
 	if(descriptorType_ != DescriptorType::Unused){
-		std::fill(descriptors.begin(), descriptors.end(), 0.0);
+		descriptors.clear();
 	}
 }
 

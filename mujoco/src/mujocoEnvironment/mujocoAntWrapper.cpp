@@ -26,7 +26,7 @@ void MujocoAntWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t ite
 
 	// Reset descriptors
 	if(descriptorType_ != DescriptorType::Unused){
-		std::fill(descriptors.begin(), descriptors.end(), 0.0);
+		descriptors.clear();
 	}
 
 }
@@ -131,6 +131,7 @@ void MujocoAntWrapper::computeState(){
 
 void MujocoAntWrapper::computeFeetContact() {
     
+	std::vector<double> descriptorsValues(feet_geom_ids_.size(), 0.0);
 	std::set<uint64_t> increasedLegs;
 
     for (int i = 0; i < d_->ncon; ++i) {
@@ -141,7 +142,7 @@ void MujocoAntWrapper::computeFeetContact() {
         // Check if geom1 is a foot
         auto it1 = footGeomToIndex.find(geom1);
         if (it1 != footGeomToIndex.end() && increasedLegs.find(it1->second) == increasedLegs.end()) {
-            descriptors[it1->second]++;
+            descriptorsValues[it1->second]++;
             increasedLegs.insert(it1->second);
             continue;
         }
@@ -149,10 +150,12 @@ void MujocoAntWrapper::computeFeetContact() {
         // Check if geom2 is a foot
         auto it2 = footGeomToIndex.find(geom2);
         if (it2 != footGeomToIndex.end() && increasedLegs.find(it2->second) == increasedLegs.end()) {
-            descriptors[it2->second]++;
+            descriptorsValues[it2->second]++;
             increasedLegs.insert(it2->second);
         }
     }
+
+	descriptors.push_back(descriptorsValues);
 }
 
 void MujocoAntWrapper::initialize_descriptors() {
@@ -168,7 +171,6 @@ void MujocoAntWrapper::initialize_descriptors() {
 		for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
 			footGeomToIndex[feet_geom_ids_[j]] = j;
 		}
-		descriptors.resize(feet_geom_ids_.size(), 0.0);
 	} else if (descriptorType_ == DescriptorType::ActionValues){
 		MujocoWrapper::initialize_descriptors();
 	}
@@ -181,4 +183,13 @@ void MujocoAntWrapper::computeDescriptors(std::vector<double>& actionsID) {
 	} else if (descriptorType_ == DescriptorType::ActionValues) {
 		MujocoWrapper::computeDescriptors(actionsID);
 	}
+}
+
+const size_t MujocoAntWrapper::getNbDescriptors(){
+	if(descriptorType_ == DescriptorType::FeetContact){
+		return 4;
+	} else if (descriptorType_ == DescriptorType::ActionValues) {
+		return MujocoWrapper::getNbDescriptors();
+	}
+	return 0;
 }

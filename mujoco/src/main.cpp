@@ -17,7 +17,7 @@
 void exportIndividual(const TPG::TPGVertex* vertex,
                       const std::string& basePathDots,
                       const std::string& basePathStats,
-                      const std::vector<size_t>& indices,
+                      const size_t index,
                       uint64_t seed,
                       int indexParam,
                       const std::string& usecase,
@@ -25,13 +25,9 @@ void exportIndividual(const TPG::TPGVertex* vertex,
                       File::TPGGraphDotExporter& dotExporter) {
 
     char dotFile[300];
-    std::ostringstream suffix;
-    for (const auto& idx : indices) {
-        suffix << "_" << idx;
-    }
 
-    sprintf(dotFile, "%s/out_best%s.%" PRIu64 ".p%d.%s.dot",
-            basePathDots.c_str(), suffix.str().c_str(), seed, indexParam, usecase.c_str());
+    sprintf(dotFile, "%s/out_best_%zu.%" PRIu64 ".p%d.%s.dot",
+            basePathDots.c_str(), index, seed, indexParam, usecase.c_str());
     dotExporter.setNewFilePath(dotFile);
     dotExporter.printSubGraph(vertex);
 
@@ -40,8 +36,8 @@ void exportIndividual(const TPG::TPGVertex* vertex,
     ps.analyzePolicy(vertex);
 
     char statsFile[300];
-    sprintf(statsFile, "%s/out_best_stats%s.%" PRIu64 ".p%d.%s.md",
-            basePathStats.c_str(), suffix.str().c_str(), seed, indexParam, usecase.c_str());
+    sprintf(statsFile, "%s/out_best_stats_%zu.%" PRIu64 ".p%d.%s.md",
+            basePathStats.c_str(), index, seed, indexParam, usecase.c_str());
     std::ofstream statsOut(statsFile);
     statsOut << ps;
     statsOut.close();
@@ -62,30 +58,65 @@ int main(int argc, char ** argv) {
 	bool saveAllGenerationsDots = 1;
 	bool usePonderationSelection = 0;
 	bool useOnlyCloseAddEdges = 0;
-	std::string archiveValuesStr = "";
+	bool useCVT = 0;
+	bool useMeanDescriptor = 0;
+	bool useMedianDescriptor = 0;
+	bool useAbsMeanDescriptor = 1;
+	bool useQuantileDescriptor = 0;
+	bool useMinMaxDescriptor = 0;
+	std::string archiveValuesStr = "3";
 	std::string descriptorType = "";
+	size_t sizeCVT = 1000;
+
+	static struct option long_options[] = {
+		{"dMean",    required_argument, 0,  1 },
+		{"dMed",     required_argument, 0,  2 },
+		{"dAbsMean", required_argument, 0,  3 },
+		{"dQ",       required_argument, 0,  4 },
+		{"dMinMax",  required_argument, 0,  5 },
+		{"cvt",      required_argument, 0,  6 },
+		{"scvt",      required_argument, 0,  7 },
+		{0, 0, 0, 0}
+	};
 
     strcpy(logsFolder, "logs");
     strcpy(paramFile, "params_0.json");
 	strcpy(usecase, "ant");
     strcpy(xmlFile, "none");
-    while((option = getopt(argc, argv, "s:p:l:x:h:c:u:a:g:w:o:d:")) != -1){
-        switch (option) {
-            case 's': seed= atoi(optarg); break;
-            case 'p': strcpy(paramFile, optarg); break;
-            case 'l': strcpy(logsFolder, optarg); break;
+	int long_index = 0;
+	while((option = getopt_long(argc, argv, "s:p:l:x:h:c:u:a:g:w:o:d:", long_options, &long_index)) != -1){
+		switch (option) {
+			case 's': seed= atoi(optarg); break;
+			case 'p': strcpy(paramFile, optarg); break;
+			case 'l': strcpy(logsFolder, optarg); break;
 			case 'u': strcpy(usecase, optarg); break;
 			case 'h': useHealthyReward = atoi(optarg); break;
 			case 'c': useContactForce = atoi(optarg); break;
-            case 'x': strcpy(xmlFile, optarg); break;
+			case 'x': strcpy(xmlFile, optarg); break;
 			case 'a': archiveValuesStr = optarg; break;
 			case 'g': saveAllGenerationsDots = atoi(optarg); break;
 			case 'w': usePonderationSelection = atoi(optarg); break;
 			case 'o': useOnlyCloseAddEdges = atoi(optarg); break;
 			case 'd': descriptorType = optarg; break;
-            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-logs logs Folder\'  \'-x xmlFile\' \'-h useHealthyReward\' \'-c useContactForce\' \'-a sizeArchive\' \'-g saveAllGenDotFiles\' \'-w usePonderationSelection\' \'-o useOnlyCloseAddEdges\' \'-d descriptorType\'." << std::endl; exit(1);
-        }
-    }
+			case 1: useMeanDescriptor = atoi(optarg); break;      // --dMean
+			case 2: useMedianDescriptor = atoi(optarg); break;    // --dMed
+			case 3: useAbsMeanDescriptor = atoi(optarg); break;   // --dAbsMean
+			case 4: useQuantileDescriptor = atoi(optarg); break;  // --dQ
+			case 5: useMinMaxDescriptor = atoi(optarg); break;    // --dMinMax
+			case 6: useCVT = atoi(optarg); break;                 // --cvt
+			case 7: sizeCVT = atoi(optarg); break;                // --scvt
+			default:
+				std::cout << "Unrecognised option. Valid options are "
+					"'-s seed' '-p paramFile.json' '-u useCase' "
+					"'-l logsFolder' '-x xmlFile' '-h useHealthyReward' "
+					"'-c useContactForce' '-a sizeArchive' '-g saveAllGenDotFiles' "
+					"'-w usePonderationSelection' '-o useOnlyCloseAddEdges' '-d descriptorType' "
+					"'--dMean useMeanDescriptor' '--dMed useMedianDescriptor' "
+					"'--dAbsMean useAbsMeanDescriptor' '--dQ useQuantileDescriptor' "
+					"'--dMinMax useMinMaxDescriptor' '--cvt useCVT'." << std::endl;
+				exit(1);
+		}
+	}
 	if(strcmp(xmlFile, "none") == 0){
     	snprintf(xmlFile, sizeof(xmlFile), "mujoco_models/%s.xml", usecase);
 	}
@@ -213,7 +244,11 @@ int main(int argc, char ** argv) {
 
 
 	// Instantiate and init the learning agent
-	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, params, archiveValues, usePonderationSelection, useOnlyCloseAddEdges);
+	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, 
+		params, archiveValues, 
+		usePonderationSelection, useOnlyCloseAddEdges,
+		useCVT, sizeCVT, useMeanDescriptor, useMedianDescriptor,
+		useAbsMeanDescriptor, useQuantileDescriptor, useMinMaxDescriptor);
 	la.init(seed);
 
 
@@ -221,16 +256,21 @@ int main(int argc, char ** argv) {
     std::cout << "SELECTED PARAMS FILE: " << paramFile << std::endl;
 	std::cout << "SELECTION METHOD :";
 	if(archiveValues.size() > 0){
-		std::cout<<" MAP ELITES";
+		if(useCVT){
+			std::cout<<" CVT MAP ELITES with " << la.getMapElitesArchive().getDimensions().second << " dimensions and a size " << la.getMapElitesArchive().size() << std::endl;
+		} else {
+			std::cout<<" MAP ELITES";
 
-		auto dims = la.getMapElitesArchive().getDimensions();
-		std::cout<<" with a "<<dims.first<<"-dimensional archive with "<<dims.second<<" dimensions resulting in size "<< (uint64_t)std::pow(dims.first, dims.second);
-		std::cout<<" Used range are [0; ";
-		for(size_t i = 0; i < archiveValues.size() - 1; i++){
-			double value = round(archiveValues[i] * 100) / 100;
-			std::cout<<value << "], ["<<value<<"; ";
-		} 
-		std::cout<<round(archiveValues[archiveValues.size() - 1]*100)/100<<"]."<<std::endl;
+			auto dims = la.getMapElitesArchive().getDimensions();
+			std::cout<<" with a "<<dims.first<<"-dimensional archive with "<<dims.second<<" dimensions resulting in size "<< (uint64_t)std::pow(dims.first, dims.second);
+			std::cout<<" Used range are [0; ";
+			for(size_t i = 0; i < archiveValues.size() - 1; i++){
+				double value = round(archiveValues[i] * 100) / 100;
+				std::cout<<value << "], ["<<value<<"; ";
+			} 
+			std::cout<<round(archiveValues[archiveValues.size() - 1]*100)/100<<"]."<<std::endl;
+		}
+
 
 	} else if(params.useTournamentSelection){
 		std::cout<<" TOURNAMENT SELECTION"<<std::endl;
@@ -306,20 +346,14 @@ int main(int argc, char ** argv) {
 
 		if(i % params.stepValidation && params.doValidation){
 			if (!archiveValues.empty()) {
-				std::vector<size_t> indices(la.getMapElitesArchive().getDimensions().second, 0);
-				size_t total = std::pow(archiveValues.size(), la.getMapElitesArchive().getDimensions().second);
 
-				for (size_t count = 0; count < total; ++count) {
-					const auto& elem = la.getMapElitesArchive().getArchiveAt(indices);
+				size_t index = 0;
+				for (const auto& elem: la.getMapElitesArchive().getAllArchive()) {
 					if (elem.second != nullptr) {
-						exportIndividual(elem.second, archiveDots, archiveStats, indices, seed, indexParam, usecase,
+						exportIndividual(elem.second, archiveDots, archiveStats, index, seed, indexParam, usecase,
 										la.getTPGGraph(), dotExporter);
 					}
-
-					for (int i = la.getMapElitesArchive().getDimensions().second - 1; i >= 0; --i) {
-						if (++indices[i] < archiveValues.size()) break;
-						indices[i] = 0;
-					}
+					index++;
 				}
 			}
 		}
@@ -329,26 +363,19 @@ int main(int argc, char ** argv) {
 	la.getTPGGraph()->clearProgramIntrons();
 
 	if (!archiveValues.empty()) {
-		std::vector<size_t> indices(la.getMapElitesArchive().getDimensions().second, 0);
-		size_t total = std::pow(archiveValues.size(), la.getMapElitesArchive().getDimensions().second);
-
-		for (size_t count = 0; count < total; ++count) {
-			const auto& elem = la.getMapElitesArchive().getArchiveAt(indices);
+		size_t index = 0;
+		for (const auto& elem: la.getMapElitesArchive().getAllArchive()) {
 			if (elem.second != nullptr) {
-				exportIndividual(elem.second, archiveDots, archiveStats, indices, seed, indexParam, usecase,
+				exportIndividual(elem.second, archiveDots, archiveStats, index, seed, indexParam, usecase,
 								la.getTPGGraph(), dotExporter);
 			}
-
-			for (int i = la.getMapElitesArchive().getDimensions().second - 1; i >= 0; --i) {
-				if (++indices[i] < archiveValues.size()) break;
-				indices[i] = 0;
-			}
+			index++;
 		}
 	} else {
 		la.keepBestPolicy();
 		const auto* best = la.getBestRoot().first;
-		std::vector<size_t> emptyIndices;
-		exportIndividual(best, logsFolder, logsFolder, emptyIndices, seed, indexParam, usecase,
+		size_t index = 0;
+		exportIndividual(best, logsFolder, logsFolder, index, seed, indexParam, usecase,
 						la.getTPGGraph(), dotExporter);
 	}
 

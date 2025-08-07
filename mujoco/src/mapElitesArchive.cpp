@@ -110,7 +110,7 @@ void MapElitesArchive::initCSVarchive(std::string path) const {
     outFile.close();
 }
 
-void MapElitesArchive::updateCSVArchive(std::string path, size_t generationNumber) const {
+void MapElitesArchive::updateCSVArchive(std::string path, uint64_t generationNumber) const {
     std::ofstream outFile(path, std::ios::app);
     if (!outFile.is_open()) {
         std::cerr << "Archive file not found " << path << std::endl;
@@ -148,4 +148,41 @@ void MapElitesArchive::updateCSVArchive(std::string path, size_t generationNumbe
 
     outFile << "\n";
     outFile.close();
+}
+
+
+bool MapElitesArchive::containsRoot(const TPG::TPGVertex* root) const {
+
+    for (const auto& pair : archive) {
+        if (pair.second == root) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
+void MapElitesArchive::removeRootFromArchiveIfNotComplete(const TPG::TPGVertex* root, size_t maxNbEvaluation)
+{
+    for (auto it = archive.begin(); it != archive.end(); ++it) {
+        if (it->second == root) {
+            if (it->first->getNbEvaluation() < maxNbEvaluation) {
+                // Remove the root from the archive if it has been evaluated enough
+                it->first = nullptr;
+                it->second = nullptr; // Clear the vertex pointer
+            }
+        }
+    }
+}
+
+void MapElitesArchive::removeRootFromArchive(const TPG::TPGVertex* root, size_t maxNbEvaluation)
+{
+    for (auto it = archive.begin(); it != archive.end(); ++it) {
+        if (it->second == root) {
+            it->first = nullptr;
+            it->second = nullptr; // Clear the vertex pointer
+            break;
+        }
+    }
 }

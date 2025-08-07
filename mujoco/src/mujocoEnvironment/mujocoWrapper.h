@@ -88,7 +88,7 @@ public:
     int frame_skip_ = 5;  // Number of frames per simlation step
     int obs_size_;  // Number of variables in observation vector
 
-	std::vector<double> descriptors; // Descriptors
+	std::vector<std::vector<double>> descriptors; // Descriptors
 	DescriptorType descriptorType_ = DescriptorType::Unused;
 
     void initialize_simulation();
@@ -106,9 +106,9 @@ public:
 	std::string ExpandEnvVars(const std::string &str);
 
 	virtual void initialize_descriptors();
-	const size_t getNbDescriptors();
+	virtual const size_t getNbDescriptors();
 	virtual void computeDescriptors(std::vector<double>& actionsID);
-	virtual const std::vector<double>& getDescriptors() const {
+	virtual const std::vector<std::vector<double>>& getDescriptors() const {
 		return descriptors;
 	}
 

@@ -6,15 +6,15 @@
 void Mutator::MapElitesMutator::addRandomActionEdge(
     TPG::TPGGraph& graph, const TPG::TPGAction& action,
     const MapElitesArchive& mapElitesArchive,
-    const std::vector<uint64_t>& indicesCloned,
-    const std::set<std::vector<uint64_t>>& validIndices,
+    const uint64_t& indicesCloned,
+    const std::set<uint64_t>& validIndices,
     Mutator::RNG& rng, bool useOnlyCloseAddEdges)
 {
 
-    std::vector<std::vector<uint64_t>> pickableIndices;
-    std::pair<uint64_t, uint64_t> dim = mapElitesArchive.getDimensions(); // dim.first = dim1, dim.second = dim2
+    std::vector<uint64_t> pickableIndices;
+    //std::pair<uint64_t, uint64_t> dim = mapElitesArchive.getDimensions(); // dim.first = dim1, dim.second = dim2
 
-    if(useOnlyCloseAddEdges){
+    /*if(useOnlyCloseAddEdges){
         for (size_t d = 0; d < dim.second; ++d) {
             // -1
             if (indicesCloned[d] > 0) {
@@ -34,12 +34,12 @@ void Mutator::MapElitesMutator::addRandomActionEdge(
             }
         }
     } else {
-        for (const auto& indices : validIndices) {
+        */for (const auto& indices : validIndices) {
             if (indices != indicesCloned) {
                 pickableIndices.push_back(indices);
             }
         }
-    }
+    //}
 
 
     // Pick an edge (excluding ones from the team and edges with the team as a
@@ -51,7 +51,7 @@ void Mutator::MapElitesMutator::addRandomActionEdge(
     for(auto indices: pickableIndices){
 
         // FOr each edge
-        for(auto edge: mapElitesArchive.getArchiveAt(indices).second->getOutgoingEdges()){
+        for(auto edge: mapElitesArchive.getAllArchive().at(indices).second->getOutgoingEdges()){
 
             // If the action value is not assessed by the action node, add the edge
             if(assessedActions.find(dynamic_cast<const TPG::TPGActionEdge*>(edge)->getActionClass()) == assessedActions.end()){
@@ -89,8 +89,8 @@ void Mutator::MapElitesMutator::addRandomActionEdge(
 void Mutator::MapElitesMutator::mutateTPGAction(
     TPG::TPGGraph& graph, const TPG::TPGAction& action,
     const MapElitesArchive& mapElitesArchive,
-    const std::vector<uint64_t>& indicesCloned,
-    const std::set<std::vector<uint64_t>>& validIndices,
+    const uint64_t& indicesCloned,
+    const std::set<uint64_t>& validIndices,
     std::list<std::shared_ptr<Program::Program>>& newPrograms,
     const Mutator::MutationParameters& params, Mutator::RNG& rng,
     bool useOnlyCloseAddEdges)
@@ -172,68 +172,26 @@ void Mutator::MapElitesMutator::mutateTPGAction(
 
 }
 
-std::pair<std::set<std::vector<size_t>>, std::vector<std::vector<size_t>>> 
+std::set<size_t>
     Mutator::MapElitesMutator::getValidAndWeightedIndices(
-        const MapElitesArchive& mapElitesArchive, bool usePonderationSelection)
+        const MapElitesArchive& mapElitesArchive)
 {
-    std::vector<std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex *>> copiedArchive;
-    std::map<const TPG::TPGVertex *, double> weightPerIndices;
 
-    std::set<std::vector<size_t>> validIndices;
-    std::pair<uint64_t, uint64_t> dim = mapElitesArchive.getDimensions();
-
-    std::vector<std::vector<size_t>> weightedIndices;
-    std::vector<size_t> indices(dim.second, 0);
-
-
-    if(usePonderationSelection){
-        for (const auto& entry : mapElitesArchive.getAllArchive()) {
-            if (entry.second != nullptr) {
-                copiedArchive.push_back(entry);
-            }
-        }
-
-        std::sort(
-            copiedArchive.begin(),
-            copiedArchive.end(),
-            [](const auto& a, const auto& b) {
-                return a.first->getResult() < b.first->getResult();
-            }
-        );
-
-        size_t idx = 1;
-        for(const auto& entry: copiedArchive){
-            weightPerIndices.insert(std::make_pair(entry.second, idx++));
-        }
-    }
+    std::set<size_t> validIndices;
 
 
     for (size_t flatIndex = 0; flatIndex < mapElitesArchive.size(); ++flatIndex) {
-        size_t idx = flatIndex;
-
-        // Calcul des indices multidimensionnels à partir de l’index linéaire
-        for (int d = dim.second - 1; d >= 0; --d) {
-            indices[d] = idx % dim.first;   // modulo par taille de chaque dimension
-            idx /= dim.first;
-        }
+        //size_t idx = flatIndex;
 
 
-        // Récupération de l’élément dans l’archive
-        const auto& elem = mapElitesArchive.getArchiveAt(indices);
+        // Get element
+        const auto& elem = mapElitesArchive.getAllArchive().at(flatIndex);
         if (elem.second != nullptr) {
-            validIndices.insert(indices);
-            // Add the element n time if ponderation selection is used
-            if(usePonderationSelection){
-                for(size_t idx = 0; idx < weightPerIndices.at(elem.second); idx++){
-                    weightedIndices.push_back(indices);
-                }
-            } else {
-                weightedIndices.push_back(indices);
-            }
+            validIndices.insert(flatIndex);
         }
     }
 
-    return std::make_pair(validIndices, weightedIndices);
+    return validIndices;
 }
 
 void Mutator::MapElitesMutator::populateTPG(TPG::TPGGraph& graph,
@@ -242,7 +200,6 @@ void Mutator::MapElitesMutator::populateTPG(TPG::TPGGraph& graph,
                                       const Mutator::MutationParameters& params,
                                       Mutator::RNG& rng, uint64_t nbGenerations,
                                       uint64_t maxNbThreads,
-                                      bool usePonderationSelection,
                                       bool useOnlyCloseAddEdges)
 {
 
@@ -254,33 +211,54 @@ void Mutator::MapElitesMutator::populateTPG(TPG::TPGGraph& graph,
     std::list<std::shared_ptr<Program::Program>> newPrograms;
 
     uint64_t nbRootsToCreate = params.tpg.nbRoots;
-
-    auto pair = getValidAndWeightedIndices(mapElitesArchive, usePonderationSelection);
-    std::set<std::vector<size_t>> validIndices = pair.first;
-    std::vector<std::vector<size_t>> weightedIndices = pair.second ;
-
-
-
+    std::set<size_t> validIndices = getValidAndWeightedIndices(mapElitesArchive);
 
     uint64_t nbRootsCreated = 0;
     while (nbRootsCreated < nbRootsToCreate) {
 
         // Select a random existing root in the archive
-        std::vector<uint64_t> indicesCloned = weightedIndices.at(rng.getUnsignedInt64(0, weightedIndices.size() - 1));
+        size_t index1 = rng.getUnsignedInt64(0, validIndices.size() - 1);
+        size_t index2 = rng.getUnsignedInt64(0, validIndices.size() - 2);
+
+        if(index1 == index2){
+            index2++;
+        }
+
+        size_t indexCloned1 = *std::next(validIndices.begin(), index1);
+        size_t indexCloned2 = *std::next(validIndices.begin(), index2);
 
         // Clone the agent
-        const TPG::TPGAction* child = (const TPG::TPGAction*)(&graph.cloneVertex(
-            *mapElitesArchive.getArchiveAt(indicesCloned).second
+        const TPG::TPGAction* child1 = (const TPG::TPGAction*)(&graph.cloneVertex(
+            *mapElitesArchive.getAllArchive().at(indexCloned1).second
         ));
+        const TPG::TPGAction* child2 = (const TPG::TPGAction*)(&graph.cloneVertex(
+            *mapElitesArchive.getAllArchive().at(indexCloned2).second
+        ));
+
+        // Get parents and create childs
+        std::vector<const TPG::TPGAction*> childs{child1, child2};
         
-        mutateTPGAction(graph, *child, mapElitesArchive, indicesCloned, validIndices, newPrograms,
-            params, rng, useOnlyCloseAddEdges);
+        // Do the crossover over the childs
+        Mutator::TPGMutator::crossTPGAction(graph, childs, params, rng);
+
+        // Then do the mutation over the childs
+        if(child1->getOutgoingEdges().size() != 0){
+            mutateTPGAction(graph, *child1, mapElitesArchive, indexCloned1, validIndices, newPrograms,
+                params, rng, useOnlyCloseAddEdges);
+                nbRootsCreated++;
+        } else {
+            graph.removeVertex(*child1);
+        }
+        if(child2->getOutgoingEdges().size() != 0){
+            mutateTPGAction(graph, *child2, mapElitesArchive, indexCloned2, validIndices, newPrograms,
+                params, rng, useOnlyCloseAddEdges);
+                nbRootsCreated++;
+        } else {
+            graph.removeVertex(*child2);
+        }
 
 
 
-        // Check the new number of roots
-        // Needed since preExisting root may be subsumed by new ones.
-        nbRootsCreated++;
     }
 
 

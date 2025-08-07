@@ -29,7 +29,7 @@ void MujocoWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterat
 
 	// Reset descriptors
 	if(descriptorType_ != DescriptorType::Unused){
-		std::fill(descriptors.begin(), descriptors.end(), 0.0);
+		descriptors.clear();
 	}
 }
 
@@ -132,19 +132,21 @@ std::string MujocoWrapper::ExpandEnvVars(const std::string &str) {
 
 void  MujocoWrapper::initialize_descriptors()
 {
-	descriptors.resize(this->getNbActions(), 0.0);
+	
 }
 
 const size_t MujocoWrapper::getNbDescriptors()
 {
-	return descriptors.size();
+	return nbActions;
 }
 
 void  MujocoWrapper::computeDescriptors(std::vector<double>& actionsID)
 {
+	std::vector<double> descriptorValues;
 	for(size_t i = 0; i < actionsID.size(); ++i) {
-		descriptors[i] += std::abs(actionsID[i]);
+		descriptorValues.push_back(actionsID[i]);
 	}
+	descriptors.push_back(descriptorValues);
 }
 
 void MujocoWrapper::registerStateAndAction(const std::vector<double>& actionsID)
