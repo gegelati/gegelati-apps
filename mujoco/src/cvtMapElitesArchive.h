@@ -10,17 +10,19 @@ class CvtMapElitesArchive : public MapElitesArchive {
         std::vector<std::vector<double>> centroids;
 
         size_t nbCentroids;             
-        size_t nbDotsInit = 10000;              
-        size_t nbIterationInit = 200; 
-        
-        
+        size_t nbDotsInit = 1000;              
+        size_t nbIterationInit = 300; 
+
+        double minRange, maxRange;
+
         const double a1 = 0.5, a2 = 0.5;
         const double b1 = 0.5, b2 = 0.5;
 
     public:
 
-        CvtMapElitesArchive(std::vector<double>& archiveLimits, size_t dim, uint64_t size, Mutator::RNG& rng)
-            : MapElitesArchive(archiveLimits, dim), nbCentroids{size}
+        CvtMapElitesArchive(std::vector<double>& archiveLimits, size_t dim, uint64_t size, Mutator::RNG& rng,
+            double min, double max)
+            : MapElitesArchive(archiveLimits, dim), nbCentroids{size}, minRange{min}, maxRange{max} 
         {
             centroids.resize(nbCentroids);
             archive.resize(size);

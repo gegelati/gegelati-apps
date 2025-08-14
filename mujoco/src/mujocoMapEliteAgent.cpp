@@ -19,8 +19,16 @@ void Learn::MujocoMapEliteLearningAgent::init(uint64_t seed){
     if(!useCVT){
         mapEliteArchive = new MapElitesArchive(archiveLimits, dynamic_cast<MujocoWrapper*>(&learningEnvironment)->getNbDescriptors() * nbDescriptorsAnalysis);
     } else {
+
+        double minRange = -1.0;
+        double maxRange = 1.0;
+        if(useAbsMeanDescriptor){
+            minRange = 0.0;
+        }
+
         mapEliteArchive = new CvtMapElitesArchive(
-            archiveLimits, dynamic_cast<MujocoWrapper*>(&learningEnvironment)->getNbDescriptors() * nbDescriptorsAnalysis, sizeCVT, this->rng);
+            archiveLimits, dynamic_cast<MujocoWrapper*>(&learningEnvironment)->getNbDescriptors() * nbDescriptorsAnalysis,
+            sizeCVT, this->rng, minRange, maxRange);
     }
     //
 }
@@ -154,21 +162,23 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
                 size_t descriptorIndex = 0;
                 if(useAbsMeanDescriptor){
                     
+                    double value = 0.0;
                     for(size_t idx2 = 0; idx2 < currentDescriptor.size(); idx2++){
-                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] 
-                            += std::abs(currentDescriptor[idx2][idx1]);
+                        value += std::abs(currentDescriptor[idx2][idx1]);
                     }
-                    
-                    descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] /= currentDescriptor.size();
+                    descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] 
+                        += value / currentDescriptor.size();
                     descriptorIndex += 1;
                 }
 
                 if(useMeanDescriptor){
+
+                    double value = 0.0;
                     for(size_t idx2 = 0; idx2 < currentDescriptor.size(); idx2++){
-                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] 
-                            += currentDescriptor[idx2][idx1];
+                        value += currentDescriptor[idx2][idx1];
                     }
-                    descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] /= currentDescriptor.size();
+                    descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] 
+                        += value / currentDescriptor.size();
                     descriptorIndex += 1;
                 }
 
@@ -180,21 +190,21 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
                     std::sort(currentDescriptorValues.begin(), currentDescriptorValues.end());
 
                     if(useMedianDescriptor){
-                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] = currentDescriptorValues[currentDescriptorValues.size() / 2];
+                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] += currentDescriptorValues[currentDescriptorValues.size() / 2];
                         descriptorIndex += 1;
                     }
                     if(useQuantileDescriptor){
                         // 25% quantile
-                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] = currentDescriptorValues[currentDescriptorValues.size() / 4];
+                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] += currentDescriptorValues[currentDescriptorValues.size() / 4];
                         descriptorIndex += 1;
                         // 75% quantile
-                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] = currentDescriptorValues[3 * currentDescriptorValues.size() / 4];
+                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] += currentDescriptorValues[3 * currentDescriptorValues.size() / 4];
                         descriptorIndex += 1;
                     }
                     if(useMinMaxDescriptor){
-                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] = currentDescriptorValues.front();
+                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] += currentDescriptorValues.front();
                         descriptorIndex += 1;
-                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] = currentDescriptorValues.back();
+                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] += currentDescriptorValues.back();
                         descriptorIndex += 1;
                     }
                 }

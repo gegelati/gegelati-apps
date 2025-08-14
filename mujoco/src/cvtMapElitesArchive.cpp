@@ -46,7 +46,7 @@ std::vector<double> CvtMapElitesArchive::average(const std::vector<std::vector<d
 std::vector<double> CvtMapElitesArchive::random_point(Mutator::RNG& rng) {
     std::vector<double> point(dim2);
     for (size_t i = 0; i < dim2; ++i)
-        point[i] = rng.getDouble(0.0, archiveLimits[archiveLimits.size() - 1]);
+        point[i] = rng.getDouble(minRange, maxRange);
     return point;
 }
 
@@ -72,6 +72,9 @@ void CvtMapElitesArchive::initialize_cvt(Mutator::RNG& rng)
     std::vector<size_t> j(nbCentroids, 1); // Compteur d'updates par centroïde
 
     for (size_t iter = 0; iter < nbIterationInit; ++iter) {
+
+        // print progress with a line overrite at each iteration
+        std::cout << "\rIteration " << iter + 1 << "/" << nbIterationInit << " (centroids initialized: " << j.size() << ")"<< std::flush;
         std::vector<std::vector<double>> samples(nbDotsInit);
         std::vector<std::vector<std::vector<double>>> assignments(nbCentroids);
 
@@ -103,6 +106,7 @@ void CvtMapElitesArchive::initialize_cvt(Mutator::RNG& rng)
             }
         }
     }
+    std::cout<<std::endl;  
 }
 
 void CvtMapElitesArchive::initCSVarchive(std::string archivePath) const {

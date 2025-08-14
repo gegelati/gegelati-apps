@@ -14,9 +14,9 @@ USECASE=${2:-ant}
 # Paramètres pour la soumission SLURM
 MEMORY="4G"
 NTASKS=1
-CPUS_PER_TASK=32
-TIME="1440"
-OUTPUT_DIR="/home/vacherq/scratch/2025/mujoco/logs/"
+CPUS_PER_TASK=16
+TIME="10080"
+OUTPUT_DIR="/data/lab_ietr/qvacher/2025MCMaster/qualityDivesity/mujoco/logs/"
 JOB_NAME_BASE="TPG_${USECASE,,}"
 
 
@@ -56,7 +56,7 @@ for params in ${list_params[@]}; do
 #SBATCH --error=${OUTPUT_DIR}/err/cerr_%j.txt
 
 # Exécution du programme avec les paramètres
-./bin/Release/mujoco -s ${i} -p ${params} -l ${OUTPUT_PATH} -u ${USECASE} -a 0.33,0.67,1
+./bin/Release/mujoco -s ${i} -p ${params} -l ${OUTPUT_PATH} -u ${USECASE} -a 3 -d actionValues
 
 EOF
 

@@ -52,7 +52,7 @@ namespace Learn {
                     // absMean can only be used alone
                     if(useAbsMeanDescriptor && (useMeanDescriptor || useMedianDescriptor ||
                         useQuantileDescriptor || useMinMaxDescriptor)){
-                        throw std::runtime_error("AbsMean descriptor can only be used alone.");
+                        std::cout<<" Warning: useAbsMeanDescriptor is set to true with other ones, since it range between 0, and 1 it will be less effective"<<std::endl;
                     }
                 }
 
