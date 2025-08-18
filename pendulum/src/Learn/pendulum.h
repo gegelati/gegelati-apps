@@ -40,7 +40,7 @@ private:
 	Mutator::RNG rng;
 
 	/// Reward history for score computation
-	double rewardHistory[REWARD_HISTORY_SIZE];
+	double rewardHistory[REWARD_HISTORY_SIZE] = { 0.0 };
 
 	/// Total reward accumulated since the last reset
 	double totalReward = 0.0;
@@ -102,7 +102,7 @@ public:
 	double getActionFromID(const uint64_t& actionID);
 
 	/// Inherited via LearningEnvironment
-	virtual void doAction(uint64_t actionID) override;
+	virtual void doAction(double actionID) override;
 
 	/// Inherited via LearningEnvironment
 	virtual bool isCopyable() const override;

@@ -110,7 +110,7 @@ void Render::controllerLoop(std::atomic<bool>& exit, std::atomic<bool>& toggleDi
 	// Prepare objects for replays
 	float angleDisplay = (float)M_PI;
 	float torqueDisplay = 0.0;
-	Environment env(set, pendulumLE.getDataSources(), params.nbRegisters, params.nbProgramConstant);
+	Environment env(set, params, pendulumLE.getDataSources());
 	TPG::TPGExecutionEngine tee(env);
 	uint64_t frame = 0;
 	std::deque<std::tuple<uint64_t, double, double>> replay;
@@ -124,9 +124,9 @@ void Render::controllerLoop(std::atomic<bool>& exit, std::atomic<bool>& toggleDi
 			pendulumLE.reset(0, Learn::LearningMode::VALIDATION);
 			for (auto action = 0; action < params.maxNbActionsPerEval; action++) {
 				auto vertexList = tee.executeFromRoot(**bestRoot);
-				const auto actionID = ((const TPG::TPGAction*)vertexList.back())->getActionID();
+				const auto actionID = ((const TPG::TPGAction*)vertexList.first.back())->getActionID();
 				replay.push_back(std::make_tuple(action, pendulumLE.getAngle(), pendulumLE.getActionFromID(actionID)));
-				pendulumLE.doAction(actionID);
+				pendulumLE.doAction((double)actionID);
 
 			}
 
@@ -211,10 +211,11 @@ int Render::renderEnv(float* state, float* torque, uint64_t frame, uint64_t gene
 	if (fabs(*torque) > 0.0) {
 		float scale = std::sqrt(std::fabs(*torque));
 		// Position of the pendulum in the window
-		const int arrowWidth = 178 * scale;
-		const int arrowHeight = 69 * scale;
+		const int arrowWidth = (int)(178 * scale);
+		const int arrowHeight = (int)(69 * scale);
 
-		SDL_Rect destArrow = { (DISPLAY_W - arrowWidth) / 2, DISPLAY_H / 2 + 14 + scale * 50.0, arrowWidth , arrowHeight };
+		SDL_Rect destArrow = { (DISPLAY_W - arrowWidth) / 2,
+			(int)(DISPLAY_H / 2 + 14 + scale * 50.0), arrowWidth , arrowHeight };
 		SDL_Point centerArrow = { arrowWidth / 2, arrowHeight / 2 };
 
 		// Display arrow
@@ -249,6 +250,8 @@ int Render::renderEnv(float* state, float* torque, uint64_t frame, uint64_t gene
 		case SDLK_q:
 			return -1;
 		}
+		break; // Prevent fallthrough to SDL_QUIT
+
 	case SDL_QUIT:
 		return -1;
 	default:

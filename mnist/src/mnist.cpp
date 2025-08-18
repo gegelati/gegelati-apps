@@ -47,7 +47,7 @@ MNIST::MNIST() : ClassificationLearningEnvironment(10), currentImage(28, 28)
 	}
 }
 
-void MNIST::doAction(uint64_t actionID)
+void MNIST::doAction(double actionID)
 {
 	// Call to devault method to increment classificationTable
 	ClassificationLearningEnvironment::doAction(actionID);
@@ -120,14 +120,14 @@ void MNIST::printClassifStatsTable(const Environment& env, const TPG::TPGVertex*
 
 		// Execute
 		auto path = tee.executeFromRoot(*bestRoot);
-		const TPG::TPGAction* action = (const TPG::TPGAction*)path.at(path.size() - 1);
+		const TPG::TPGAction* action = (const TPG::TPGAction*)path.first.back();
 		uint8_t actionID = (uint8_t)action->getActionID();
 
 		// Increment table
 		classifTable[currentLabel][actionID]++;
 
 		// Do action (to trigger image update)
-		this->doAction(action->getActionID());
+		this->doAction((double)action->getActionID());
 	}
 
 	// Print the table

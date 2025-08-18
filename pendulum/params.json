@@ -1,4 +1,7 @@
 {
+	// string that indicate the activation function used for continuous actions 
+	// "activationFunction" : 'none', // Default value
+	"activationFunction" : "none",
 	// Number of recordings held in the Archive.
 	// "archiveSize" : 50, // Default value
 	"archiveSize" : 2000,
@@ -22,15 +25,21 @@
 	{
 		"prog" : 
 		{
+			// Initial maximum number of Line within the Program of the TPGGraph.
+			// "initMaxProgramSize" : 10, // Default value
+			"initMaxProgramSize" : 10,
+			// Initial minimum number of Line within the Program of the TPGGraph.
+			// "initMinProgramSize" : 1, // Default value
+			"initMinProgramSize" : 1,
 			// Maximum constant value possible.
-			// "maxConstValue" : 100, // Default value
-			"maxConstValue" : 10,
+			// "maxConstValue" : 1.0, // Default value
+			"maxConstValue" : 10.0,
 			// Maximum number of Line within the Program of the TPG.
 			// "maxProgramSize" : 96, // Default value
 			"maxProgramSize" : 20,
 			// Minimum constant value possible.
-			// "minConstValue" : -10, // Default value
-			"minConstValue" : -10,
+			// "minConstValue" : -1.0, // Default value
+			"minConstValue" : -10.0,
 			// Probability of inserting a line in the Program.
 			// "pAdd" : 0.5, // Default value
 			"pAdd" : 0.5,
@@ -43,6 +52,9 @@
 			// Probability of altering a line of the Program.
 			// "pMutate" : 1.0, // Default value
 			"pMutate" : 1.0,
+			// Probability of creating a new program.
+			// "pNewProgram" : 0.0, // Default value
+			"pNewProgram" : 0.0,
 			// Probability of swapping two lines of the Program.
 			// "pSwap" : 1.0, // Default value
 			"pSwap" : 1.0
@@ -59,13 +71,22 @@
 			// Maximum number of outgoing edge during TPGGraph mutations.
 			// "maxOutgoingEdges" : 5, // Default value
 			"maxOutgoingEdges" : 5,
-			// Number of TPGAction vertex of the initialized TPGGraph.
-			// This parameter is generally automatically set by the LearningEnvironment.
-			// /* "nbActions" : 0,*/ // Commented by default
-			/* "nbActions" : 0,*/
+			// Number of edge per action vertex at initialisation
+			// "nbActionEdgeInit" : 1, // Default value
+			"nbActionEdgeInit" : 1,
+						
 			// Number of root TPGTeams to maintain when populating the TPGGraph
 			// "nbRoots" : 100, // Default value
-			"nbRoots" : 2000,
+			"nbRoots" : 500,
+			// Probability of adding an outgoing Action Edge to a Action.
+			// "pActionEdgeAddition" : 0.7, // Default value
+			"pActionEdgeAddition" : 0.7,
+			// Probability of deleting an outgoing ActionEdge of a Action.
+			// "pActionEdgeDeletion" : 0.7, // Default value
+			"pActionEdgeDeletion" : 0.7,
+			//  Probablity of changing the action edge by any other action edge in the graph
+			// "pChangeActionClass" : 0.1, // Default value
+			"pChangeActionClass" : 0.1,
 			// Probability of adding an outgoing Edge to a Team.
 			// "pEdgeAddition" : 0.7, // Default value
 			"pEdgeAddition" : 0.7,
@@ -78,9 +99,33 @@
 			// Probability of the new destination of an Edge to be an Action.
 			// "pEdgeDestinationIsAction" : 0.5, // Default value
 			"pEdgeDestinationIsAction" : 0.5,
+			//  Probablity of mutation the program on the action edge
+			// "pMutateActionProgram" : 0.1, // Default value
+			"pMutateActionProgram" : 0.1,
 			// Probability of mutating the Program of an outgoing Edge.
 			// "pProgramMutation" : 0.2, // Default value
-			"pProgramMutation" : 0.2
+			"pProgramMutation" : 0.2,
+			//  Probablity of swapping two action edge within the same action vertex
+			// "pSwapActionProgram" : 0.1, // Default value
+			"pSwapActionProgram" : 0.1,
+			// When an edge is mutate, the choice between action and context program is based on this
+			// "probaContextOverActionProgram" : 0.5, // Default value
+			"probaContextOverActionProgram" : 0.5,
+			// Ratio of teams roots over the number of actions roots.
+			// If set to 1, there will be no action roots, if set to 0, there will be no team root.
+			// "ratioTeamsOverActions" : 1.0, // Default value
+			"ratioTeamsOverActions" : 1.0,
+			// During mutation of a team, setting this parameter to true allow a team
+			//to change destination toward any other actions. If set to false, it can only
+			//change destination toward a root action.
+			// "teamAccessAllActions" : true, // Default value
+			"teamAccessAllActions" : true,
+			// Create action program, instead of using context program to select continuous action(s).
+			// "useActionProgram" : false, // Default value
+			"useActionProgram" : false,
+			// Create multiple action program, instead of one outputting multiple action in a single program.
+			// "useMultiActionProgram" : false, // Default value
+			"useMultiActionProgram" : false
 		}
 	},
 	// Number of generations of the training.
@@ -95,6 +140,9 @@
 	// Number of evaluation of each root per generation.
 	// "nbIterationsPerPolicyEvaluation" : 5, // Default value
 	"nbIterationsPerPolicyEvaluation" : 5,
+	// Number of evaluation of each root per generation.
+	// "nbIterationsPerPolicyValidation" : 5, // Default value
+	"nbIterationsPerPolicyValidation" : 5,
 	// Number of Constant available in each Program.
 	// "nbProgramConstant" : 0, // Default value
 	"nbProgramConstant" : 5,
@@ -106,8 +154,17 @@
 	// When undefined in the json file, this parameter is automatically set to the
 	// number of cores of the CPU.
 	// /* "nbThreads" : 0,*/ // Commented by default
-	/* "nbThreads" : 0,*/
+	/*"nbThreads" : 12,*/
 	// Percentage of deleted (and regenerated) root TPGVertex at each generation.
 	// "ratioDeletedRoots" : 0.5, // Default value
-	"ratioDeletedRoots" : 0.998
+	"ratioDeletedRoots" : 0.998,
+	// Size of tournament if tournament selection is used.
+	// "sizeTournament" : 5, // Default value
+	"sizeTournament" : 5,
+	// Value to indicate how many generation between each validation step
+	// "stepValidation" : 1, // Default value
+	"stepValidation" : 1,
+	// If tournament of simple selection is used.
+	// "useTournamentSelection" : false, // Default value
+	"useTournamentSelection" : false
 }

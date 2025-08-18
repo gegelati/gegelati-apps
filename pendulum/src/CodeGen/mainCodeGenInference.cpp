@@ -28,7 +28,7 @@ int main() {
 	/// Init the pendulum
 	le.reset(seed);
 	float angleDisplay = (float)(in1[0]);
-	float torqueDisplay = (float)(in1[1]);
+	float torqueDisplay = 0;
 
 #ifndef NO_CONSOLE_CONTROL
 	Render::renderInit();
@@ -48,13 +48,15 @@ int main() {
 	while (nbActions < 1000 && !le.isTerminal()) {
 
 		/// inference with generated C files
-		actions[nbActions] = inferenceTPG();
+		double a[1];
+		inferenceTPG(a);
+		actions[nbActions] = (uint64_t)a[0];
 		// Do the action 
-		le.doAction(actions[nbActions]);
+		le.doAction((double)actions[nbActions]);
 
 		// Display the result
 		angleDisplay = (float)(in1[0]);
-		torqueDisplay = (float)(in1[1]);
+		torqueDisplay = (float)le.getActionFromID(actions[nbActions]);
 
 #ifndef NO_CONSOLE_CONTROL
 		Render::renderEnv(&angleDisplay, &torqueDisplay, nbActions, 0);
@@ -74,11 +76,11 @@ int main() {
 	auto startReplay = std::chrono::system_clock::now();
 	while (iter < nbActions) {
 		// Do the action 
-		le.doAction(actions[iter]);
+		le.doAction((double)actions[iter]);
 
 		// Display the result
 		angleDisplay = (float)(in1[0]);
-		torqueDisplay = (float)(in1[1]);
+		torqueDisplay = (float)le.getActionFromID(actions[iter]);
 
 #ifndef NO_CONSOLE_CONTROL
 		Render::renderEnv(&angleDisplay, &torqueDisplay, nbActions, 0);

@@ -27,7 +27,7 @@ int main() {
 
 	// Load graph from dot file
 	std::string path(ROOT_DIR "/src/CodeGen/");
-	Environment dotEnv(set, le.getDataSources(), params.nbRegisters, params.nbProgramConstant);
+	Environment dotEnv(set, params, le.getDataSources());
 	TPG::TPGGraph dotGraph(dotEnv);
 	std::string filename(path + "Pendulum_out_best.dot");
 	File::TPGGraphDotImporter dot(filename.c_str(), dotEnv, dotGraph);
@@ -42,7 +42,7 @@ int main() {
 	/// Initialize the pendulum
 	le.reset(seed);
 	float angleDisplay = (float)(in1[0]);
-	float torqueDisplay = (float)(in1[1]);
+	float torqueDisplay = 0.0;
 
 	// Prepare for inference
 	TPG::TPGExecutionEngine tee(dotEnv);
@@ -66,14 +66,14 @@ int main() {
 	while (nbActions < 1000 && !le.isTerminal()) {
 		/// inference with TPG
 		auto trace = tee.executeFromRoot(*root);
-		actions[nbActions] = ((const TPG::TPGAction*)trace.back())->getActionID();
+		actions[nbActions] = ((const TPG::TPGAction*)trace.first.back())->getActionID();
 
 		// Do the action 
-		le.doAction(actions[nbActions]);
+		le.doAction((double)actions[nbActions]);
 
 		// Display the result
 		angleDisplay = (float)(in1[0]);
-		torqueDisplay = (float)(in1[1]);
+		torqueDisplay = le.getActionFromID(actions[nbActions]);
 
 #ifndef NO_CONSOLE_CONTROL
 		Render::renderEnv(&angleDisplay, &torqueDisplay, nbActions, 0);
@@ -94,11 +94,11 @@ int main() {
 	auto startReplay = std::chrono::system_clock::now();
 	while (iter < nbActions) {
 		// Do the action 
-		le.doAction(actions[iter]);
+		le.doAction((double)actions[iter]);
 
 		// Display the result
 		angleDisplay = (float)(in1[0]);
-		torqueDisplay = (float)(in1[1]);
+		torqueDisplay = le.getActionFromID(actions[nbActions]);
 
 #ifndef NO_CONSOLE_CONTROL
 		Render::renderEnv(&angleDisplay, &torqueDisplay, nbActions, 0);
