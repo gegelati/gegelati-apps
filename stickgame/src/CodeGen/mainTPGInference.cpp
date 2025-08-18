@@ -26,7 +26,7 @@ int main() {
 
 	// Load graph from dot file
 	std::string path(ROOT_DIR "/src/CodeGen/");
-	Environment dotEnv(set, le.getDataSources(), params.nbRegisters, params.nbProgramConstant);
+	Environment dotEnv(set, params, le.getDataSources());
 	TPG::TPGGraph dotGraph(dotEnv);
 	std::string filename(path + "StickGame_out_best.dot");
 	File::TPGGraphDotImporter dot(filename.c_str(), dotEnv, dotGraph);
@@ -49,7 +49,7 @@ int main() {
 
 	// let's play, the only way to leave this loop is to play nbGames games
 	int nbActions = 0;
-	size_t actions[1000];
+	uint64_t actions[1000];
 	// measure time
 	auto start = std::chrono::system_clock::now();
 
@@ -58,10 +58,10 @@ int main() {
 
 		///inference with generated C files
 		auto trace = tee.executeFromRoot(*root);
-		actions[nbActions] = ((const TPG::TPGAction*)trace.back())->getActionID();
+		actions[nbActions] = ((const TPG::TPGAction*)trace.first.back())->getActionID();
 
 		std::cout << "player : " << playerNb << " removes : " << actions[nbActions] + 1 << " sticks " << std::endl;
-		le.doAction(actions[nbActions]);
+		le.doAction((double)actions[nbActions]);
 		playerNb = !playerNb;
 
 		nbActions++;
@@ -85,7 +85,7 @@ int main() {
 	while (playedGames < nbGames) {
 
 		std::cout << "player : " << playerNb << " removes : " << actions[nbActions] + 1 << " sticks " << std::endl;
-		le.doAction(actions[nbActions]);
+		le.doAction((double)actions[nbActions]);
 		playerNb = !playerNb;
 
 		nbActions++;

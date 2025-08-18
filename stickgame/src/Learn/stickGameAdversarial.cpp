@@ -56,7 +56,7 @@ void StickGameAdversarial::randomPlay() {
     }
 }
 
-void StickGameAdversarial::doAction(uint64_t actionID)
+void StickGameAdversarial::doAction(double actionID)
 {
     LearningEnvironment::doAction(actionID);
 
