@@ -31,7 +31,7 @@ int main() {
 	Learn::LearningParameters params;
 	File::ParametersParser::loadParametersFromJson(
 		ROOT_DIR"/params.json", params);
-	Environment dotEnv(set, data, params.nbRegisters, params.nbProgramConstant);
+	Environment dotEnv(set, params, data);
 	TPG::TPGGraph dotGraph(dotEnv);
 
 	std::string filename(path + "Pendulum_out_best.dot");

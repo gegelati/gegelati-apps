@@ -26,7 +26,7 @@ int main() {
 	/// Instantiate an Environment and import (required only for gegelati Inference)
 	Learn::LearningParameters params;
 	File::ParametersParser::loadParametersFromJson(ROOT_DIR"/params.json", params);
-	Environment env(set, le.getDataSources(), params.nbRegisters);
+	Environment env(set, params, le.getDataSources());
 
 	/// fetch data in the environment
 	auto& st = le.getDataSources().at(0).get();
@@ -41,7 +41,7 @@ int main() {
 
 	// let's play, the only way to leave this loop is to play nbGames games
 	int nbActions = 0;
-	size_t actions[1000];
+	double actions[1000];
 	// measure time
 	auto start = std::chrono::system_clock::now();
 
@@ -49,7 +49,7 @@ int main() {
 	while (playedGames < nbGames) {
 
 		///inference with generated C files
-		actions[nbActions] = inferenceTPG();
+		inferenceTPG(&actions[nbActions]);
 
 		std::cout << "player : " << playerNb << " removes : " << actions[nbActions] + 1 << " sticks " << std::endl;
 		le.doAction(actions[nbActions]);

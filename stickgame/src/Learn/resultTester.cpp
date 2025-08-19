@@ -46,100 +46,100 @@
 #include "stickGameAdversarial.h"
 
 void agentTest(char* tpgPath) {
-    // Create the instruction set for programs
-    Instructions::Set set;
-    auto minus = [](int a, int b)->double {return (double)a - (double)b; };
-    auto cast = [](int a)->double {return (double)a; };
-    auto add = [](double a, double b)->double {return a + b; };
-    auto max = [](double a, double b)->double {return std::max(a, b); };
-    auto nulltest = [](double a)->double {return (a == 0.0) ? 10.0 : 0.0; };
-    auto modulo = [](double a, double b)->double {
-        if (b != 0.0) { return fmod(a, b); }
-        else { return  DBL_MIN; }	};
+	// Create the instruction set for programs
+	Instructions::Set set;
+	auto minus = [](int a, int b)->double {return (double)a - (double)b; };
+	auto cast = [](int a)->double {return (double)a; };
+	auto add = [](double a, double b)->double {return a + b; };
+	auto max = [](double a, double b)->double {return std::max(a, b); };
+	auto nulltest = [](double a)->double {return (a == 0.0) ? 10.0 : 0.0; };
+	auto modulo = [](double a, double b)->double {
+		if (b != 0.0) { return fmod(a, b); }
+		else { return  DBL_MIN; }	};
 
-    set.add(*(new Instructions::LambdaInstruction<double, double>(modulo)));
-    set.add(*(new Instructions::LambdaInstruction<int, int>(minus)));
-    set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
-    set.add(*(new Instructions::LambdaInstruction<int>(cast)));
-    set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
-    set.add(*(new Instructions::LambdaInstruction<double>(nulltest)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(modulo)));
+	set.add(*(new Instructions::LambdaInstruction<int, int>(minus)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(add)));
+	set.add(*(new Instructions::LambdaInstruction<int>(cast)));
+	set.add(*(new Instructions::LambdaInstruction<double, double>(max)));
+	set.add(*(new Instructions::LambdaInstruction<double>(nulltest)));
 
-    // Set the parameters for the learning process.
-    // (Controls mutations probability, program lengths, and graph size
-    // among other things)
-    // Loads them from the file params.json
-    Learn::LearningParameters params;
-    File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json",params);
-
-
-    // Instantiate the LearningEnvironment
-    auto le = StickGameAdversarial(false);
-
-    // Instantiate the environment that will embed the LearningEnvironment
-    Environment env(set, le.getDataSources(), 8);
-
-    // Instantiate the TPGGraph that we will load
-    auto tpg = TPG::TPGGraph(env);
-
-    // Instantiate the tee that will handle the decisions taken by the TPG
-    TPG::TPGExecutionEngine tee(env);
-
-    // Create an importer for the best graph and imports it
-    File::TPGGraphDotImporter dotImporter(tpgPath, env, tpg);
-    dotImporter.importGraph();
-
-    // takes the first root of the graph, anyway out_best has only 1 root (the best)
-    auto root = tpg.getRootVertices().back();
-    //auto root = tpg.getRootVertices().back();
+	// Set the parameters for the learning process.
+	// (Controls mutations probability, program lengths, and graph size
+	// among other things)
+	// Loads them from the file params.json
+	Learn::LearningParameters params;
+	File::ParametersParser::loadParametersFromJson(ROOT_DIR "/params.json", params);
 
 
-    size_t x = 0;
-    std::cout<<"Game :\n"<<le.toString()<<std::endl;
-    // let's play, the only way to leave this loop is to enter -1
-    while(x!=-1){
-        // gets the action the TPG would decide in this situation
-        uint64_t action=((const TPG::TPGAction *) tee.executeFromRoot(* root).back())->getActionID();
-        std::cout<<"TPG : "<<action<<std::endl;
-        le.doAction(action);
+	// Instantiate the LearningEnvironment
+	auto le = StickGameAdversarial(false);
 
-        // prints the game board
-        std::cout<<"Game :\n"<<le.toString()<<std::endl;
+	// Instantiate the environment that will embed the LearningEnvironment
+	Environment env(set, params, le.getDataSources());
 
-        if(le.isTerminal()){
-            std::cout<<"Player won !"<<std::endl;
-            std::cout<<"Reseting game..."<<std::endl;
-            le.reset();
-            continue;
-        }
+	// Instantiate the TPGGraph that we will load
+	auto tpg = TPG::TPGGraph(env);
 
-        // gets the action of the player, and checks that he did something legal as he has less discipline than a TPG
-        std::cout<<"Player move ? "<<std::endl;
-        std::cin>>x;
-        std::cout<<x<<" chosen"<<std::endl;
-        if(x<0 || x>2){
-            continue;
-        }
-        le.doAction(x);
+	// Instantiate the tee that will handle the decisions taken by the TPG
+	TPG::TPGExecutionEngine tee(env);
+
+	// Create an importer for the best graph and imports it
+	File::TPGGraphDotImporter dotImporter(tpgPath, env, tpg);
+	dotImporter.importGraph();
+
+	// takes the first root of the graph, anyway out_best has only 1 root (the best)
+	auto root = tpg.getRootVertices().back();
+	//auto root = tpg.getRootVertices().back();
 
 
-        // prints the game board
-        std::cout<<"Game :\n"<<le.toString()<<std::endl;
+	size_t x = 0;
+	std::cout << "Game :\n" << le.toString() << std::endl;
+	// let's play, the only way to leave this loop is to enter -1
+	while (x != -1) {
+		// gets the action the TPG would decide in this situation
+		uint64_t action = (uint64_t)((const TPG::TPGAction*)tee.executeFromRoot(*root).first.back())->getActionID();
+		std::cout << "TPG : " << action << std::endl;
+		le.doAction((double)action);
 
-        if(le.isTerminal()){
-            std::cout<<"TPG won !"<<std::endl;
-            std::cout<<"Reseting game..."<<std::endl;
-            le.reset();
-            continue;
-        }
+		// prints the game board
+		std::cout << "Game :\n" << le.toString() << std::endl;
+
+		if (le.isTerminal()) {
+			std::cout << "Player won !" << std::endl;
+			std::cout << "Reseting game..." << std::endl;
+			le.reset();
+			continue;
+		}
+
+		// gets the action of the player, and checks that he did something legal as he has less discipline than a TPG
+		std::cout << "Player move ? " << std::endl;
+		std::cin >> x;
+		std::cout << x << " chosen" << std::endl;
+		if (x < 0 || x>2) {
+			continue;
+		}
+		le.doAction((double)x);
+
+
+		// prints the game board
+		std::cout << "Game :\n" << le.toString() << std::endl;
+
+		if (le.isTerminal()) {
+			std::cout << "TPG won !" << std::endl;
+			std::cout << "Reseting game..." << std::endl;
+			le.reset();
+			continue;
+		}
 
 
 
 
-    }
+	}
 
 
-    // cleanup
-    for (unsigned int i = 0; i < set.getNbInstructions(); i++) {
-        delete (&set.getInstruction(i));
-    }
+	// cleanup
+	for (unsigned int i = 0; i < set.getNbInstructions(); i++) {
+		delete (&set.getInstruction(i));
+	}
 }

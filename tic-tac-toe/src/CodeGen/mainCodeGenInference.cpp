@@ -1,13 +1,16 @@
 #include <iostream>
 #include <string>
 #include <cfloat>
+
 extern "C" {
+#include "externHeader.h"
 #include "TicTacToe.h"
+    /// instantiate global variable used to communicate between the TPG and the environment
+    double* in1;
 }
 
 #include "../Learn/TicTacToe.h"
-/// instantiate global variable used to communicate between the TPG and the environment
-double* in1;
+
 
 int main(){
     /// Import instruction set used during training(required only for gegelati Inference)
@@ -40,7 +43,7 @@ int main(){
 
     Learn::LearningParameters params;
     File::ParametersParser::loadParametersFromJson(ROOT_DIR"/params.json", params);
-    Environment env(set, le.getDataSources(), params.nbRegisters);
+    Environment env(set, params, le.getDataSources());
 
     auto tpg = TPG::TPGGraph(env);
     TPG::TPGExecutionEngine tee(env);
@@ -59,7 +62,9 @@ int main(){
     // let's play, the only way to leave this loop is finish all games
     while(nbParties!=0){
         /// to use inference with generated C files uncomment the 2 following lines
-        action = inferenceTPG();
+        double a[1];
+        inferenceTPG(a);
+		action = (uint64_t)a[0];
 
         std::cout<<"TPG : "<<action<<std::endl;
         le.play(action,playerSymbol);

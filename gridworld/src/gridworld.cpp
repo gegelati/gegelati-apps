@@ -36,9 +36,9 @@ bool GridWorld::positionAvailable(int pos_x, int pos_y){
 
 }
 
-void GridWorld::doAction(uint64_t action){
+void GridWorld::doAction(double action){
 
-    switch (action){
+    switch ((uint64_t)action){
         case 0: // left
             if (positionAvailable(agentCoord[0] - 1, agentCoord[1])) agentCoord[0]--;
             break;

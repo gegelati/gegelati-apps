@@ -60,10 +60,15 @@ double Pendulum::getActionFromID(const uint64_t& actionID)
 	return (actionID <= availableActions.size()) ? result : -result;
 }
 
-void Pendulum::doAction(uint64_t actionID)
+void Pendulum::doAction(double actionID)
 {
+	// Throw an exception if the actionID is not in the range of available actions
+	if (actionID < 0 || actionID >= this->availableActions.size() * 2 + 1) {
+		throw std::runtime_error("Pendulum::doAction: actionID out of range");
+	}
+
 	// Get the action
-	double currentAction = getActionFromID(actionID);
+	double currentAction = getActionFromID((uint64_t)actionID);
 	currentAction *= Pendulum::MAX_TORQUE;
 
 	// Get current state
@@ -72,7 +77,7 @@ void Pendulum::doAction(uint64_t actionID)
 
 	// Compute current reward
 	double angleToUpward = fmod((angle + M_PI), (2.f * M_PI)) - M_PI;
-	double reward = -((angleToUpward * angleToUpward) + 0.1f * (velocity * velocity) + 0.001f * (currentAction * currentAction));
+	double reward = -((angleToUpward * angleToUpward) + 0.2f * (velocity * velocity) + 0.01f * (currentAction * currentAction));
 
 	// Store and accumulate reward
 	this->rewardHistory[this->nbActionsExecuted % REWARD_HISTORY_SIZE] = reward;
