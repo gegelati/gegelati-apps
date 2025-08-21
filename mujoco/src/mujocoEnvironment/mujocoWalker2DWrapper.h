@@ -20,6 +20,7 @@ protected:
 	std::vector<double> healthy_z_range_;
 	std::vector<double> healthy_angle_range_;
 	double reset_noise_scale_ = 5e-3;
+
 public:
 
 	
@@ -43,12 +44,9 @@ public:
 			frame_skip_ = 4;
 			initialize_simulation();
 
-			if(descriptorType_ == DescriptorType::FeetContact){
-				throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoWalker2DWrapper.");
-			} else if(descriptorType_ == DescriptorType::ActionValues){
-				// Initialize the descriptors
-				initialize_descriptors();
-			}
+			
+			// Initialize the descriptors
+			initialize_descriptors();
 		};
 
     /**
@@ -64,12 +62,9 @@ public:
 		healthy_angle_range_ = {-1.0, 1.0};
 		frame_skip_ = 4;
 		initialize_simulation();
-		if(descriptorType_ == DescriptorType::FeetContact){
-			throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoWalker2DWrapper.");
-		} else if(descriptorType_ == DescriptorType::ActionValues){
-			// Initialize the descriptors
-			initialize_descriptors();
-		}
+		
+		// Initialize the descriptors
+		initialize_descriptors();
     }
 
     ~MujocoWalker2DWrapper() {
@@ -145,6 +140,10 @@ public:
     bool is_healthy() const;
 
 
+	
+	virtual void initialize_descriptors() override;
+
+	virtual const size_t getNbDescriptors() override;
 };
 
 #endif // !MUJOCO_WALKER2D_WRAPPER_H

@@ -128,3 +128,29 @@ void MujocoWalker2DWrapper::computeState(){
 	}
 }
 
+
+void MujocoWalker2DWrapper::initialize_descriptors() {
+
+	// Initialize values for feet contact
+	if(descriptorType_ == DescriptorType::FeetContact){
+		feet_geom_ids_.clear();
+		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "foot_geom"));
+		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "foot_left_geom"));
+
+		for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
+			footGeomToIndex[feet_geom_ids_[j]] = j;
+		}
+	} else if (descriptorType_ == DescriptorType::ActionValues){
+		MujocoWrapper::initialize_descriptors();
+	}
+}
+
+
+const size_t MujocoWalker2DWrapper::getNbDescriptors(){
+	if(descriptorType_ == DescriptorType::FeetContact){
+		return 2;
+	} else if (descriptorType_ == DescriptorType::ActionValues) {
+		return MujocoWrapper::getNbDescriptors();
+	}
+	return 0;
+}

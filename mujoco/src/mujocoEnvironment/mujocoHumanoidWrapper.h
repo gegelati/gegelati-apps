@@ -10,7 +10,6 @@ protected:
     const std::string xmlFile;
 
     bool use_healthy_reward;
-    bool use_contact_forces_;
     bool exclude_current_positions_from_observation_;
     double forward_reward_weight_ = 1.25;
     double control_cost_weight_ = 0.1;
@@ -20,34 +19,29 @@ protected:
     std::vector<double> healthy_z_range_ = {1.0, 2.0};
     std::vector<double> contact_force_range_ = {-1.0, 1.0};
     double reset_noise_scale_ = 1e-2;
+
 public:
 
     // Constructeur
     MujocoHumanoidWrapper(const char *pXmlFile, std::string descriptorType = "unused", 
-                          bool useHealthyReward = true, 
-                          bool useContactForce = false,
+                          bool useHealthyReward = true,
                           bool excludeCurrentPositionsFromObservation = true) :
         MujocoWrapper(17, excludeCurrentPositionsFromObservation ? 376 : 378, descriptorType),
         xmlFile{pXmlFile},
         use_healthy_reward{useHealthyReward},
-        use_contact_forces_{useContactForce},
         exclude_current_positions_from_observation_{excludeCurrentPositionsFromObservation}
     {
         model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
         initialize_simulation();
-        if(descriptorType_ == DescriptorType::FeetContact){
-            throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoHumanoidWrapper.");
-        } else if(descriptorType_ == DescriptorType::ActionValues){
-            // Initialize the descriptors
-            initialize_descriptors();
-        }
+        
+		// Initialize the descriptors
+		initialize_descriptors();
     }
 
     MujocoHumanoidWrapper(const MujocoHumanoidWrapper &other) :
         MujocoWrapper(other),
         xmlFile{other.xmlFile},
         use_healthy_reward{other.use_healthy_reward},
-        use_contact_forces_{other.use_contact_forces_},
         exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_},
         forward_reward_weight_{other.forward_reward_weight_},
         control_cost_weight_{other.control_cost_weight_},
@@ -58,12 +52,10 @@ public:
     {
         model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
         initialize_simulation();
-        if(descriptorType_ == DescriptorType::FeetContact){
-            throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoHumanoidWrapper.");
-        } else if(descriptorType_ == DescriptorType::ActionValues){
-            // Initialize the descriptors
-            initialize_descriptors();
-		}
+
+        
+		// Initialize the descriptors
+		initialize_descriptors();
     }
 
 
@@ -93,6 +85,11 @@ public:
     bool is_healthy() const;
     std::array<double, 2> massCenter() const;
     virtual void computeState();
+
+    
+	virtual void initialize_descriptors() override;
+
+	virtual const size_t getNbDescriptors() override;
 };
 
 #endif // MUJOCO_HUMANOID_WRAPPER_H

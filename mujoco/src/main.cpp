@@ -54,7 +54,6 @@ int main(int argc, char ** argv) {
 	char xmlFile[150];
 	char usecase[150];
 	bool useHealthyReward = 1;
-	bool useContactForce = 0;
 	bool saveAllGenerationsDots = 1;
 	bool usePonderationSelection = 0;
 	bool useOnlyCloseAddEdges = 0;
@@ -64,7 +63,7 @@ int main(int argc, char ** argv) {
 	bool useAbsMeanDescriptor = 1;
 	bool useQuantileDescriptor = 0;
 	bool useMinMaxDescriptor = 0;
-	std::string archiveValuesStr = "3";
+	std::string archiveValuesStr = "";
 	std::string descriptorType = "";
 	size_t sizeCVT = 1000;
 
@@ -91,7 +90,6 @@ int main(int argc, char ** argv) {
 			case 'l': strcpy(logsFolder, optarg); break;
 			case 'u': strcpy(usecase, optarg); break;
 			case 'h': useHealthyReward = atoi(optarg); break;
-			case 'c': useContactForce = atoi(optarg); break;
 			case 'x': strcpy(xmlFile, optarg); break;
 			case 'a': archiveValuesStr = optarg; break;
 			case 'g': saveAllGenerationsDots = atoi(optarg); break;
@@ -109,7 +107,7 @@ int main(int argc, char ** argv) {
 				std::cout << "Unrecognised option. Valid options are "
 					"'-s seed' '-p paramFile.json' '-u useCase' "
 					"'-l logsFolder' '-x xmlFile' '-h useHealthyReward' "
-					"'-c useContactForce' '-a sizeArchive' '-g saveAllGenDotFiles' "
+					"'-a sizeArchive' '-g saveAllGenDotFiles' "
 					"'-w usePonderationSelection' '-o useOnlyCloseAddEdges' '-d descriptorType' "
 					"'--dMean useMeanDescriptor' '--dMed useMedianDescriptor' "
 					"'--dAbsMean useAbsMeanDescriptor' '--dQ useQuantileDescriptor' "
@@ -225,7 +223,7 @@ int main(int argc, char ** argv) {
 	// Instantiate the LearningEnvironment
 	MujocoWrapper* mujocoLE = nullptr;
 	if(strcmp(usecase, "humanoid") == 0){
-		mujocoLE = new MujocoHumanoidWrapper(xmlFile, descriptorType, useHealthyReward, useContactForce);
+		mujocoLE = new MujocoHumanoidWrapper(xmlFile, descriptorType, useHealthyReward);
 	} else if (strcmp(usecase, "half_cheetah") == 0) {
 		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile, descriptorType);
 	} else if (strcmp(usecase, "hopper") == 0) {
@@ -237,7 +235,7 @@ int main(int argc, char ** argv) {
 	} else if (strcmp(usecase, "reacher") == 0) {
 		mujocoLE = new MujocoReacherWrapper(xmlFile, descriptorType);
 	} else if (strcmp(usecase, "ant") == 0) {
-		mujocoLE = new MujocoAntWrapper(xmlFile, descriptorType, useHealthyReward, useContactForce);
+		mujocoLE = new MujocoAntWrapper(xmlFile, descriptorType, useHealthyReward);
 	} else {
 		throw std::runtime_error("Use case not found");
 	}

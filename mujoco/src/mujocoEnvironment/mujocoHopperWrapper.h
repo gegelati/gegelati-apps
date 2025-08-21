@@ -41,12 +41,9 @@ public:
 			healthy_angle_range_ = {-0.2, 0.2};
 			frame_skip_ = 4;
 			initialize_simulation();
-			if(descriptorType_ == DescriptorType::FeetContact){
-				throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoHopperWrapper.");
-			} else if(descriptorType_ == DescriptorType::ActionValues){
-				// Initialize the descriptors
-				initialize_descriptors();
-			}
+			
+			// Initialize the descriptors
+			initialize_descriptors();
 		};
 
     /**
@@ -62,12 +59,9 @@ public:
 		healthy_angle_range_ = {-0.2, 0.2};
 		frame_skip_ = 4;
 		initialize_simulation();
-		if(descriptorType_ == DescriptorType::FeetContact){
-			throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoHopperWrapper.");
-		} else if(descriptorType_ == DescriptorType::ActionValues){
-			// Initialize the descriptors
-			initialize_descriptors();
-		}
+		
+		// Initialize the descriptors
+		initialize_descriptors();
     }
 
     ~MujocoHopperWrapper() {
@@ -143,6 +137,9 @@ public:
     bool is_healthy() const;
 
 
+	virtual void initialize_descriptors() override;
+
+	virtual const size_t getNbDescriptors() override;
 };
 
 #endif // !MUJOCOHOPPERWRAPPER_H

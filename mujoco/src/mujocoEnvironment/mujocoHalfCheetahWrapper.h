@@ -16,6 +16,7 @@ protected:
     double control_cost_weight_ = 0.5;
     double reset_noise_scale_ = 0.1;
     bool exclude_current_positions_from_observation_ = true;
+
 public:
 
 
@@ -26,12 +27,8 @@ public:
 		{
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
 			initialize_simulation();
-			if(descriptorType_ == DescriptorType::FeetContact){
-				throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoalfCheetahWrapper.");
-			} else if(descriptorType_ == DescriptorType::ActionValues){
-				// Initialize the descriptors
-				initialize_descriptors();
-			}
+			// Initialize the descriptors
+			initialize_descriptors();
 		};
 
     /**
@@ -42,12 +39,9 @@ public:
 	{   
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		initialize_simulation();
-		if(other.descriptorType_ == DescriptorType::FeetContact){
-			throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoHalfCheetahWrapper.");
-		} else if(other.descriptorType_ == DescriptorType::ActionValues){
-			// Initialize the descriptors
-			initialize_descriptors();
-		}
+		// Initialize the descriptors
+		initialize_descriptors();
+
     }
 
     ~MujocoHalfCheetahWrapper() {
@@ -116,6 +110,9 @@ public:
 	void computeState();
 
 
+	virtual void initialize_descriptors() override;
+
+	virtual const size_t getNbDescriptors() override;
 
 };
 

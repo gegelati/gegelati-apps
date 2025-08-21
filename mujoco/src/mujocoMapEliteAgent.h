@@ -34,7 +34,7 @@ namespace Learn {
                 bool usePonderationSelection = false, bool useOnlyCloseAddEdges = false,
                 bool useCVT = false, size_t sizeCVT = 100,
                 bool useMeanDescriptor = false, bool useMedianDescriptor = false,
-                bool useAbsMeanDescriptor = false, bool useQuantileDescriptor = false,
+                bool useAbsMeanDescriptor = true, bool useQuantileDescriptor = false,
                 bool useMinMaxDescriptor = false,
                 const TPG::TPGFactory& factory = TPG::TPGFactory())
                 : ParallelLearningAgent(le, iSet, p, factory), archiveLimits{archiveLimits},

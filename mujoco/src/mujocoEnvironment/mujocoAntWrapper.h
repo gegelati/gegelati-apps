@@ -20,10 +20,6 @@ protected:
     double reset_noise_scale_ = 0.1;
 	uint64_t main_body = 1;
 
-	bool useFeetContact;
-	std::vector<int> feet_geom_ids_; // À initialiser avec les indices MuJoCo des pieds
-	std::vector<bool> feet_in_contact_;
-	std::unordered_map<int, size_t> footGeomToIndex;
 public:
 
 	/**
@@ -34,8 +30,7 @@ public:
 	MujocoAntWrapper(const char *pXmlFile, std::string descriptorType = "unused", bool useHealthyReward=true, bool p_exclude_current_positions_from_observation = true) :
 		MujocoWrapper(8, (p_exclude_current_positions_from_observation) ? 27:29, descriptorType), 
 		xmlFile{pXmlFile}, use_healthy_reward{useHealthyReward},
-		exclude_current_positions_from_observation_{p_exclude_current_positions_from_observation},
-		useFeetContact{useFeetContact}
+		exclude_current_positions_from_observation_{p_exclude_current_positions_from_observation}
 		{
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
 			healthy_z_range_ = {0.2, 1.0};
@@ -51,7 +46,7 @@ public:
     */ 
     MujocoAntWrapper(const MujocoAntWrapper &other) : MujocoWrapper(other), 
 	xmlFile{other.xmlFile}, use_healthy_reward{other.use_healthy_reward},
-	exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}, useFeetContact{other.useFeetContact}
+	exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}
 	
 	{
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
@@ -133,11 +128,10 @@ public:
 
     bool is_healthy() const;
 
-	void computeFeetContact();
-	virtual void initialize_descriptors() override;
-	virtual void computeDescriptors(std::vector<double>& actionsID) override;
 
-	virtual const size_t getNbDescriptors();
+	virtual void initialize_descriptors() override;
+	
+	virtual const size_t getNbDescriptors() override;
 };
 
 #endif // !MUJOCOANTWRAPPER_H

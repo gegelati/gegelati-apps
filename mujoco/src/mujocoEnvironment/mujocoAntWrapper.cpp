@@ -129,35 +129,6 @@ void MujocoAntWrapper::computeState(){
 	}
 }
 
-void MujocoAntWrapper::computeFeetContact() {
-    
-	std::vector<double> descriptorsValues(feet_geom_ids_.size(), 0.0);
-	std::set<uint64_t> increasedLegs;
-
-    for (int i = 0; i < d_->ncon; ++i) {
-        const mjContact& contact = d_->contact[i];
-        int geom1 = contact.geom1;
-        int geom2 = contact.geom2;
-
-        // Check if geom1 is a foot
-        auto it1 = footGeomToIndex.find(geom1);
-        if (it1 != footGeomToIndex.end() && increasedLegs.find(it1->second) == increasedLegs.end()) {
-            descriptorsValues[it1->second]++;
-            increasedLegs.insert(it1->second);
-            continue;
-        }
-
-        // Check if geom2 is a foot
-        auto it2 = footGeomToIndex.find(geom2);
-        if (it2 != footGeomToIndex.end() && increasedLegs.find(it2->second) == increasedLegs.end()) {
-            descriptorsValues[it2->second]++;
-            increasedLegs.insert(it2->second);
-        }
-    }
-
-	descriptors.push_back(descriptorsValues);
-}
-
 void MujocoAntWrapper::initialize_descriptors() {
 
 	// Initialize values for feet contact
@@ -176,14 +147,6 @@ void MujocoAntWrapper::initialize_descriptors() {
 	}
 }
 
-void MujocoAntWrapper::computeDescriptors(std::vector<double>& actionsID) {
-	if(descriptorType_ == DescriptorType::FeetContact){
-		//std::cout<<descriptors.size()<<" Compute."<<std::endl;
-		computeFeetContact();
-	} else if (descriptorType_ == DescriptorType::ActionValues) {
-		MujocoWrapper::computeDescriptors(actionsID);
-	}
-}
 
 const size_t MujocoAntWrapper::getNbDescriptors(){
 	if(descriptorType_ == DescriptorType::FeetContact){

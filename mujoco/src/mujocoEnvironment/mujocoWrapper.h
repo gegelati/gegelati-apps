@@ -32,6 +32,10 @@ protected:
 	std::vector<std::vector<double>> actionData;
 	bool saveStateAndAction = false;
 
+	std::vector<int> feet_geom_ids_; // À initialiser avec les indices MuJoCo des pieds
+	std::vector<bool> feet_in_contact_;
+	std::unordered_map<int, size_t> footGeomToIndex;
+
 public:
 
 	enum class DescriptorType { FeetContact, ActionValues, Unused };
@@ -111,6 +115,9 @@ public:
 	virtual const std::vector<std::vector<double>>& getDescriptors() const {
 		return descriptors;
 	}
+
+	
+	void computeFeetContact();
 
 	virtual void registerStateAndAction(const std::vector<double>& actionsID);
 	virtual void printStateAndAction(std::string path) const;
