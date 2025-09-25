@@ -12,6 +12,7 @@
 
 #include "mujocoEnvironment/mujocoWrappers.h"
 #include "instructions.h"
+#include "lexicaseSelector.h"
 
 void exportIndividual(const TPG::TPGVertex* vertex,
                       const std::string& basePathDots,
@@ -57,13 +58,17 @@ int main(int argc, char ** argv) {
 	char xmlFile[150];
 	char usecase[150];
 	bool useHealthyReward = 1;
+	bool useObstacleReward = 0;
 	bool saveAllGenerationsDots = 1;
+	std::string obstacleUsedStr = "";
+	char dotPath[150];
 
+    strcpy(dotPath, "");
     strcpy(logsFolder, "logs");
     strcpy(paramFile, "params_0.json");
 	strcpy(usecase, "ant");
     strcpy(xmlFile, "none");
-    while((option = getopt(argc, argv, "s:p:l:x:h:c:u:a:g:w:o:")) != -1){
+    while((option = getopt(argc, argv, "s:p:l:x:h:c:u:a:g:w:o:d:")) != -1){
         switch (option) {
             case 's': seed= atoi(optarg); break;
             case 'p': strcpy(paramFile, optarg); break;
@@ -72,7 +77,10 @@ int main(int argc, char ** argv) {
 			case 'h': useHealthyReward = atoi(optarg); break;
             case 'x': strcpy(xmlFile, optarg); break;
 			case 'g': saveAllGenerationsDots = atoi(optarg); break;
-            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-logs logs Folder\'  \'-x xmlFile\' \'-h useHealthyReward\' \'-g saveAllGenDotFiles\'." << std::endl; exit(1);
+			case 'o': useObstacleReward = atoi(optarg); break;
+			case 'w': obstacleUsedStr = optarg; break;
+            case 'd': strcpy(dotPath, optarg); break;
+            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-logs logs Folder\'  \'-x xmlFile\' \'-h useHealthyReward\' \'-g saveAllGenDotFiles\' \'-w obstacle used \'." << std::endl; exit(1);
         }
     }
 	if(strcmp(xmlFile, "none") == 0){
@@ -90,6 +98,27 @@ int main(int argc, char ** argv) {
 	if (!std::filesystem::exists(dotGen)) {
 		std::filesystem::create_directory(dotGen);
 	}
+
+
+
+    std::vector<std::vector<size_t>> obstacleUsed;
+    std::stringstream ss(obstacleUsedStr);
+    std::string token;
+
+    while (std::getline(ss, token, ',')) {
+        if (token.empty()) continue;
+
+        std::vector<size_t> currentGroup;
+        for (char c : token) {
+            if (isdigit(c)) {
+                currentGroup.push_back(c - '0');
+            } else {
+                std::cerr << "Caractère invalide dans le token: " << c << std::endl;
+                exit(1);
+            }
+        }
+        obstacleUsed.push_back(currentGroup);
+    }
 
     std::cout << "SELECTED SEED : " << seed << std::endl;
     std::cout << "SELECTED PARAMS FILE: " << paramFile << std::endl;
@@ -121,14 +150,30 @@ int main(int argc, char ** argv) {
 	File::ParametersParser::loadParametersFromJson(paramFile, params);
 
 	std::cout << "SELECTION METHOD :";
-	if(params.useTournamentSelection){
+	if(params.selection.selectionMode == "tournament"){
 		std::cout<<" TOURNAMENT SELECTION"<<std::endl;
+	} else if(params.selection.selectionMode == "truncation") {
+		std::cout<<" TRUNCATION SELECTION"<<std::endl;
 	} else {
-		std::cout<<" STANDARD SELECTION"<<std::endl;
+		std::cout<<" LEXICASE SELECTION"<<std::endl;
 	}
 
 
 	std::cout << "START MUJOCO APPLICATION WITH ENVIRONMENT "<< usecase << std::endl;
+
+	if((obstacleUsed.size() == 0)){
+		std::cout << "USING NO OBSTACLE " << std::endl;
+		obstacleUsed.clear();
+	} else {
+		std::cout << "USING OBSTACLES: ";
+		for (const auto& group : obstacleUsed) {
+			for (size_t num : group) {
+				std::cout << num << " ";
+			}
+			std::cout << "| ";
+		}
+		std::cout<<std::endl;
+	}
 
 	// Export parameters before starting training.
 	// These may differ from imported parameters because of LE or machine specific
@@ -141,11 +186,11 @@ int main(int argc, char ** argv) {
 	if(strcmp(usecase, "humanoid") == 0){
 		mujocoLE = new MujocoHumanoidWrapper(xmlFile, useHealthyReward);
 	} else if (strcmp(usecase, "half_cheetah") == 0) {
-		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile);
+		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile, useObstacleReward);
 	} else if (strcmp(usecase, "hopper") == 0) {
 		mujocoLE = new MujocoHopperWrapper(xmlFile, useHealthyReward);
 	} else if (strcmp(usecase, "walker2d") == 0) {
-		mujocoLE = new MujocoWalker2DWrapper(xmlFile, useHealthyReward);
+		mujocoLE = new MujocoWalker2DWrapper(xmlFile, useHealthyReward, useObstacleReward);
 	} else if (strcmp(usecase, "inverted_double_pendulum") == 0) {
 		mujocoLE = new MujocoDoublePendulumWrapper(xmlFile);
 	} else if (strcmp(usecase, "reacher") == 0) {
@@ -156,12 +201,25 @@ int main(int argc, char ** argv) {
 		throw std::runtime_error("Use case not found");
 	}
 
-	std::cout << "Number of threads: " << params.nbThreads << std::endl;
+	std::cout << "NUMBER OF THREADS: " << params.nbThreads << std::endl;
 
 	// Instantiate and init the learning agent
-	Learn::ParallelLearningAgent la(*mujocoLE, set, params);
+	Learn::LexicaseAgent la(*mujocoLE, set, params, obstacleUsed);
 	la.init(seed);
 
+	if(dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get()) == nullptr && params.selection.selectionMode == "lexicase"){
+		throw std::runtime_error("lexicase selector should be used.");
+	}
+
+	
+    std::string dotFileName = std::filesystem::path(dotPath).stem().string();
+	if(dotFileName.size() > 0){
+		std::cout<<"LOAD FILE " << dotPath << std::endl;
+		auto &tpg = *la.getTPGGraph();
+		Environment env(set, params, mujocoLE->getDataSources(), mujocoLE->getNbActions());
+
+		File::TPGGraphDotImporter dotImporter(dotPath, env, tpg);
+	}
 
 	std::atomic<bool> exitProgram = false; // (set to false by other thread) 
 	std::atomic<bool> toggleDisplay = false;
@@ -179,13 +237,13 @@ int main(int argc, char ** argv) {
     Log::LABasicLogger log(la, logStream);
 
 	// Create an exporter for all graphs
-    char dotPath[400];
+    char dotSavingPath[400];
 	if(saveAllGenerationsDots){
-    	sprintf(dotPath, "%s/out_lastGen.%" PRIu64 ".0.p%d.%s.dot", dotGen, seed, indexParam, usecase);
+    	sprintf(dotSavingPath, "%s/out_lastGen.%" PRIu64 ".0.p%d.%s.dot", dotGen, seed, indexParam, usecase);
 	} else {
-    	sprintf(dotPath, "%s/out_lastGen.%" PRIu64 ".p%d.%s.dot", dotGen, seed, indexParam, usecase);	
+    	sprintf(dotSavingPath, "%s/out_lastGen.%" PRIu64 ".p%d.%s.dot", dotGen, seed, indexParam, usecase);	
 	}
-	File::TPGGraphDotExporter dotExporter(dotPath, *la.getTPGGraph());
+	File::TPGGraphDotExporter dotExporter(dotSavingPath, *la.getTPGGraph());
 
 	// Logging best policy stat.
     char bestPolicyStatsPath[250];
@@ -215,8 +273,8 @@ int main(int argc, char ** argv) {
 	la.getTPGGraph()->clearProgramIntrons();
 
 
-	la.keepBestPolicy();
-	const auto* best = la.getBestRoot().first;
+	la.getSelector()->keepBestPolicy();
+	const auto* best = la.getSelector()->getBestRoot().first;
 	std::vector<size_t> emptyIndices;
 	exportIndividual(best, logsFolder, logsFolder, emptyIndices, seed, indexParam, usecase,
 					la.getTPGGraph(), dotExporter);

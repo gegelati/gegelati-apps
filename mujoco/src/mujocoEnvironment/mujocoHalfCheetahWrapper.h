@@ -10,33 +10,57 @@ protected:
 
 
 	const std::string xmlFile;
+	bool useObstacleReward = false;
 
     // Parameters
     double forward_reward_weight = 1.0;
-    double control_cost_weight_ = 0.5;
+    double control_cost_weight_ = 0.1;
     double reset_noise_scale_ = 0.1;
     bool exclude_current_positions_from_observation_ = true;
+
+
+
+
 public:
 
 
 
-	MujocoHalfCheetahWrapper(const char *pXmlFile, bool exclude_current_positions_from_observation = true) :
-		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 17:18), xmlFile{pXmlFile},
+	MujocoHalfCheetahWrapper(const char *pXmlFile, bool useObstacleReward=true, std::vector<size_t> obstacleUsed={}, bool exclude_current_positions_from_observation = true) :
+		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 19:18), xmlFile{pXmlFile},
+		useObstacleReward{useObstacleReward},
 		exclude_current_positions_from_observation_{exclude_current_positions_from_observation}
 		{
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
 			initialize_simulation();
+
+			sizeObstacleArea = 10;
+			used_obstacles = {
+				{"obstacle0"},
+				{"obstacle1"},
+				{"obstacle2-a", "obstacle2-b"},
+				{"obstacle3-a", "obstacle3-b"},
+				{"obstacle4"},
+			};
 		};
 
     /**
     * \brief Copy constructor for the armLearnWrapper.
     */ 
     MujocoHalfCheetahWrapper(const MujocoHalfCheetahWrapper &other) : MujocoWrapper(other),
-	xmlFile{other.xmlFile}, exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}
+	xmlFile{other.xmlFile}, useObstacleReward{other.useObstacleReward},
+	exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}
 	{   
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		initialize_simulation();
-    }
+
+		used_obstacles = {
+			{"obstacle0"},
+			{"obstacle1"},
+			{"obstacle2-a", "obstacle2-b"},
+			{"obstacle3-a", "obstacle3-b"},
+			{"obstacle4"},
+		};
+	}
 
     ~MujocoHalfCheetahWrapper() {
         // Free visualization storage
@@ -87,6 +111,9 @@ public:
 	virtual double getScore() const override;
 	virtual double getUtility() const override;
 
+	/// Inherited via LearningEnvironment
+	virtual bool isUsingUtility() const override;
+
 	/**
 	* \brief Is the pendulum considered stabilized.
 	*
@@ -97,12 +124,12 @@ public:
 	* \return true if the pendulum has been stabilized, false otherwise.
 	*/
 	virtual bool isTerminal() const override;
+    bool is_healthy() const;
 
     double control_cost(std::vector<double>& action);
 
 
 	void computeState();
-
 
 
 };

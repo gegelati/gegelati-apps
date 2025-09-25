@@ -40,6 +40,97 @@
         </body>
       </body>
     </body>
+
+    <body name="obstacle0" pos="0 0 0.0">   <!-- z centré pour toucher le sol -->
+      <geom name="obstacle0-geom" pos="-100 0 0.06" mass="0"
+            type="box" size="1 2.0 0.1"   
+            rgba="0.9 0.9 0.9 1"
+            contype="1" conaffinity="1"
+            quat="0.9962 0 -0.0872 0"/>           <!-- 20° = 0.349066 rad -->
+    </body>
+
+    <body name="obstacle1-a" pos="0 0 0.05">
+      <geom name="obstacle1-a_geom" pos="-100.5 0 0.075" mass="0.0"
+            type="cylinder" size="0.075 0.5"
+            rgba="0.9 0.9 0.9 1"
+            contype="1" conaffinity="1"
+            quat="0.7071 0.7071 0 0"/> <!-- rotation 90° autour de X -->
+    </body>
+    <body name="obstacle1-b" pos="0 0 0.05">
+      <geom name="obstacle1-b_geom" pos="-100.3 0 0.075" mass="0.0"
+            type="cylinder" size="0.075 0.5"
+            rgba="0.9 0.9 0.9 1"
+            contype="1" conaffinity="1"
+            quat="0.7071 0.7071 0 0"/> <!-- rotation 90° autour de X -->
+    </body>
+    <body name="obstacle1-c" pos="0 0 0.05">
+      <geom name="obstacle1-c_geom" pos="-100.1 0 0.075" mass="0.0"
+            type="cylinder" size="0.075 0.5"
+            rgba="0.9 0.9 0.9 1"
+            contype="1" conaffinity="1"
+            quat="0.7071 0.7071 0 0"/> <!-- rotation 90° autour de X -->
+    </body>
+    <body name="obstacle1-d" pos="0 0 0.05">
+      <geom name="obstacle1-d_geom" pos="-99.9 0 0.075" mass="0.0"
+            type="cylinder" size="0.075 0.5"
+            rgba="0.9 0.9 0.9 1"
+            contype="1" conaffinity="1"
+            quat="0.7071 0.7071 0 0"/> <!-- rotation 90° autour de X -->
+    </body>
+    <body name="obstacle1-e" pos="0 0 0.05">
+      <geom name="obstacle1-e_geom" pos="-99.7 0 0.075" mass="0.0"
+            type="cylinder" size="0.075 0.5"
+            rgba="0.9 0.9 0.9 1"
+            contype="1" conaffinity="1"
+            quat="0.7071 0.7071 0 0"/> <!-- rotation 90° autour de X -->
+    </body>
+    <body name="obstacle1-f" pos="0 0 0.05">
+      <geom name="obstacle1-f_geom" pos="-99.5 0 0.075" mass="0.0"
+            type="cylinder" size="0.075 0.5"
+            rgba="0.9 0.9 0.9 1"
+            contype="1" conaffinity="1"
+            quat="0.7071 0.7071 0 0"/> <!-- rotation 90° autour de X -->
+    </body>
+
+    <body name="obstacle2-a" pos="0 0 0.0">   <!-- z centré pour toucher le sol -->
+      <geom name="obstacle2-a-geom" pos="-100 0 0.05" mass="0"
+            type="box" size="1 2.0 0.05"   
+            rgba="0.9 0.2 0.2 1"
+            contype="1" conaffinity="1"/>           <!-- 20° = 0.349066 rad -->
+    </body>
+    <body name="obstacle2-b" pos="0 0 0.0">   <!-- z centré pour toucher le sol -->
+      <geom name="obstacle2-b-geom" pos="-99.75 0 0.15" mass="0"
+            type="box" size="0.75 2.0 0.05"   
+            rgba="0.9 0.2 0.9 1"
+            contype="1" conaffinity="1"/>           <!-- 20° = 0.349066 rad -->
+    </body>
+    <body name="obstacle2-c" pos="0 0 0.0">   <!-- z centré pour toucher le sol -->
+      <geom name="obstacle2-c-geom" pos="-99.5 0 0.25" mass="0"
+            type="box" size="0.5 2.0 0.05"   
+            rgba="0.9 0.9 0.2 1"
+            contype="1" conaffinity="1"/>           <!-- 20° = 0.349066 rad -->
+    </body>
+    <body name="obstacle2-d" pos="0 0 0.0">   <!-- z centré pour toucher le sol -->
+      <geom name="obstacle2-d-geom" pos="-99.25 0 0.35" mass="0"
+            type="box" size="0.25 2.0 0.05"   
+            rgba="0.2 0.9 0.9 1"
+            contype="1" conaffinity="1"/>           <!-- 20° = 0.349066 rad -->
+    </body>
+
+    <body name="obstacle3" pos="0 0 0">
+      <geom name="obstacle3_geom" pos="-100 0 0.1" mass = "0.0"
+            type="box" size="0.1 2 0.1"
+            rgba="0.9 0.9 0.9 1"
+            contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle4" pos="0 0 0">
+      <geom name="obstacle4_geom" pos="-100 0 1.4" mass = "0.0"
+            type="box" size="0.1 2 0.1"
+            rgba="0.9 0.9 0.9 1"
+            contype="1" conaffinity="1"/>
+    </body>
+
   </worldbody>
   <actuator>
     <!-- <motor joint="torso_joint" ctrlrange="-100.0 100.0" isctrllimited="true"/>-->

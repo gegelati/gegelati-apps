@@ -13,6 +13,8 @@
 #include <glfw3.h>
 #include <filesystem>
 
+#include "lexicaseSelector.h"
+
 // keyboard callback
 void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods) {
     // backspace: reset simulation
@@ -77,7 +79,7 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
     mjv_moveCamera(m, mjMOUSE_ZOOM, 0, -0.05 * yoffset, &scn, &cam);
 }
 
-void InitVisualization(mjModel* task_m, mjData* task_d) {
+void InitVisualization(mjModel* task_m, mjData* task_d, bool fixed) {
     m = task_m;
     d = task_d;
 
@@ -100,7 +102,9 @@ void InitVisualization(mjModel* task_m, mjData* task_d) {
     // Select the camera defined in the XML model, e.g., "track"
     int cam_id = mj_name2id(m, mjOBJ_CAMERA, "track");
     if (cam_id >= 0) {
-        cam.type = mjCAMERA_FIXED;
+        if(fixed){
+            cam.type = mjCAMERA_FIXED;  
+        }
         cam.fixedcamid = cam_id;
         std::cout << "Using fixed camera: track (id " << cam_id << ")" << std::endl;
     } else {
@@ -188,13 +192,15 @@ int main(int argc, char ** argv) {
 	bool useHealthyReward = 1;
 	bool saveCodeGen = 0;
 	size_t fastVisu = 0;
+	std::string obstacleUsedStr = "";
+    bool fixed = 1;
     
     strcpy(dotPath, "logs/out_best.0.p0.dot");
     strcpy(paramFile, "params_0.json");
     strcpy(pathRenderVideo, "../logs/render");
 	strcpy(usecase, "ant");
     strcpy(xmlFile, "none");
-    while((option = getopt(argc, argv, "s:p:d:f:g:x:h:c:u:v:")) != -1){
+    while((option = getopt(argc, argv, "s:p:d:f:g:x:h:c:u:v:w:m:")) != -1){
         switch (option) {
             case 's': seed= atoi(optarg); break;
             case 'p': strcpy(paramFile, optarg); break;
@@ -206,6 +212,8 @@ int main(int argc, char ** argv) {
 			case 'v': fastVisu = atoi(optarg); break;
 			case 'c': saveCodeGen = atoi(optarg); break;
             case 'x': strcpy(xmlFile, optarg); break;
+			case 'w': obstacleUsedStr = optarg; break;
+            case 'm': fixed = atoi(optarg); break;
             default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-d dot path\' \'-f save or not video\' \'-g path for video saved\' \'-x xmlFile\' \'-h useHealthyReward\' \'-v fastVisu\' \'-c Save codeGen\'." << std::endl; exit(1);
         }
     }
@@ -215,6 +223,25 @@ int main(int argc, char ** argv) {
     std::string dotFileName = std::filesystem::path(dotPath).stem().string();
     std::string dotDir = std::filesystem::path(dotPath).parent_path().string();
 
+    
+    std::vector<std::vector<size_t>> obstacleUsed;
+    std::stringstream ss(obstacleUsedStr);
+    std::string token;
+
+    while (std::getline(ss, token, ',')) {
+        if (token.empty()) continue;
+
+        std::vector<size_t> currentGroup;
+        for (char c : token) {
+            if (isdigit(c)) {
+                currentGroup.push_back(c - '0');
+            } else {
+                std::cerr << "Caractère invalide dans le token: " << c << std::endl;
+                exit(1);
+            }
+        }
+        obstacleUsed.push_back(currentGroup);
+    }
 
 	std::cout << "Start Mujoco Rendering application with seed " << seed<<"." << std::endl;
     // Create the instruction set for programs
@@ -235,11 +262,11 @@ int main(int argc, char ** argv) {
 	if(strcmp(usecase, "humanoid") == 0){
 		mujocoLE = new MujocoHumanoidWrapper(xmlFile, useHealthyReward);
 	} else if (strcmp(usecase, "half_cheetah") == 0) {
-		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile);
+		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile, obstacleUsed.size() > 0);
 	} else if (strcmp(usecase, "hopper") == 0) {
 		mujocoLE = new MujocoHopperWrapper(xmlFile, useHealthyReward);
 	} else if (strcmp(usecase, "walker2d") == 0) {
-		mujocoLE = new MujocoWalker2DWrapper(xmlFile, useHealthyReward);
+		mujocoLE = new MujocoWalker2DWrapper(xmlFile, useHealthyReward, obstacleUsed.size() > 0);
 	} else if (strcmp(usecase, "inverted_double_pendulum") == 0) {
 		mujocoLE = new MujocoDoublePendulumWrapper(xmlFile);
 	} else if (strcmp(usecase, "reacher") == 0) {
@@ -251,7 +278,7 @@ int main(int argc, char ** argv) {
 	}
 
 	// Instantiate and init the learning agent
-	Learn::ParallelLearningAgent la(*mujocoLE, set, params);
+	Learn::LexicaseAgent la(*mujocoLE, set, params, obstacleUsed);
 	la.init(seed);
 
     auto &tpg = *la.getTPGGraph();
@@ -261,16 +288,17 @@ int main(int argc, char ** argv) {
 
     if(tpg.getNbRootVertices() > 1){
         
+        if(params.selection.selectionMode == "lexicase"){
+            dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get())->updateTestCases(la.getRNG(), Learn::LearningMode::TRAINING);
+        }
         std::cout<<"Multiple roots identified. One generation training launched to identified the best root"<<std::endl;
         // Basic logger
         Log::LABasicLogger basicLogger(la);
 		auto results = la.evaluateAllRoots(0, Learn::LearningMode::TRAINING);
-        // Save the best score of this generation
-        la.updateBestScoreLastGen(results);
         // Update the best
-        la.updateEvaluationRecords(results);
+        la.getSelector()->updateEvaluationRecords(results);
         // Keep best policy
-        la.keepBestPolicy();
+        la.getSelector()->keepBestPolicy();
 
         auto iter = results.begin();
         std::advance(iter, results.size() - 1);
@@ -314,8 +342,15 @@ int main(int argc, char ** argv) {
     int frameDelayMs = static_cast<int>(frameDuration * 1000); // en millisecondes
 
     if(fastVisu != 2){
-        InitVisualization(mujocoLE->m_, mujocoLE->d_);
+        InitVisualization(mujocoLE->m_, mujocoLE->d_, fixed);
         StepVisualization(isRenderVideoSaved, pathRenderVideo);
+    }
+
+    // Update the test cases in lexicase selection.
+    if(params.selection.selectionMode == "lexicase"){
+        dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get())->updateTestCases(la.getRNG(), Learn::LearningMode::TRAINING);
+        auto testCases = dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get())->getCurrentTestCases();
+        mujocoLE->setObstacles(testCases.at(0));
     }
 
     mujocoLE->reset(seed, Learn::LearningMode::TESTING);
@@ -346,7 +381,7 @@ int main(int argc, char ** argv) {
 	std::string actionAndStateData = dotDir + "/stateAndActionData_" + dotFileName + "." + std::to_string(seed) + ".csv";
     mujocoLE->printStateAndAction(actionAndStateData);
     
-    std::cout<<"Score: "<<mujocoLE->getUtility() << " with "<<nbActions<<" actions taken"<<std::endl;;
+    std::cout<<"Score: "<<mujocoLE->getScore() << " And utility " << mujocoLE->getUtility() << " with "<<nbActions<<" actions taken"<<std::endl;;
 
     if(isRenderVideoSaved){
         int fps = static_cast<int>(1.0 / frameDuration);

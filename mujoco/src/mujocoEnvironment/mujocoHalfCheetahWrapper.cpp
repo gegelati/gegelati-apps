@@ -13,16 +13,23 @@ void MujocoHalfCheetahWrapper::reset(size_t seed, Learn::LearningMode mode, uint
 
 
 	std::vector<double> qpos(m_->nq);
-	for (size_t i = 0; i < qpos.size(); i++) {
+	for (size_t i = 0; i < 9; i++) {
 		qpos[i] = init_qpos_[i] + this->rng.getDouble(-reset_noise_scale_, reset_noise_scale_);
 	}
 	std::vector<double> qvel(m_->nv);
-	for (size_t i = 0; i < qvel.size(); i++) {
+	for (size_t i = 0; i < 9; i++) {
 		qvel[i] = init_qvel_[i] + this->rng.getDouble(0.0, reset_noise_scale_);
 	}
 	mj_resetData(m_, d_);
 	set_state(qpos, qvel);
+
+	
+
+	
+	this->updateObstaclesPosition(obstacleIndex, 0, 0);
+	
 	this->computeState();
+	this->computeObstaclesState(17, 2, 2);
 }
 
 void MujocoHalfCheetahWrapper::doActions(std::vector<double> actionsID)
@@ -43,13 +50,16 @@ void MujocoHalfCheetahWrapper::doActions(std::vector<double> actionsID)
 	auto reward = rewards - costs;
 
 	this->computeState();
+	this->computeObstaclesState(17, 2, 2);
 
 	// Incremente the reward.
-	this->totalReward += reward;
+	this->totalReward += rewards;
+	if(!useObstacleReward){
+		this->totalReward -= costs;
+	}
+	this->totalUtility += reward;
 
 	this->nbActionsExecuted++;
-
-
 }
 
 bool MujocoHalfCheetahWrapper::isCopyable() const
@@ -64,17 +74,25 @@ Learn::LearningEnvironment* MujocoHalfCheetahWrapper::clone() const
 
 double MujocoHalfCheetahWrapper::getScore() const
 {
-	return totalReward;
+	return this->totalReward;
 }
 double MujocoHalfCheetahWrapper::getUtility() const
 {
-	return totalReward;
+	return totalUtility;
+}
+bool MujocoHalfCheetahWrapper::isUsingUtility() const
+{
+	return useObstacleReward;
 }
 
 
 bool MujocoHalfCheetahWrapper::isTerminal() const
 {
-	return false;
+	return !is_healthy();
+}
+
+bool MujocoHalfCheetahWrapper::is_healthy() const{
+	return (d_->qpos[2] < 2.5) && (d_->qpos[2] > -2.5);
 }
 
 double MujocoHalfCheetahWrapper::control_cost(std::vector<double>& action) {
@@ -90,15 +108,16 @@ void MujocoHalfCheetahWrapper::computeState(){
 	if(exclude_current_positions_from_observation_){
 		reduction = 1;
 	}
-	for (int i = reduction; i < m_->nq; i++) 
+	for (int i = reduction; i < 9; i++) 
 	{
 		currentState.setDataAt(typeid(double), index, d_->qpos[i]);
 		index++;
 	}
-	for (int i = 0; i < m_->nv; i++) 
+	for (int i = 0; i < 9; i++) 
 	{
 		currentState.setDataAt(typeid(double), index, d_->qvel[i]);
 		index++;
 	}
+
 }
 

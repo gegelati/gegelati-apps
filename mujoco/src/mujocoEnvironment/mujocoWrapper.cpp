@@ -26,6 +26,10 @@ void MujocoWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterat
 	this->nbActionsExecuted = 0;
 	this->totalReward = 0.0;
 	this->totalUtility = 0.0;
+
+	this->obstacleIndex = -1;
+	this->obstaclePos = 0;
+	this->currentObstacleArea = 0;
 }
 
 
@@ -177,4 +181,81 @@ void MujocoWrapper::printStateAndAction(std::string path) const
 		throw std::runtime_error("saveStateAndAction should be true");
 	}
 
+}
+
+void MujocoWrapper::updateObstaclesPosition(
+	int64_t currIndexObstacle, double xposMin, double xposMax)
+{
+	// Place the obstacles selected at a random position, and the other obstacles at -100
+	auto it = obstacles.begin();
+	while(it != obstacles.end()){
+		double xpos = -100.0;
+
+		if((int64_t)it->first == currIndexObstacle){
+			xpos = this->rng.getDouble(xposMin, xposMax) + additionObstacle;
+			if(currIndexObstacle != -1){
+				obstaclePos = xpos - additionObstacle;
+			} else {
+				obstaclePos = 0;
+			}
+		}
+
+		
+		for (const auto& obstacle : it->second) {
+			// Get IDs
+			int obstacle_id = mj_name2id(m_, mjOBJ_BODY, obstacle.c_str());
+			if(obstacle_id == -1) {
+				std::cerr << "Error: obstacle '" << obstacle.c_str() << "' not found in model." << std::endl;
+				continue;
+			}
+			m_->body_pos[3 * obstacle_id] = xpos; // X
+		}
+
+		it++;
+	}
+}
+
+bool MujocoWrapper::computeObstaclesState(uint64_t index, double xposMin, double xposMax)
+{
+	
+	double dist_x = 0.0;
+	bool obstacleSucced = false;
+	if(obstacleIndex != -1) {
+		dist_x = obstaclePos - d_->qpos[0];
+	} 
+
+	if((obstacleIndex == -1 || d_->qpos[0] > sizeObstacleArea * (currentObstacleArea + 1)) && obstacles.size() > 0){
+		
+		if(d_->qpos[0] > sizeObstacleArea * (currentObstacleArea + 1)){
+			currentObstacleArea++;
+			obstacleSucced = true;
+
+		}
+		size_t index = this->rng.getUnsignedInt64(0, obstacles.size() - 1);
+		
+		auto it = obstacles.begin();
+		std::advance(it, index);
+		obstacleIndex =  it->first;
+		this->updateObstaclesPosition(
+			obstacleIndex, 
+			(sizeObstacleArea * currentObstacleArea) + xposMin,
+			(sizeObstacleArea * (currentObstacleArea + 1)) - xposMax);
+		
+		dist_x = obstaclePos - d_->qpos[0];
+	} 
+	currentState.setDataAt(typeid(double), index, obstacleIndex);
+	currentState.setDataAt(typeid(double), index + 1, dist_x);
+
+	return obstacleSucced;
+}
+
+void MujocoWrapper::setObstacles(std::vector<size_t>& obs){
+	size_t obstacleUsedIdx = 0;
+	obstacles.clear();
+	for(size_t idx = 0; idx < used_obstacles.size() && obstacleUsedIdx < obs.size(); idx++){
+		if(idx == obs[obstacleUsedIdx]){
+			obstacles.emplace(idx, used_obstacles[idx]);
+			obstacleUsedIdx++;
+		}
+	}
 }

@@ -41,7 +41,7 @@ void mouse_button(GLFWwindow* window, int button, int act, int mods);
 // mouse move callback
 void mouse_move(GLFWwindow* window, double xpos, double ypos);
 
-void InitVisualization(mjModel* task_m, mjData* task_d);
+void InitVisualization(mjModel* task_m, mjData* task_d, bool fixed);
 
 void saveFrame(int width, int height, const char* filename);
 

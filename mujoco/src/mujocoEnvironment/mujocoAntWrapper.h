@@ -109,15 +109,8 @@ public:
 	/// Inherited via LearningEnvironment
 	virtual bool isUsingUtility() const override;
 
-	/**
-	* \brief Is the pendulum considered stabilized.
-	*
-	* If the mean reward over the recent rewardHistory is lower than a fixed
-	* threshold, then the pendulum is considered to be stable in the upward
-	* position and the learningAgent has succeded in stabilizing it.
-	*
-	* \return true if the pendulum has been stabilized, false otherwise.
-	*/
+
+	/// Inherited via LearningEnvironment
 	virtual bool isTerminal() const override;
 
 

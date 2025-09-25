@@ -16,7 +16,7 @@ protected:
     double control_cost_weight_ = 0.1;
     double healthy_reward_ = 5.0;
     bool terminate_when_unhealthy_ = true;
-    double contact_cost_weight_ = 5e-4;
+    double contact_cost_weight_ = 5e-7;
     std::vector<double> healthy_z_range_ = {1.0, 2.0};
     std::vector<double> contact_force_range_ = {-1.0, 1.0};
     double reset_noise_scale_ = 1e-2;

@@ -15,15 +15,22 @@ void MujocoWalker2DWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_
 
 	std::vector<double> qpos(m_->nq);
 	for (size_t i = 0; i < qpos.size(); i++) {
-		qpos[i] = init_qpos_[i] + this->rng.getDouble(-reset_noise_scale_, reset_noise_scale_);
+		if(i < 9){
+			qpos[i] = init_qpos_[i] + this->rng.getDouble(-reset_noise_scale_, reset_noise_scale_);
+		}
 	}
 	std::vector<double> qvel(m_->nv);
 	for (size_t i = 0; i < qvel.size(); i++) {
-		qvel[i] = init_qvel_[i] + this->rng.getDouble(0.0, reset_noise_scale_);
+		if(i < 9){
+			qvel[i] = init_qvel_[i] + this->rng.getDouble(-reset_noise_scale_, reset_noise_scale_);
+		}
 	}
 	mj_resetData(m_, d_);
 	set_state(qpos, qvel);
+
+	this->updateObstaclesPosition(obstacleIndex, 0, 0);
 	this->computeState();
+	this->computeObstaclesState(17, 2, 1);
 }
 
 void MujocoWalker2DWrapper::doActions(std::vector<double> actionsID)
@@ -41,12 +48,22 @@ void MujocoWalker2DWrapper::doActions(std::vector<double> actionsID)
 	auto ctrl_cost = control_cost(actionsID);
 	auto costs = ctrl_cost;
 
+
 	auto reward = rewards - costs;
 
 	this->computeState();
 
+	this->computeObstaclesState(17, 2, 2);
+
+
 	// Incremente the reward.
-	this->totalReward += reward + int(useHealthyReward) * healthy_reward();
+	this->totalReward += rewards;
+	if(!useObstacleReward){
+		this->totalReward -= costs;
+	}
+	if(useHealthyReward){
+		this->totalReward += healthy_reward();
+	}
 	this->totalUtility += reward + healthy_reward();
 
 	this->nbActionsExecuted++;
@@ -65,7 +82,7 @@ Learn::LearningEnvironment* MujocoWalker2DWrapper::clone() const
 
 double MujocoWalker2DWrapper::getScore() const
 {
-	return totalReward;
+	return this->totalReward;
 }
 double MujocoWalker2DWrapper::getUtility() const
 {
@@ -73,7 +90,7 @@ double MujocoWalker2DWrapper::getUtility() const
 }
 bool MujocoWalker2DWrapper::isUsingUtility() const
 {
-	return !useHealthyReward;
+	return !useHealthyReward || useObstacleReward;
 }
 
 bool MujocoWalker2DWrapper::isTerminal() const
@@ -112,15 +129,16 @@ void MujocoWalker2DWrapper::computeState(){
 		reduction = 1;
 	}
 
-	for (int i = reduction; i < m_->nq; i++) 
+	for (int i = reduction; i < 9; i++) 
 	{
 		currentState.setDataAt(typeid(double), index, d_->qpos[i]);
 		index++;
 	}
-	for (int i = 0; i < m_->nv; i++) 
+	for (int i = 0; i < 9; i++) 
 	{
 		currentState.setDataAt(typeid(double), index, std::clamp((double)d_->qvel[i], -10.0, 10.0));
 		index++;
 	}
+
 }
 

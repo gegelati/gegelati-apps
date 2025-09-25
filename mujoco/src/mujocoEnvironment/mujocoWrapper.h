@@ -32,6 +32,15 @@ protected:
 	std::vector<std::vector<double>> actionData;
 	bool saveStateAndAction = false;
 
+	
+	std::multimap<size_t, std::vector<std::string>> obstacles;
+	std::vector<std::vector<std::string>> used_obstacles;
+	int64_t obstacleIndex = 0;
+	uint64_t currentObstacleArea = 0;
+	double sizeObstacleArea = 0.0;
+	double obstaclePos = 0.0;
+	double additionObstacle = 0.0;
+
 public:
 
 	/**
@@ -50,8 +59,8 @@ public:
 	* Default copy constructor since all attributes are trivially copyable.
 	*/
 	MujocoWrapper(const MujocoWrapper& other) : LearningEnvironment(other.nbActions, false),
-		currentState{other.currentState}, stateSize{other.stateSize} {}
-	
+		currentState{other.currentState}, stateSize{other.stateSize}, obstacles{other.obstacles}, sizeObstacleArea{other.sizeObstacleArea}, additionObstacle{other.additionObstacle} {}
+
 
 	/// Inherited via LearningEnvironment
 	virtual void reset(size_t seed = 0, Learn::LearningMode mode = Learn::LearningMode::TRAINING,
@@ -92,6 +101,12 @@ public:
 
 	virtual void registerStateAndAction(const std::vector<double>& actionsID);
 	virtual void printStateAndAction(std::string path) const;
+
+	virtual void updateObstaclesPosition(int64_t indexObstacle, double xposMin, double xposMax);
+
+	virtual bool computeObstaclesState(uint64_t index, double xposMin, double xposMax);
+
+	virtual void setObstacles(std::vector<size_t>& obs);
 
 };
 

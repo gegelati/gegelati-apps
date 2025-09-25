@@ -11,6 +11,7 @@ protected:
 
 	const std::string xmlFile;
 	bool useHealthyReward;
+	bool useObstacleReward;
 	bool exclude_current_positions_from_observation_ = true;
 	// Parameters
 	double forward_reward_weight = 1.0;
@@ -22,19 +23,14 @@ protected:
 	double reset_noise_scale_ = 5e-3;
 public:
 
-	
-
-
-
-
 	/**
 	* \brief Default constructor.
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoWalker2DWrapper(const char *pXmlFile, bool useHealthyReward_p=true, bool exclude_current_positions_from_observation = true) :
-		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 17:18), 
-		xmlFile{pXmlFile}, useHealthyReward{useHealthyReward_p},
+	MujocoWalker2DWrapper(const char *pXmlFile, bool useHealthyReward_p=true, bool useObstacleReward=true, std::vector<size_t> obstacleUsed={}, bool exclude_current_positions_from_observation = true) :
+		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 19:19), 
+		xmlFile{pXmlFile}, useHealthyReward{useHealthyReward_p}, useObstacleReward{useObstacleReward},
 		exclude_current_positions_from_observation_{exclude_current_positions_from_observation}
 		{
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
@@ -42,13 +38,24 @@ public:
 			healthy_angle_range_ = {-1.0, 1.0};
 			frame_skip_ = 4;
 			initialize_simulation();
+
+			sizeObstacleArea = 5;
+			additionObstacle = 100;
+
+			used_obstacles = {
+				{"obstacle0"},
+				{"obstacle1-a", "obstacle1-b", "obstacle1-c", "obstacle1-d", "obstacle1-e", "obstacle1-f"},
+				{"obstacle2-a", "obstacle2-b", "obstacle2-c", "obstacle2-d",},
+				{"obstacle3"},
+				{"obstacle4"},
+			};
 		};
 
     /**
     * \brief Copy constructor for the armLearnWrapper.
     */ 
     MujocoWalker2DWrapper(const MujocoWalker2DWrapper &other) : MujocoWrapper(other), 
-	xmlFile{other.xmlFile}, useHealthyReward{other.useHealthyReward},
+	xmlFile{other.xmlFile}, useHealthyReward{other.useHealthyReward}, useObstacleReward{other.useObstacleReward},
 	exclude_current_positions_from_observation_{other.exclude_current_positions_from_observation_}
 
 	{
@@ -57,6 +64,14 @@ public:
 		healthy_angle_range_ = {-1.0, 1.0};
 		frame_skip_ = 4;
 		initialize_simulation();
+
+		used_obstacles = {
+			{"obstacle0"},
+			{"obstacle1-a", "obstacle1-b", "obstacle1-c", "obstacle1-d", "obstacle1-e", "obstacle1-f"},
+			{"obstacle2-a", "obstacle2-b", "obstacle2-c", "obstacle2-d",},
+			{"obstacle3"},
+			{"obstacle4"},
+		};
     }
 
     ~MujocoWalker2DWrapper() {
@@ -130,7 +145,6 @@ public:
     double control_cost(std::vector<double>& action);
 
     bool is_healthy() const;
-
 
 };
 
