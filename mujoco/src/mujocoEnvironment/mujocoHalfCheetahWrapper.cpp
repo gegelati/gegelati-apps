@@ -41,6 +41,8 @@ void MujocoHalfCheetahWrapper::doActions(std::vector<double> actionsID)
 	auto x_pos_after = d_->qpos[0];
 	auto x_vel = (x_pos_after - x_pos_before) / (m_->opt.timestep * frame_skip_);
 
+	//std::cout<<actionsID[0]<<" "<<actionsID[1]<<" "<<actionsID[2]<<" "<<actionsID[3]<<" "<<actionsID[4]<<" "<<actionsID[5]<<std::endl;
+
 
 	auto forward_reward = forward_reward_weight * x_vel;
 	auto rewards = forward_reward;

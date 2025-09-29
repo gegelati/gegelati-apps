@@ -54,7 +54,7 @@ namespace Selector {
                           const TPG::TPGVertex*>& results,
             Mutator::RNG& rng) override;
 
-        virtual std::vector<std::vector<size_t>> shuffleTestCases(Mutator::RNG& rng);
+        virtual std::vector<std::vector<size_t>> shuffleTestCases(Mutator::RNG& rng) const;
         
         /**
          * \brief select the test cases for the new generation
@@ -114,15 +114,15 @@ namespace Learn {
             {
                 // There is probably a cleaner way to do that, but using the factory
                 // was creating import issues.
-                if (p.selection.selectionMode == "truncation") {
+                if (p.selection._selectionMode == "truncation") {
                     selector =
                         std::make_shared<Selector::TruncationSelector>(tpg, p);
                 }
-                else if (p.selection.selectionMode == "tournament") {
+                else if (p.selection._selectionMode == "tournament") {
                     selector =
                         std::make_shared<Selector::TournamentSelector>(tpg, p);
                 }
-                else if (p.selection.selectionMode == "lexicase"){
+                else if (p.selection._selectionMode == "lexicase"){
                     selector = std::make_shared<Selector::LexicaseSelector>(tpg, p, testCases);
                 } else {
                     throw std::runtime_error("Selection mode not found");

@@ -118,7 +118,7 @@
 			//to change destination toward any other actions. If set to false, it can only
 			//change destination toward a root action.
 			// "teamAccessAllActions" : true, // Default value
-			"teamAccessAllActions" : true,
+			"teamAccessAllActions" : false,
 			// Create action program, instead of using context program to select continuous action(s).
 			// "useActionProgram" : false, // Default value
 			"useActionProgram" : true,
@@ -129,7 +129,7 @@
 	},
 	// Number of generations of the training.
 	// "nbGenerations" : 500, // Default value
-	"nbGenerations" : 100,
+	"nbGenerations" : 10,
 	// [Only used in AdversarialLearningAgent.]
 	// Number of times each job is evaluated in the learning process.
 	// Each root may belong to several jobs, hence this parameter should be lower
@@ -153,19 +153,29 @@
 	// When undefined in the json file, this parameter is automatically set to the
 	// number of cores of the CPU.
 	// /* "nbThreads" : 0,*/ // Commented by default
-	"nbThreads" : 12,
+	"nbThreads" : 20,
 	"selection" : 
 	{
 		// Selection mode used. Available modes are:
+		//   - "lexicase"
 		//   - "truncation"
 		//   - "tournament"
-		// "selectionMode" : Truncation, // Default value
-		"selectionMode" : "lexicase",
-		"tournament" 	: 
+		// "_selectionMode" : Truncation, // Default value
+		"_selectionMode" : "tournament",
+		"lexicase" : 
+		{
+			// Coefficient multiply to epsilon to change the effect of epsilon lexicase.
+			// "alpha" : 1.0, // Default value
+			"alpha" : 0.1,
+			// Ratio of root selected (not deleted) by the lexicase selction.
+			// "ratioSelectedRoots" : 0.9, // Default value
+			"ratioSelectedRoots" : 0.05
+		},
+		"tournament" : 
 		{
 			// Percentage of root TPGVertex saved from the tournament at each generation.
 			// "ratioSavedRoots" : 0.05, // Default value
-			"ratioSavedRoots" : 0.5,
+			"ratioSavedRoots" : 0.05,
 			// Size of tournament if tournament selection is used.
 			// "sizeTournament" : 5, // Default value
 			"sizeTournament" : 3
@@ -174,7 +184,7 @@
 		{
 			// Percentage of deleted (and regenerated) root TPGVertex at each generation.
 			// "ratioDeletedRoots" : 0.5, // Default value
-			"ratioDeletedRoots" : 0.7
+			"ratioDeletedRoots" : 0.95
 		}
 	},
 	// Value to indicate how many generation between each validation step

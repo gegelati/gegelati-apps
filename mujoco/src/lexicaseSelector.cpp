@@ -6,7 +6,6 @@ void Selector::LexicaseSelector::doSelection(
     std::multimap<std::shared_ptr<Learn::EvaluationResult>,
         const TPG::TPGVertex*>& results, Mutator::RNG& rng)
 {
-
     // Vertices selected to be parents
     std::set<const TPG::TPGVertex*> selectedVertices;
 
@@ -30,7 +29,7 @@ void Selector::LexicaseSelector::doSelection(
         std::cout<<s.second<<"  ";
     }
 
-    size_t nbSelectedParents = 50;
+    size_t nbSelectedParents = results.size() * params.selection.lexicase.ratioSelectedRoots;
     for(size_t idx = 0; idx < nbSelectedParents; idx++){
 
         // Shuffle the test cases
@@ -85,7 +84,7 @@ void Selector::LexicaseSelector::doSelection(
             // Get best score and erase the already selected vertices
             it = currentResult.begin();
             while(it != currentResult.end()){
-                if (dynamic_cast<Learn::LexicaseEvaluationResult*>(it->first.get())->getScores().at(*testCase) < bestScore - mad/10){
+                if (dynamic_cast<Learn::LexicaseEvaluationResult*>(it->first.get())->getScores().at(*testCase) < bestScore - mad * params.selection.lexicase.alpha){
                     it = currentResult.erase(it);
                 } else {
                     it++;
@@ -106,8 +105,6 @@ void Selector::LexicaseSelector::doSelection(
 
 
     auto it = results.begin();
-    size_t v = 0;
-    size_t w = 0;
     while(it != results.end()){
         if(selectedVertices.find(it->second) == selectedVertices.end()){
 
@@ -115,17 +112,13 @@ void Selector::LexicaseSelector::doSelection(
             // Removed stored result (if any)
             this->resultsPerRoot.erase(it->second);
             it = results.erase(it);
-            v++;
         } else {
             it++;
-            w++;
         }
     }
-
-
 }
 
-std::vector<std::vector<size_t>> Selector::LexicaseSelector::shuffleTestCases(Mutator::RNG& rng)
+std::vector<std::vector<size_t>> Selector::LexicaseSelector::shuffleTestCases(Mutator::RNG& rng) const
 {
     std::vector<std::vector<size_t>> shuffledTestCases;
     std::vector<std::vector<size_t>> testCases(this->currentTestCases);
@@ -145,14 +138,22 @@ void Selector::LexicaseSelector::updateTestCases(Mutator::RNG& rng, Learn::Learn
     this->currentTestCases.clear();
     std::vector<std::vector<size_t>> allTestCasesCopy(this->allTestCases);
     
-    size_t nbCases = allTestCases.size();//(mode == Learn::LearningMode::TRAINING) ? params.nbIterationsPerPolicyEvaluation : params.nbIterationsPerPolicyValidation;
+    if(mode == Learn::LearningMode::TRAINING){
+        while(this->currentTestCases.size() < allTestCases.size() && allTestCasesCopy.size() > 0){
+            auto it = allTestCasesCopy.begin();
+            std::advance(it, rng.getUnsignedInt64(0, allTestCasesCopy.size() - 1));
 
-    while(this->currentTestCases.size() < nbCases && allTestCasesCopy.size() > 0){
-        auto it = allTestCasesCopy.begin();
-        std::advance(it, rng.getUnsignedInt64(0, allTestCasesCopy.size() - 1));
+            this->currentTestCases.push_back(*it);
+            allTestCasesCopy.erase(it);
+        }
+    } else {
+        std::set<size_t> allUniqueCases;
+        for(auto& vect: this->allTestCases){
+            allUniqueCases.insert(vect.begin(), vect.end());
+        }
 
-        this->currentTestCases.push_back(*it);
-        allTestCasesCopy.erase(it);
+        std::vector<size_t> vectorAllCases(allUniqueCases.begin(), allUniqueCases.end());
+        this->currentTestCases.push_back(vectorAllCases);
     }
 }
 
@@ -230,9 +231,9 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
     uint64_t generationNumber, LearningMode mode,
     LearningEnvironment& le) const
 {
-    if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) == nullptr){
+    /*if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) == nullptr){
         return Learn::LearningAgent::evaluateJob(tee, job, generationNumber, mode, le);
-    }
+    }*/
 
 
     // Only consider the first root of jobs as we are not in adversarial mode
@@ -257,9 +258,14 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
                                 ? this->params.nbIterationsPerPolicyEvaluation
                                 : this->params.nbIterationsPerPolicyValidation;
 
-    auto testCases = dynamic_cast<Selector::LexicaseSelector*>(selector.get())->getCurrentTestCases();
+    std::vector<std::vector<size_t>>* testCases;
+    size_t nbTestCase = 1;
+    if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) != nullptr){
+    testCases = new std::vector<std::vector<size_t>>(dynamic_cast<Selector::LexicaseSelector*>(selector.get())->getCurrentTestCases());
+    nbTestCase = testCases->size();
+    }
 
-    for(size_t taskNumber = 0; taskNumber < testCases.size(); taskNumber++){
+    for(size_t taskNumber = 0; taskNumber < nbTestCase; taskNumber++){
 
         double rTask = 0;
 
@@ -270,7 +276,9 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
             Data::Hash<uint64_t> hasher;
             uint64_t hash = hasher(generationNumber) ^ hasher(iterationNumber) ^ hasher(taskNumber);
 
-            dynamic_cast<MujocoWrapper*>(&le)->setObstacles(testCases.at(taskNumber));
+    if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) != nullptr){
+            dynamic_cast<MujocoWrapper*>(&le)->setObstacles(testCases->at(taskNumber));
+    }
 
             // Reset the learning Environment
             le.reset(hash, mode, iterationNumber, generationNumber);
@@ -297,14 +305,17 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
             }
         }
         
-        allScores.insert(std::make_pair(testCases.at(taskNumber), rTask / nbEvaluation));
+        
+    if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) != nullptr){
+        allScores.insert(std::make_pair(testCases->at(taskNumber), rTask / nbEvaluation));
+    }
     }
 
 
     // Create the EvaluationResult
     auto evaluationResult = std::shared_ptr<LexicaseEvaluationResult>(
-        new LexicaseEvaluationResult(allScores, result / (double)(nbEvaluation * testCases.size()), nbEvaluation,
-                             utility / (double)(nbEvaluation*testCases.size())));
+        new LexicaseEvaluationResult(allScores, result / (double)(nbEvaluation * nbTestCase), nbEvaluation,
+                             utility / (double)(nbEvaluation*nbTestCase)));
 
 
     // Combine it with previous one if any
@@ -323,7 +334,7 @@ void Learn::LexicaseAgent::trainOneGeneration(uint64_t generationNumber,
     }
 
     // Update the test cases in lexicase selection.
-    if(params.selection.selectionMode == "lexicase"){
+    if(params.selection._selectionMode == "lexicase"){
         dynamic_cast<Selector::LexicaseSelector*>(selector.get())->updateTestCases(rng, Learn::LearningMode::TRAINING);
     }
 
@@ -335,7 +346,7 @@ void Learn::LexicaseAgent::trainOneGeneration(uint64_t generationNumber,
     }
 
     // Remove worst performing roots
-    this->selector->doSelection(results, rng);
+    this->selector->launchSelection(results, rng);
     // Update the evaluation records
     this->selector->updateEvaluationRecords(results);
 
@@ -346,7 +357,7 @@ void Learn::LexicaseAgent::trainOneGeneration(uint64_t generationNumber,
     // Does a validation or not according to the parameter doValidation
     if (params.doValidation) {
         // Update the test cases in lexicase selection.
-        if(params.selection.selectionMode == "lexicase"){
+        if(params.selection._selectionMode == "lexicase"){
             dynamic_cast<Selector::LexicaseSelector*>(selector.get())->updateTestCases(rng, Learn::LearningMode::VALIDATION);
         }
 

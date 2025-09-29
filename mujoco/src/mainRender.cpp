@@ -243,7 +243,21 @@ int main(int argc, char ** argv) {
         obstacleUsed.push_back(currentGroup);
     }
 
+
 	std::cout << "Start Mujoco Rendering application with seed " << seed<<"." << std::endl;
+	if((obstacleUsed.size() == 0)){
+		std::cout << "USING NO OBSTACLE " << std::endl;
+		obstacleUsed.clear();
+	} else {
+		std::cout << "USING OBSTACLES: ";
+		for (const auto& group : obstacleUsed) {
+			for (size_t num : group) {
+				std::cout << num << " ";
+			}
+			std::cout << "| ";
+		}
+		std::cout<<std::endl;
+	}
     // Create the instruction set for programs
 	Instructions::Set set;
 	fillInstructionSet(set);
@@ -277,6 +291,13 @@ int main(int argc, char ** argv) {
 		throw std::runtime_error("Use case not found");
 	}
 
+    
+    if(obstacleUsed.size() > 1){
+        throw std::runtime_error("Cannot use more than one type of task at the same time for render mode");
+    } else if (obstacleUsed.size() == 1) {
+        mujocoLE->setObstacles(obstacleUsed[0]);
+    }
+
 	// Instantiate and init the learning agent
 	Learn::LexicaseAgent la(*mujocoLE, set, params, obstacleUsed);
 	la.init(seed);
@@ -288,7 +309,7 @@ int main(int argc, char ** argv) {
 
     if(tpg.getNbRootVertices() > 1){
         
-        if(params.selection.selectionMode == "lexicase"){
+        if(params.selection._selectionMode == "lexicase"){
             dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get())->updateTestCases(la.getRNG(), Learn::LearningMode::TRAINING);
         }
         std::cout<<"Multiple roots identified. One generation training launched to identified the best root"<<std::endl;
@@ -347,7 +368,7 @@ int main(int argc, char ** argv) {
     }
 
     // Update the test cases in lexicase selection.
-    if(params.selection.selectionMode == "lexicase"){
+    if(params.selection._selectionMode == "lexicase"){
         dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get())->updateTestCases(la.getRNG(), Learn::LearningMode::TRAINING);
         auto testCases = dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get())->getCurrentTestCases();
         mujocoLE->setObstacles(testCases.at(0));

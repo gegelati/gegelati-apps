@@ -150,12 +150,14 @@ int main(int argc, char ** argv) {
 	File::ParametersParser::loadParametersFromJson(paramFile, params);
 
 	std::cout << "SELECTION METHOD :";
-	if(params.selection.selectionMode == "tournament"){
+	if(params.selection._selectionMode == "tournament"){
 		std::cout<<" TOURNAMENT SELECTION"<<std::endl;
-	} else if(params.selection.selectionMode == "truncation") {
+	} else if(params.selection._selectionMode == "truncation") {
 		std::cout<<" TRUNCATION SELECTION"<<std::endl;
-	} else {
+	} else if(params.selection._selectionMode == "lexicase"){
 		std::cout<<" LEXICASE SELECTION"<<std::endl;
+	} else {
+		std::cout<<" NO SELECTION.... WAIIIT I SHOULD CRASH NOOW?"<<std::endl;
 	}
 
 
@@ -201,13 +203,22 @@ int main(int argc, char ** argv) {
 		throw std::runtime_error("Use case not found");
 	}
 
+	// Set obstacles when no lexicase
+	if(params.selection._selectionMode != "lexicase"){
+		if(obstacleUsed.size() > 1){
+			throw std::runtime_error("Cannot use more than one type of task at the same time without lexicase selection");
+		} else if (obstacleUsed.size() == 1) {
+			mujocoLE->setObstacles(obstacleUsed[0]);
+		}
+	}
+
 	std::cout << "NUMBER OF THREADS: " << params.nbThreads << std::endl;
 
 	// Instantiate and init the learning agent
 	Learn::LexicaseAgent la(*mujocoLE, set, params, obstacleUsed);
 	la.init(seed);
 
-	if(dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get()) == nullptr && params.selection.selectionMode == "lexicase"){
+	if(dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get()) == nullptr && params.selection._selectionMode == "lexicase"){
 		throw std::runtime_error("lexicase selector should be used.");
 	}
 

@@ -1,0 +1,16 @@
+Mon Sep 29 14:50:38 2025
+ERROR: Load model error: Error: material 'MatPlane' not found in geom 0
+Object name = floor, id = 0, line = 47, column = 5
+
+Mon Sep 29 14:50:40 2025
+ERROR: Load model error: Error: material 'MatPlane' not found in geom 0
+Object name = floor, id = 0, line = 47, column = 5
+
+Mon Sep 29 14:52:27 2025
+ERROR: Load model error: Error: repeated name in geom array, position 9
+Object name = obstacle0_geom, id = 9, line = 86, column = 7
+
+Mon Sep 29 14:52:39 2025
+ERROR: Load model error: Error: body mass is too small, cannot compute center of mass
+Object name = obstacle0, id = 8, line = 81, column = 5
+
