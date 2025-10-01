@@ -14,3 +14,76 @@ Mon Sep 29 14:52:39 2025
 ERROR: Load model error: Error: body mass is too small, cannot compute center of mass
 Object name = obstacle0, id = 8, line = 81, column = 5
 
+Mon Sep 29 16:15:05 2025
+ERROR: Load model error: Error: material 'MatPlane' not found in geom 9
+Object name = obstacle0-ground, id = 9, line = 88, column = 7
+
+Mon Sep 29 16:26:37 2025
+ERROR: Load model error: Error: body mass is too small, cannot compute center of mass
+Object name = obstacle2, id = 12, line = 109, column = 5
+
+Mon Sep 29 16:27:28 2025
+ERROR: Load model error: XML parse error at line 150, column 13:
+Error reading Attributes.
+
+
+Mon Sep 29 16:28:10 2025
+ERROR: Load model error: Error: body mass is too small, cannot compute center of mass
+Object name = obstacle2, id = 12, line = 109, column = 5
+
+Mon Sep 29 16:33:42 2025
+ERROR: Load model error: Error: repeated name in geom array, position 20
+Object name = obstacle4-ground, id = 20, line = 161, column = 7
+
+Mon Sep 29 16:39:19 2025
+ERROR: Load model error: XML Error: Schema violation: unrecognized attribute: 'mass'
+
+Element 'body', line 128, column 5
+
+
+Mon Sep 29 16:42:15 2025
+ERROR: Load model error: Error: body mass is too small, cannot compute center of mass
+Object name = obstacle3, id = 14, line = 128, column = 5
+
+Mon Sep 29 18:01:27 2025
+ERROR: Load model error: Error: repeated name in geom array, position 9
+Object name = obstacle0_geom, id = 9, line = 90, column = 7
+
+Mon Sep 29 19:05:07 2025
+ERROR: Load model error: Error: body mass is too small, cannot compute center of mass
+Object name = obstacle2-ground, id = 14, line = 124, column = 5
+
+Mon Sep 29 19:27:03 2025
+ERROR: Load model error: Error: repeated name in geom array, position 19
+Object name = obstacle0_geom, id = 19, line = 148, column = 7
+
+Mon Sep 29 19:27:11 2025
+ERROR: Load model error: Error: body mass is too small, cannot compute center of mass
+Object name = obstacle3, id = 15, line = 143, column = 5
+
+Mon Sep 29 19:45:39 2025
+ERROR: Load model error: XML Error: attribute 'pos' has too much data
+Element 'geom', line 190, column 7
+
+
+Mon Sep 29 19:45:48 2025
+ERROR: Load model error: XML Error: attribute 'pos' has too much data
+Element 'geom', line 190, column 7
+
+
+Mon Sep 29 19:46:07 2025
+ERROR: Load model error: XML Error: attribute 'pos' has too much data
+Element 'geom', line 190, column 7
+
+
+Mon Sep 29 19:49:25 2025
+ERROR: Load model error: Error: repeated name in geom array, position 31
+Object name = obstacle4a-geom, id = 31, line = 204, column = 7
+
+Mon Sep 29 20:14:58 2025
+ERROR: Load model error: Error: repeated name in geom array, position 33
+Object name = obstacle4h-geom, id = 33, line = 215, column = 7
+
+Tue Sep 30 10:11:58 2025
+ERROR: Could not initialize GLFW
+

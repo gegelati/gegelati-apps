@@ -11,7 +11,7 @@ def run_mujoco_and_get_score(env: str, w: int, wTest: int, sTrain: int, sTest: i
     cmd = [
         "./bin/Release/renderMujoco",
         "-u", env,
-        "-d", f"logs/{env}/oneObstacle_{w}/out_best.{sTrain}.p0.{env}.dot",
+        "-d", f"logs/{env}/test/obs{w}/out_best.{sTrain}.p0.{env}.dot",
         "-w", str(wTest),
         "-v", "2",
         "-s", str(sTest)
@@ -53,9 +53,9 @@ def main():
     envs = ["half_cheetah"]
     nb_obsTrain = 5
     nb_obsTest = 5
-    nb_seed_train = 5
+    nb_seed_train = 2
     nb_seed_test = 10
-    max_workers = 8  # Ajuste selon ta machine (ex: 4-16)
+    max_workers = 20  # Ajuste selon ta machine (ex: 4-16)
 
     # Initialisation du DataFrame
     df = pd.DataFrame(columns=[

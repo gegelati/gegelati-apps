@@ -26,10 +26,22 @@ void MujocoHalfCheetahWrapper::reset(size_t seed, Learn::LearningMode mode, uint
 	
 
 	
-	this->updateObstaclesPosition(obstacleIndex, 0, 0);
+	this->updateObstaclesPosition(obstacleIndex, 0, 0, 0);
 	
 	this->computeState();
-	this->computeObstaclesState(17, 2, 2);
+	this->computeObstaclesState(17, 4, 5);
+
+	/*if(Learn::LearningMode::TRAINING == mode){
+		std::cout<<"Training mode  ";
+	} else {
+		std::cout<<"Not training mode  ";
+	}
+	for(auto b: obstacles){
+		std::cout<<b.first<<" "<<b.second<<" - ";
+	}std::cout<<std::endl;
+	if(obstacles.size() == 0){
+		std::cout<<"Size empty weird"<<std::endl;
+	}*/
 }
 
 void MujocoHalfCheetahWrapper::doActions(std::vector<double> actionsID)
@@ -43,6 +55,12 @@ void MujocoHalfCheetahWrapper::doActions(std::vector<double> actionsID)
 
 	//std::cout<<actionsID[0]<<" "<<actionsID[1]<<" "<<actionsID[2]<<" "<<actionsID[3]<<" "<<actionsID[4]<<" "<<actionsID[5]<<std::endl;
 
+	/*for(auto b: obstacles){
+		std::cout<<b.first<<" "<<b.second;
+	}std::cout<<std::endl;
+	if(obstacles.size() == 0){
+		std::cout<<"Size empty weird"<<std::endl;
+	}*/
 
 	auto forward_reward = forward_reward_weight * x_vel;
 	auto rewards = forward_reward;
@@ -52,7 +70,7 @@ void MujocoHalfCheetahWrapper::doActions(std::vector<double> actionsID)
 	auto reward = rewards - costs;
 
 	this->computeState();
-	this->computeObstaclesState(17, 2, 2);
+	this->computeObstaclesState(17, 4, 5);
 
 	// Incremente the reward.
 	this->totalReward += rewards;
@@ -94,7 +112,7 @@ bool MujocoHalfCheetahWrapper::isTerminal() const
 }
 
 bool MujocoHalfCheetahWrapper::is_healthy() const{
-	return (d_->qpos[2] < 2.5) && (d_->qpos[2] > -2.5);
+	return (d_->qpos[2] < 2.5) && (d_->qpos[2] > -2.5) && (d_->qpos[1] > -5);
 }
 
 double MujocoHalfCheetahWrapper::control_cost(std::vector<double>& action) {
@@ -121,5 +139,6 @@ void MujocoHalfCheetahWrapper::computeState(){
 		index++;
 	}
 
+	
 }
 

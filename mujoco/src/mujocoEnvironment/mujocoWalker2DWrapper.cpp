@@ -28,7 +28,7 @@ void MujocoWalker2DWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_
 	mj_resetData(m_, d_);
 	set_state(qpos, qvel);
 
-	this->updateObstaclesPosition(obstacleIndex, 0, 0);
+	this->updateObstaclesPosition(obstacleIndex, 0, 0, 0);
 	this->computeState();
 	this->computeObstaclesState(17, 2, 1);
 }

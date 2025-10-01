@@ -1,4 +1,6 @@
 
+#include <fstream>
+#include <sstream>
 #include "lexicaseSelector.h"
 #include "mujocoEnvironment/mujocoWrapper.h"
 
@@ -9,25 +11,6 @@ void Selector::LexicaseSelector::doSelection(
     // Vertices selected to be parents
     std::set<const TPG::TPGVertex*> selectedVertices;
 
-    std::map<const std::vector<size_t>, double> bs;
-
-    for(auto& r : results){
-        if(bs.empty()){
-            for(auto& v: dynamic_cast<Learn::LexicaseEvaluationResult*>(r.first.get())->getScores()){
-                bs[v.first] = v.second;
-            }
-        }
-
-        for(auto& v: dynamic_cast<Learn::LexicaseEvaluationResult*>(r.first.get())->getScores()){
-            if(v.second > bs[v.first]){
-                bs[v.first] = v.second;
-            }
-        }
-    }
-    std::cout<<"  best ";
-    for(auto s: bs){
-        std::cout<<s.second<<"  ";
-    }
 
     size_t nbSelectedParents = results.size() * params.selection.lexicase.ratioSelectedRoots;
     for(size_t idx = 0; idx < nbSelectedParents; idx++){
@@ -154,6 +137,7 @@ void Selector::LexicaseSelector::updateTestCases(Mutator::RNG& rng, Learn::Learn
 
         std::vector<size_t> vectorAllCases(allUniqueCases.begin(), allUniqueCases.end());
         this->currentTestCases.push_back(vectorAllCases);
+        //this->currentTestCases = {{0}, {1}, {2}, {3}, {4}, {0,1,2,3,4}};
     }
 }
 
@@ -258,11 +242,16 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
                                 ? this->params.nbIterationsPerPolicyEvaluation
                                 : this->params.nbIterationsPerPolicyValidation;
 
-    std::vector<std::vector<size_t>>* testCases;
+    std::vector<std::vector<size_t>>* currentTestCases;
     size_t nbTestCase = 1;
     if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) != nullptr){
-    testCases = new std::vector<std::vector<size_t>>(dynamic_cast<Selector::LexicaseSelector*>(selector.get())->getCurrentTestCases());
-    nbTestCase = testCases->size();
+        currentTestCases = new std::vector<std::vector<size_t>>(dynamic_cast<Selector::LexicaseSelector*>(selector.get())->getCurrentTestCases());
+        nbTestCase = currentTestCases->size();
+    }
+
+    if(mode != Learn::LearningMode::TRAINING){
+        currentTestCases = new std::vector<std::vector<size_t>>{{0}, {1}, {2}, {3}, {4}, {0,1,2,3,4}};
+        nbTestCase = currentTestCases->size();
     }
 
     for(size_t taskNumber = 0; taskNumber < nbTestCase; taskNumber++){
@@ -276,12 +265,21 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
             Data::Hash<uint64_t> hasher;
             uint64_t hash = hasher(generationNumber) ^ hasher(iterationNumber) ^ hasher(taskNumber);
 
-    if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) != nullptr){
-            dynamic_cast<MujocoWrapper*>(&le)->setObstacles(testCases->at(taskNumber));
-    }
 
+            if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) != nullptr || mode != Learn::LearningMode::TRAINING){
+                dynamic_cast<MujocoWrapper*>(&le)->setObstacles(currentTestCases->at(taskNumber));
+            } else if(testCases.size() > 1){
+                throw std::runtime_error("Cannot use more than one type of task at the same time without lexicase selection");
+            } else if (testCases.size() == 1) {
+                std::vector<size_t> nonConstTestCase = this->testCases[0];
+                dynamic_cast<MujocoWrapper*>(&le)->setObstacles(nonConstTestCase);
+            } else {
+                std::vector<size_t> v;
+                dynamic_cast<MujocoWrapper*>(&le)->setObstacles(v);
+            }
             // Reset the learning Environment
             le.reset(hash, mode, iterationNumber, generationNumber);
+
 
             uint64_t nbActions = 0;
             while (!le.isTerminal() &&
@@ -295,6 +293,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
                 nbActions++;
             }
 
+
             // Update results
             result += le.getScore();
             rTask += le.getScore();
@@ -306,11 +305,10 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
         }
         
         
-    if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) != nullptr){
-        allScores.insert(std::make_pair(testCases->at(taskNumber), rTask / nbEvaluation));
+    if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) != nullptr || mode != Learn::LearningMode::TRAINING){
+        allScores.insert(std::make_pair(currentTestCases->at(taskNumber), rTask / nbEvaluation));
     }
     }
-
 
     // Create the EvaluationResult
     auto evaluationResult = std::shared_ptr<LexicaseEvaluationResult>(
@@ -369,10 +367,55 @@ void Learn::LexicaseAgent::trainOneGeneration(uint64_t generationNumber,
             generationNumber == params.nbGenerations - 1) {
             validationResults = evaluateAllRoots(
                 generationNumber, Learn::LearningMode::VALIDATION);
+    
+            std::map<const std::vector<size_t>, double> bs;
+
+            for(auto& r : validationResults){
+                if(bs.empty()){
+                    for(auto& v: dynamic_cast<Learn::LexicaseEvaluationResult*>(r.first.get())->getScores()){
+                        bs[v.first] = v.second;
+                    }
+                }
+
+                for(auto& v: dynamic_cast<Learn::LexicaseEvaluationResult*>(r.first.get())->getScores()){
+                    if(v.second > bs[v.first]){
+                        bs[v.first] = v.second;
+                    }
+                }
+            }
+            std::ifstream infile(csvFile);
+            std::stringstream buffer;
+            buffer << infile.rdbuf();
+            infile.close();
+
+            std::ofstream outfile(csvFile, std::ios::app);
+            if (outfile.tellp() == 0) {
+                // Write header if file is empty
+                for (auto it = bs.begin(); it != bs.end(); ++it) {
+                    outfile << "\"";
+                    for (size_t i = 0; i < it->first.size(); ++i) {
+                        outfile << it->first[i];
+                        if (i < it->first.size() - 1) outfile << "-";
+                    }
+                    outfile << "\"";
+                    if (std::next(it) != bs.end()) outfile << ",";
+                }
+                outfile << std::endl;
+            }
+            for (auto it = bs.begin(); it != bs.end(); ++it) {
+                outfile << it->second;
+                if (std::next(it) != bs.end()) outfile << ",";
+            }
+            outfile << std::endl;
+            outfile.close();
         }
+
+
         for (auto logger : loggers) {
             logger.get().logAfterValidate(validationResults);
         }
+
+        
     }
 
     if (doPopulate) {

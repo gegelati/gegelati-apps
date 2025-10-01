@@ -42,13 +42,13 @@ public:
 			sizeObstacleArea = 5;
 			additionObstacle = 100;
 
-			used_obstacles = {
+			/*used_obstacles = {
 				{"obstacle0"},
 				{"obstacle1-a", "obstacle1-b", "obstacle1-c", "obstacle1-d", "obstacle1-e", "obstacle1-f"},
 				{"obstacle2-a", "obstacle2-b", "obstacle2-c", "obstacle2-d",},
 				{"obstacle3"},
 				{"obstacle4"},
-			};
+			};*/
 		};
 
     /**
@@ -65,13 +65,13 @@ public:
 		frame_skip_ = 4;
 		initialize_simulation();
 
-		used_obstacles = {
+		/*used_obstacles = {
 			{"obstacle0"},
 			{"obstacle1-a", "obstacle1-b", "obstacle1-c", "obstacle1-d", "obstacle1-e", "obstacle1-f"},
 			{"obstacle2-a", "obstacle2-b", "obstacle2-c", "obstacle2-d",},
 			{"obstacle3"},
 			{"obstacle4"},
-		};
+		};*/
     }
 
     ~MujocoWalker2DWrapper() {

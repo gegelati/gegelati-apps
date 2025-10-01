@@ -184,35 +184,65 @@ void MujocoWrapper::printStateAndAction(std::string path) const
 }
 
 void MujocoWrapper::updateObstaclesPosition(
-	int64_t currIndexObstacle, double xposMin, double xposMax)
+	int64_t currIndexObstacle, double xposMin, double xposMax, double middle)
 {
 	// Place the obstacles selected at a random position, and the other obstacles at -100
 	auto it = obstacles.begin();
-	while(it != obstacles.end()){
+	auto itGrounds = grounds.begin();
+	auto itAll = allObstacles.begin();
+	auto itAllGrounds = allGrounds.begin();
+	while(itAll != allObstacles.end() && itAllGrounds != allGrounds.end()){
 		double xpos = -100.0;
+		double groundPos = -100.0;
 
-		if((int64_t)it->first == currIndexObstacle){
+
+		std::string nameObstacle = itAll->second;
+		if((int64_t)itAll->first == currIndexObstacle){
 			xpos = this->rng.getDouble(xposMin, xposMax) + additionObstacle;
 			if(currIndexObstacle != -1){
 				obstaclePos = xpos - additionObstacle;
 			} else {
 				obstaclePos = 0;
 			}
+
+			if(noObstacleArea){
+				nameObstacle = "empty";
+			}
+
+			groundPos = middle;
+
+			it++;
+			itGrounds++;	
 		}
+
 
 		
-		for (const auto& obstacle : it->second) {
-			// Get IDs
-			int obstacle_id = mj_name2id(m_, mjOBJ_BODY, obstacle.c_str());
-			if(obstacle_id == -1) {
-				std::cerr << "Error: obstacle '" << obstacle.c_str() << "' not found in model." << std::endl;
-				continue;
-			}
+		int obstacle_id = mj_name2id(m_, mjOBJ_BODY, nameObstacle.c_str());
+		if(obstacle_id == -1) {
+			std::cerr << "Error: obstacle '" << nameObstacle.c_str() << "' not found in model." << std::endl;
+		} else {
 			m_->body_pos[3 * obstacle_id] = xpos; // X
+
+
 		}
 
-		it++;
+		// Get IDs
+		int ground_id = mj_name2id(m_, mjOBJ_BODY, itAllGrounds->second.c_str());
+		if(ground_id == -1) {
+			std::cerr << "Error: ground '" << itAllGrounds->second.c_str() << "' not found in model." << std::endl;
+		} else {
+
+			m_->body_pos[3 * ground_id] = groundPos; // X
+		}
+
+
+		itAll++;
+		itAllGrounds++;
 	}
+
+	/*if(it != obstacles.end() || itGrounds != grounds.end()){
+		throw std::runtime_error("Obstacles and grounds should have the same size");
+	}*/
 }
 
 bool MujocoWrapper::computeObstaclesState(uint64_t index, double xposMin, double xposMax)
@@ -223,6 +253,11 @@ bool MujocoWrapper::computeObstaclesState(uint64_t index, double xposMin, double
 	if(obstacleIndex != -1) {
 		dist_x = obstaclePos - d_->qpos[0];
 	} 
+
+	if(obstacles.size() == 0){
+		std::vector<size_t> nullVect;
+		this->setObstacles(nullVect);
+	}
 
 	if((obstacleIndex == -1 || d_->qpos[0] > sizeObstacleArea * (currentObstacleArea + 1)) && obstacles.size() > 0){
 		
@@ -239,7 +274,8 @@ bool MujocoWrapper::computeObstaclesState(uint64_t index, double xposMin, double
 		this->updateObstaclesPosition(
 			obstacleIndex, 
 			(sizeObstacleArea * currentObstacleArea) + xposMin,
-			(sizeObstacleArea * (currentObstacleArea + 1)) - xposMax);
+			(sizeObstacleArea * (currentObstacleArea + 1)) - xposMax,
+			(sizeObstacleArea * currentObstacleArea) + sizeObstacleArea / 2);
 		
 		dist_x = obstaclePos - d_->qpos[0];
 	} 
@@ -251,11 +287,25 @@ bool MujocoWrapper::computeObstaclesState(uint64_t index, double xposMin, double
 
 void MujocoWrapper::setObstacles(std::vector<size_t>& obs){
 	size_t obstacleUsedIdx = 0;
+	grounds.clear();
 	obstacles.clear();
-	for(size_t idx = 0; idx < used_obstacles.size() && obstacleUsedIdx < obs.size(); idx++){
+    std::sort(obs.begin(), obs.end()); // Ensure deterministic order
+	for(size_t idx = 0; obstacleUsedIdx < obs.size(); idx++){
 		if(idx == obs[obstacleUsedIdx]){
-			obstacles.emplace(idx, used_obstacles[idx]);
+			std::string obs = "obstacle" + std::to_string(idx);
+			std::string obsGround = obs + "-ground";
+			obstacles.emplace(idx, obs);
+			grounds.emplace(idx, obsGround);
 			obstacleUsedIdx++;
 		}
+	}
+
+	if(obs.size() == 0){
+		std::string obs = "obstacle" + std::to_string(0)+ "-ground";
+		obstacles.emplace(0, "empty");
+		grounds.emplace(0, obs);
+		noObstacleArea = true;
+	} else {
+		noObstacleArea = false;
 	}
 }

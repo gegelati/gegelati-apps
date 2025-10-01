@@ -299,13 +299,14 @@ int main(int argc, char ** argv) {
     }
 
 	// Instantiate and init the learning agent
-	Learn::LexicaseAgent la(*mujocoLE, set, params, obstacleUsed);
+	Learn::LexicaseAgent la(*mujocoLE, set, params, obstacleUsed, "renderMode");
 	la.init(seed);
 
     auto &tpg = *la.getTPGGraph();
     Environment env(set, params, mujocoLE->getDataSources(), mujocoLE->getNbActions());
 
     File::TPGGraphDotImporter dotImporter(dotPath, env, tpg);
+		std::cout<<"Loading graph with "<< la.getTPGGraph()->getNbRootVertices() << " vertices and " << la.getTPGGraph()->getEdges().size() << " edges."<< std::endl;
 
     if(tpg.getNbRootVertices() > 1){
         
@@ -322,8 +323,12 @@ int main(int argc, char ** argv) {
         la.getSelector()->keepBestPolicy();
 
         auto iter = results.begin();
+        for(auto r : results){
+            std::cout<<r.first->getResult()<<" "<<std::endl;
+        }
         std::advance(iter, results.size() - 1);
         double max = iter->first->getResult();
+    
         std::cout<<max<<std::endl;
 
 

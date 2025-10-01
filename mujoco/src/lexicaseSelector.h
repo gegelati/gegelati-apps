@@ -27,6 +27,7 @@ namespace Selector {
 
         std::vector<std::vector<size_t>> currentTestCases;
 
+
       public:
         /**
          * \brief Constructor for Selector.
@@ -37,7 +38,7 @@ namespace Selector {
         LexicaseSelector(std::shared_ptr<TPG::TPGGraph> graph,
                          const Learn::LearningParameters& params,
                          const std::vector<std::vector<size_t>>& testCases)
-            : Selector{graph, params}, allTestCases{testCases} {}
+            : Selector{graph, params}, allTestCases{testCases}{}
 
         /**
          * \brief override of doSelection method
@@ -105,12 +106,17 @@ namespace Selector {
 namespace Learn {
     class LexicaseAgent : public ParallelLearningAgent
     {
+        protected:
+            std::vector<std::vector<size_t>> testCases;
+            std::string csvFile;
+
+
         public:
             LexicaseAgent(
                 LearningEnvironment& le, const Instructions::Set& iSet,
                 const LearningParameters& p, const std::vector<std::vector<size_t>>& testCases,
-                const TPG::TPGFactory& factory = TPG::TPGFactory())
-                : ParallelLearningAgent(le, iSet, p, factory)
+                std::string csvFile = "results.csv", const TPG::TPGFactory& factory = TPG::TPGFactory())
+                : ParallelLearningAgent(le, iSet, p, factory), testCases{testCases}, csvFile{csvFile}
             {
                 // There is probably a cleaner way to do that, but using the factory
                 // was creating import issues.
@@ -126,6 +132,15 @@ namespace Learn {
                     selector = std::make_shared<Selector::LexicaseSelector>(tpg, p, testCases);
                 } else {
                     throw std::runtime_error("Selection mode not found");
+                }
+
+                // Init csv file with column names score, 0, 1, 2, 3, 4 and 01234
+                std::ofstream file(csvFile);
+                if (file.is_open()) {
+                    file << "score,0,1,2,3,4,01234\n";
+                    file.close();
+                } else if (csvFile != "renderMode"){
+                    std::cerr << "Could not open file " + csvFile + " for writing, it will not be used"<<std::endl;
                 }
             }
 

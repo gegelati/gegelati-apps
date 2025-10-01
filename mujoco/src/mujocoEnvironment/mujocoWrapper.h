@@ -33,13 +33,22 @@ protected:
 	bool saveStateAndAction = false;
 
 	
-	std::multimap<size_t, std::vector<std::string>> obstacles;
-	std::vector<std::vector<std::string>> used_obstacles;
+	std::multimap<size_t, std::string> allObstacles = {
+		{0, "obstacle0"}, {1, "obstacle1"}, {2, "obstacle2"}, {3, "obstacle3"}, {4, "obstacle4"}
+	};
+	std::multimap<size_t, std::string> allGrounds = {
+		{0, "obstacle0-ground"}, {1, "obstacle1-ground"}, {2, "obstacle2-ground"}, {3, "obstacle3-ground"}, {4, "obstacle4-ground"}
+	};
+
+
+	std::multimap<size_t, std::string> obstacles;
+	std::multimap<size_t, std::string> grounds;
 	int64_t obstacleIndex = 0;
 	uint64_t currentObstacleArea = 0;
 	double sizeObstacleArea = 0.0;
 	double obstaclePos = 0.0;
 	double additionObstacle = 0.0;
+	bool noObstacleArea = false;
 
 public:
 
@@ -59,7 +68,7 @@ public:
 	* Default copy constructor since all attributes are trivially copyable.
 	*/
 	MujocoWrapper(const MujocoWrapper& other) : LearningEnvironment(other.nbActions, false),
-		currentState{other.currentState}, stateSize{other.stateSize}, obstacles{other.obstacles}, sizeObstacleArea{other.sizeObstacleArea}, additionObstacle{other.additionObstacle} {}
+		currentState{other.currentState}, stateSize{other.stateSize}, sizeObstacleArea{other.sizeObstacleArea}, additionObstacle{other.additionObstacle} {}
 
 
 	/// Inherited via LearningEnvironment
@@ -102,7 +111,7 @@ public:
 	virtual void registerStateAndAction(const std::vector<double>& actionsID);
 	virtual void printStateAndAction(std::string path) const;
 
-	virtual void updateObstaclesPosition(int64_t indexObstacle, double xposMin, double xposMax);
+	virtual void updateObstaclesPosition(int64_t indexObstacle, double xposMin, double xposMax, double middle);
 
 	virtual bool computeObstaclesState(uint64_t index, double xposMin, double xposMax);
 

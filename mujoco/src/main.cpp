@@ -33,7 +33,7 @@ void exportIndividual(const TPG::TPGVertex* vertex,
     sprintf(dotFile, "%s/out_best%s.%" PRIu64 ".p%d.%s.dot",
             basePathDots.c_str(), suffix.str().c_str(), seed, indexParam, usecase.c_str());
     dotExporter.setNewFilePath(dotFile);
-    dotExporter.printSubGraph(vertex);
+    dotExporter.print();
 
     TPG::PolicyStats ps;
     ps.setEnvironment(graph->getEnvironment());
@@ -203,19 +203,14 @@ int main(int argc, char ** argv) {
 		throw std::runtime_error("Use case not found");
 	}
 
-	// Set obstacles when no lexicase
-	if(params.selection._selectionMode != "lexicase"){
-		if(obstacleUsed.size() > 1){
-			throw std::runtime_error("Cannot use more than one type of task at the same time without lexicase selection");
-		} else if (obstacleUsed.size() == 1) {
-			mujocoLE->setObstacles(obstacleUsed[0]);
-		}
-	}
 
 	std::cout << "NUMBER OF THREADS: " << params.nbThreads << std::endl;
 
+	// Name of csv file for validation data with logsFolder to create it, and usecase and indexparam
+	std::string csvFile = "" + std::string(logsFolder) + "/validationStats." + std::to_string(seed) + "." + std::string(usecase) + ".p" + std::to_string(indexParam) + ".csv";
+
 	// Instantiate and init the learning agent
-	Learn::LexicaseAgent la(*mujocoLE, set, params, obstacleUsed);
+	Learn::LexicaseAgent la(*mujocoLE, set, params, obstacleUsed, csvFile);
 	la.init(seed);
 
 	if(dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get()) == nullptr && params.selection._selectionMode == "lexicase"){
@@ -278,11 +273,10 @@ int main(int argc, char ** argv) {
 		dotExporter.setNewFilePath(buff);
 		dotExporter.print();
 
-		la.trainOneGeneration(i);
+		la.trainOneGeneration(i, i != params.nbGenerations - 1);
 	}
 
 	la.getTPGGraph()->clearProgramIntrons();
-
 
 	la.getSelector()->keepBestPolicy();
 	const auto* best = la.getSelector()->getBestRoot().first;

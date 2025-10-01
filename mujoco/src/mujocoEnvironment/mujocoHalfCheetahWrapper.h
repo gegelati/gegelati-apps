@@ -34,13 +34,6 @@ public:
 			initialize_simulation();
 
 			sizeObstacleArea = 10;
-			used_obstacles = {
-				{"obstacle0"},
-				{"obstacle1"},
-				{"obstacle2-a", "obstacle2-b"},
-				{"obstacle3-a", "obstacle3-b"},
-				{"obstacle4"},
-			};
 		};
 
     /**
@@ -52,14 +45,6 @@ public:
 	{   
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		initialize_simulation();
-
-		used_obstacles = {
-			{"obstacle0"},
-			{"obstacle1"},
-			{"obstacle2-a", "obstacle2-b"},
-			{"obstacle3-a", "obstacle3-b"},
-			{"obstacle4"},
-		};
 	}
 
     ~MujocoHalfCheetahWrapper() {
