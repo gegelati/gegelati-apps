@@ -47,6 +47,110 @@ void exportIndividual(const TPG::TPGVertex* vertex,
     statsOut.close();
 }
 
+void analyseValidationResults(
+	std::multimap<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex *>& validationResults,
+	size_t generationNumber,
+	const std::string& csvFile,
+	const std::string& basePathDots,
+	const std::string& basePathStats,
+	uint64_t seed,
+	int indexParam,
+	const std::string& usecase,
+	std::vector<std::vector<size_t>>& obstacleUsed,
+	std::shared_ptr<TPG::TPGGraph> graph,
+    File::TPGGraphDotExporter& dotExporter) {
+    
+    std::map<const std::vector<size_t>, std::pair<double, const TPG::TPGVertex*>> bestResults;
+
+	// Erase from validationResults the vertex not in the graph
+	for (auto it = validationResults.begin(); it != validationResults.end(); ) {
+		if (!graph->hasVertex(*it->second)) {
+			it = validationResults.erase(it);
+		}
+		else {
+			++it;
+		}
+	}
+
+	if(validationResults.empty()){
+		throw std::runtime_error("No valid individual in validation results");
+	}
+
+	// Find best individuals for each test case
+	for(auto& r : validationResults){
+		if(bestResults.empty()){
+			for(auto& v: dynamic_cast<Learn::LexicaseEvaluationResult*>(r.first.get())->getScores()){
+				bestResults[v.first] = std::make_pair(v.second, r.second);
+			}
+		}
+
+		for(auto& v: dynamic_cast<Learn::LexicaseEvaluationResult*>(r.first.get())->getScores()){
+			if(v.second > bestResults[v.first].first){
+				bestResults[v.first] = std::make_pair(v.second, r.second);
+			}
+		}
+	}
+
+	// Export best score in the csv file
+	std::ifstream infile(csvFile);
+	std::stringstream buffer;
+	buffer << infile.rdbuf();
+	infile.close();
+
+	std::ofstream outfile(csvFile, std::ios::app);
+	outfile << generationNumber << ",";
+	for (auto it = bestResults.begin(); it != bestResults.end(); ++it) {
+		outfile << it->second.first;
+		if (std::next(it) != bestResults.end()) outfile << ",";
+	}
+	outfile << std::endl;
+	outfile.close();
+
+
+
+	// Export best individuals
+	for(auto& [indices, pair] : bestResults){
+		char dotFile[300];
+		std::ostringstream suffix;
+		suffix << "obs";
+		for (const auto& idx : indices) {
+			suffix  << idx;
+		}
+		sprintf(dotFile, "%s/out_best.s%" PRIu64 ".g%" PRIu64 ".%s.p%d.%s.dot",
+				basePathDots.c_str(), seed, generationNumber, suffix.str().c_str(), indexParam, usecase.c_str());
+		dotExporter.setNewFilePath(dotFile);
+		dotExporter.printSubGraph(pair.second);
+
+		
+		// Load file with basePathStats
+		char statsFile[300];
+		sprintf(statsFile, "%s/bestPolicyStats.s%" PRIu64 ".%s.p%d.%s.md",
+			basePathStats.c_str(), seed, suffix.str().c_str(), indexParam, usecase.c_str());
+		std::ofstream stats;
+		if(generationNumber == 0){
+			stats.open(statsFile);
+		} else {
+			stats.open(statsFile, std::ios::app); // <-- open in append mode
+		}
+
+
+		// Update the best root befor loggin it PolicyStats
+        stats << "Generation " << generationNumber << " - Score "
+              << pair.first
+              << std::endl
+              << std::endl;
+        TPG::PolicyStats ps;
+        ps.setEnvironment(graph->getEnvironment());
+        ps.analyzePolicy(pair.second);
+        stats << ps << std::endl;
+        stats << std::endl
+              << std::endl
+              << "==========" << std::endl
+              << std::endl;
+		stats.close();
+	}	
+}
+
 
 
 int main(int argc, char ** argv) {
@@ -61,6 +165,7 @@ int main(int argc, char ** argv) {
 	bool useObstacleReward = 0;
 	bool saveAllGenerationsDots = 1;
 	std::string obstacleUsedStr = "";
+	std::string validationObstacleUsedStr = "0,1,2,3,4,01234";
 	char dotPath[150];
 
     strcpy(dotPath, "");
@@ -68,7 +173,7 @@ int main(int argc, char ** argv) {
     strcpy(paramFile, "params_0.json");
 	strcpy(usecase, "ant");
     strcpy(xmlFile, "none");
-    while((option = getopt(argc, argv, "s:p:l:x:h:c:u:a:g:w:o:d:")) != -1){
+    while((option = getopt(argc, argv, "s:p:l:x:h:c:u:a:g:w:o:d:v:")) != -1){
         switch (option) {
             case 's': seed= atoi(optarg); break;
             case 'p': strcpy(paramFile, optarg); break;
@@ -78,9 +183,10 @@ int main(int argc, char ** argv) {
             case 'x': strcpy(xmlFile, optarg); break;
 			case 'g': saveAllGenerationsDots = atoi(optarg); break;
 			case 'o': useObstacleReward = atoi(optarg); break;
+			case 'v': validationObstacleUsedStr = optarg; break;
 			case 'w': obstacleUsedStr = optarg; break;
             case 'd': strcpy(dotPath, optarg); break;
-            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-logs logs Folder\'  \'-x xmlFile\' \'-h useHealthyReward\' \'-g saveAllGenDotFiles\' \'-w obstacle used \'." << std::endl; exit(1);
+            default: std::cout << "Unrecognised option. Valid options are \'-s seed\' \'-p paramFile.json\' \'-u useCase\' \'-logs logs Folder\'  \'-x xmlFile\' \'-h useHealthyReward\' \'-g saveAllGenDotFiles\' \'-w obstacle used \' \'-v validation obstacle used\'." << std::endl; exit(1);
         }
     }
 	if(strcmp(xmlFile, "none") == 0){
@@ -120,6 +226,22 @@ int main(int argc, char ** argv) {
         obstacleUsed.push_back(currentGroup);
     }
 
+	std::vector<std::vector<size_t>> validationObstacleUsed;
+	std::stringstream ssVal(validationObstacleUsedStr);
+	while (std::getline(ssVal, token, ',')) {
+		if (token.empty()) continue;
+		std::vector<size_t> currentGroup;
+		for (char c : token) {
+			if (isdigit(c)) {
+				currentGroup.push_back(c - '0');
+			} else {
+				std::cerr << "Caractère invalide dans le token: " << c << std::endl;
+				exit(1);
+			}
+		}
+		validationObstacleUsed.push_back(currentGroup);
+	}
+
     std::cout << "SELECTED SEED : " << seed << std::endl;
     std::cout << "SELECTED PARAMS FILE: " << paramFile << std::endl;
 
@@ -150,13 +272,16 @@ int main(int argc, char ** argv) {
 	File::ParametersParser::loadParametersFromJson(paramFile, params);
 
 	std::cout << "SELECTION METHOD :";
-	if(params.selection._selectionMode == "tournament"){
+	if (params.selection._isHierarchical){
+		std::cout<<" HIERARCHICAL SELECTION"<<std::endl;
+	} else if(params.selection._selectionMode == "tournament"){
 		std::cout<<" TOURNAMENT SELECTION"<<std::endl;
 	} else if(params.selection._selectionMode == "truncation") {
 		std::cout<<" TRUNCATION SELECTION"<<std::endl;
 	} else if(params.selection._selectionMode == "lexicase"){
 		std::cout<<" LEXICASE SELECTION"<<std::endl;
-	} else {
+	}
+	else {
 		std::cout<<" NO SELECTION.... WAIIIT I SHOULD CRASH NOOW?"<<std::endl;
 	}
 
@@ -206,11 +331,36 @@ int main(int argc, char ** argv) {
 
 	std::cout << "NUMBER OF THREADS: " << params.nbThreads << std::endl;
 
+	// creates validation folder
+	char validationFolder[150];
+	snprintf(validationFolder, sizeof(validationFolder), "%s/validation", logsFolder);
 	// Name of csv file for validation data with logsFolder to create it, and usecase and indexparam
-	std::string csvFile = "" + std::string(logsFolder) + "/validationStats." + std::to_string(seed) + "." + std::string(usecase) + ".p" + std::to_string(indexParam) + ".csv";
+	std::string csvFile = "" + std::string(validationFolder) + "/validationStats." + std::to_string(seed) + "." + std::string(usecase) + ".p" + std::to_string(indexParam) + ".csv";
+	if(params.doValidation){
+		if (!std::filesystem::exists(validationFolder)) {
+			std::filesystem::create_directory(validationFolder);
+		}
+		// Init csv file with column names score, 0, 1, 2, 3, 4 and 01234
+		std::ofstream file(csvFile);
+		if (file.is_open()) {
+			file << "gen";
+			for(auto& v: validationObstacleUsed){
+				file << ",";
+				for(auto& i : v){
+					file << i;
+				}
+			}
+			file << "\n";
+			file.close();
+		} else if (csvFile != "renderMode"){
+			std::cerr << "Could not open file " + csvFile + " for writing, it will not be used"<<std::endl;
+		}
+	}
 
+
+	
 	// Instantiate and init the learning agent
-	Learn::LexicaseAgent la(*mujocoLE, set, params, obstacleUsed, csvFile);
+	Learn::LexicaseAgent la(*mujocoLE, set, params, obstacleUsed, validationObstacleUsed);
 	la.init(seed);
 
 	if(dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get()) == nullptr && params.selection._selectionMode == "lexicase"){
@@ -274,6 +424,13 @@ int main(int argc, char ** argv) {
 		dotExporter.print();
 
 		la.trainOneGeneration(i, i != params.nbGenerations - 1);
+
+		auto validationResults = la.getLastValidationResults();
+		if(validationResults.size() > 0){
+			analyseValidationResults(
+				validationResults, i, csvFile, validationFolder, validationFolder, 
+				seed, indexParam, usecase, obstacleUsed, la.getTPGGraph(), dotExporter);
+		}
 	}
 
 	la.getTPGGraph()->clearProgramIntrons();
@@ -285,7 +442,7 @@ int main(int argc, char ** argv) {
 					la.getTPGGraph(), dotExporter);
 
 
-    bool printCodeGen = true;
+    bool printCodeGen = false;
     if(printCodeGen){
 		char codeGen[160];
 		snprintf(codeGen, sizeof(codeGen), "%s/codeGen/", logsFolder);

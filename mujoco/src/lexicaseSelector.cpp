@@ -1,4 +1,3 @@
-
 #include <fstream>
 #include <sstream>
 #include "lexicaseSelector.h"
@@ -104,18 +103,18 @@ void Selector::LexicaseSelector::doSelection(
 std::vector<std::vector<size_t>> Selector::LexicaseSelector::shuffleTestCases(Mutator::RNG& rng) const
 {
     std::vector<std::vector<size_t>> shuffledTestCases;
-    std::vector<std::vector<size_t>> testCases(this->currentTestCases);
-    while(testCases.size() > 0){
-        auto it = testCases.begin();
-        std::advance(it, rng.getUnsignedInt64(0, testCases.size() - 1));
+    std::vector<std::vector<size_t>> currentTestCases(this->testCases);
+    while(currentTestCases.size() > 0){
+        auto it = currentTestCases.begin();
+        std::advance(it, rng.getUnsignedInt64(0, currentTestCases.size() - 1));
 
         shuffledTestCases.push_back(*it);
-        testCases.erase(it);
+        currentTestCases.erase(it);
     }
     return shuffledTestCases;
 }
 
-void Selector::LexicaseSelector::updateTestCases(Mutator::RNG& rng, Learn::LearningMode mode)
+/*void Selector::LexicaseSelector::updateTestCases(Mutator::RNG& rng, Learn::LearningMode mode)
 {
 
     this->currentTestCases.clear();
@@ -139,11 +138,11 @@ void Selector::LexicaseSelector::updateTestCases(Mutator::RNG& rng, Learn::Learn
         this->currentTestCases.push_back(vectorAllCases);
         //this->currentTestCases = {{0}, {1}, {2}, {3}, {4}, {0,1,2,3,4}};
     }
-}
+}*/
 
 const std::vector<std::vector<size_t>>& Selector::LexicaseSelector::getCurrentTestCases() const
 {
-    return this->currentTestCases;
+    return this->testCases;
 }
 
 
@@ -153,6 +152,97 @@ const std::vector<std::vector<size_t>>& Selector::LexicaseSelector::getCurrentTe
 
 
 
+
+/* HIERARCHICAL PART */
+
+void Selector::HierarchicalSelector::launchSelection(
+    std::multimap<std::shared_ptr<Learn::EvaluationResult>,
+                    const TPG::TPGVertex*>& results,
+    Mutator::RNG& rng)
+{
+    // Clear the set of vertices to delete.
+    this->verticesToDelete.clear();
+    // Preparing multi-population selection....
+    if (params.mutation.tpg.ratioTeamsOverActions != 0.0 &&
+        params.mutation.tpg.ratioTeamsOverActions != 1.0) {
+
+        std::multimap<std::shared_ptr<Learn::EvaluationResult>,
+                      const TPG::TPGVertex*>
+            resultsTeam;
+        std::multimap<std::shared_ptr<Learn::EvaluationResult>,
+                      const TPG::TPGVertex*>
+            resultsAction;
+
+        // Split the results into result of team and result of action
+        for (const auto& p : results) {
+            if (dynamic_cast<const TPG::TPGAction*>(p.second)){
+
+                resultsAction.insert(p);
+            }
+            else {
+                resultsTeam.insert(p);
+            }
+        }
+
+        // --- SPLIT actions by testCase ---
+        // Suppose allTestCases.size() == nb d'actions distinctes
+        std::vector<std::multimap<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex*>> resultsActionPerTestCase;
+        resultsActionPerTestCase.resize(this->testCases.size());
+
+        for (const auto& p : resultsAction) {
+            auto action = dynamic_cast<const TPG::TPGAction*>(p.second);
+            if (action) {
+                size_t id = action->getActionID();
+                if (id < resultsActionPerTestCase.size()) {
+                    resultsActionPerTestCase[id].insert(p);
+                }
+            }
+        }
+
+        // Sélection tournoi spécifique à chaque testCase
+        for (auto& actionGroup : resultsActionPerTestCase) {
+            if (!actionGroup.empty()) {
+                TournamentSelector::doSelection(actionGroup, rng);
+            }
+        }
+
+        // Fusionner tous les sous-groupes d'actions sélectionnés
+        resultsAction.clear();
+        for (const auto& actionGroup : resultsActionPerTestCase) {
+            resultsAction.insert(actionGroup.begin(), actionGroup.end());
+        }
+
+        // Sélection lexicase sur les teams
+        if(params.selection._selectionMode == "lexicase"){
+            LexicaseSelector::doSelection(resultsTeam, rng);
+        } else if (params.selection._selectionMode == "tournament"){
+            TournamentSelector::doSelection(resultsTeam, rng);
+        } else {
+            throw std::runtime_error("Selection mode not recognized in HierarchicalSelector");
+        }
+
+        // Fusing the results
+        results.clear();
+        results.insert(resultsTeam.begin(), resultsTeam.end());
+        results.insert(resultsAction.begin(), resultsAction.end());
+
+        std::vector<size_t> v2 = {0,0,0,0,0};
+        for(const TPG::TPGAction* action: graph->getRootActions()){
+            v2.at(action->getActionID()) += 1;
+        }
+    }
+    else {
+        this->doSelection(results, rng);
+    }
+}
+
+void Selector::HierarchicalSelector::doSelection(
+    std::multimap<std::shared_ptr<Learn::EvaluationResult>,
+                    const TPG::TPGVertex*>& results,
+    Mutator::RNG& rng)
+{
+    throw std::runtime_error("Hierarchical selection not implemented yet");
+}
 
 
 
@@ -242,19 +332,39 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
                                 ? this->params.nbIterationsPerPolicyEvaluation
                                 : this->params.nbIterationsPerPolicyValidation;
 
-    std::vector<std::vector<size_t>>* currentTestCases;
+    std::vector<std::vector<size_t>> currentTestCases;
     size_t nbTestCase = 1;
-    if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) != nullptr){
-        currentTestCases = new std::vector<std::vector<size_t>>(dynamic_cast<Selector::LexicaseSelector*>(selector.get())->getCurrentTestCases());
-        nbTestCase = currentTestCases->size();
+    if(mode == Learn::LearningMode::TRAINING){
+        currentTestCases = trainingTestCases;
+        if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) != nullptr){
+
+            if(params.selection._isHierarchical && dynamic_cast<const TPG::TPGAction*>(root) != nullptr){
+                currentTestCases.clear();
+                currentTestCases.push_back(trainingTestCases.at(dynamic_cast<const TPG::TPGAction*>(root)->getActionID()));
+
+            } else if (params.selection._isHierarchical && params.selection._selectionMode == "tournament"){
+
+                // concat currentTestCases without duplicates
+                std::set<size_t> v;
+                for(auto& vec: currentTestCases){
+                    v.insert(vec.begin(), vec.end());
+                }
+                currentTestCases.clear();
+                currentTestCases.push_back(std::vector<size_t>(v.begin(), v.end()));
+            }
+        }
+        nbTestCase = currentTestCases.size();
+    }
+    else {
+        currentTestCases = validationTestCases;
+        nbTestCase = currentTestCases.size();
     }
 
-    if(mode != Learn::LearningMode::TRAINING){
-        currentTestCases = new std::vector<std::vector<size_t>>{{0}, {1}, {2}, {3}, {4}, {0,1,2,3,4}};
-        nbTestCase = currentTestCases->size();
-    }
+    // print if team is action or team, if mode is training or validation and the number of test cases
+    //std::cout << "Evaluating " << (dynamic_cast<const TPG::TPGAction*>(root) ? "action" : "team") << " in " << (mode == Learn::LearningMode::TRAINING ? "training" : "validation") << " mode with " << nbTestCase << " test cases." << std::endl;
 
     for(size_t taskNumber = 0; taskNumber < nbTestCase; taskNumber++){
+
 
         double rTask = 0;
 
@@ -265,13 +375,13 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
             Data::Hash<uint64_t> hasher;
             uint64_t hash = hasher(generationNumber) ^ hasher(iterationNumber) ^ hasher(taskNumber);
 
-
-            if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) != nullptr || mode != Learn::LearningMode::TRAINING){
-                dynamic_cast<MujocoWrapper*>(&le)->setObstacles(currentTestCases->at(taskNumber));
-            } else if(testCases.size() > 1){
-                throw std::runtime_error("Cannot use more than one type of task at the same time without lexicase selection");
-            } else if (testCases.size() == 1) {
-                std::vector<size_t> nonConstTestCase = this->testCases[0];
+            if(currentTestCases.size() > 1){
+                if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) == nullptr && mode == Learn::LearningMode::TRAINING){
+                    throw std::runtime_error("Cannot use more than one type of task at the same time without lexicase selection");
+                }
+                dynamic_cast<MujocoWrapper*>(&le)->setObstacles(currentTestCases.at(taskNumber));
+            } else if (currentTestCases.size() == 1) {
+                std::vector<size_t> nonConstTestCase = currentTestCases[0];
                 dynamic_cast<MujocoWrapper*>(&le)->setObstacles(nonConstTestCase);
             } else {
                 std::vector<size_t> v;
@@ -305,10 +415,11 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
         }
         
         
-    if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) != nullptr || mode != Learn::LearningMode::TRAINING){
-        allScores.insert(std::make_pair(currentTestCases->at(taskNumber), rTask / nbEvaluation));
+        if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) != nullptr || mode != Learn::LearningMode::TRAINING){
+            allScores.insert(std::make_pair(currentTestCases.at(taskNumber), rTask / nbEvaluation));
+        }
     }
-    }
+
 
     // Create the EvaluationResult
     auto evaluationResult = std::shared_ptr<LexicaseEvaluationResult>(
@@ -332,8 +443,8 @@ void Learn::LexicaseAgent::trainOneGeneration(uint64_t generationNumber,
     }
 
     // Update the test cases in lexicase selection.
-    if(params.selection._selectionMode == "lexicase"){
-        dynamic_cast<Selector::LexicaseSelector*>(selector.get())->updateTestCases(rng, Learn::LearningMode::TRAINING);
+    if(params.selection._selectionMode == "lexicase" || params.selection._isHierarchical){
+        //dynamic_cast<Selector::LexicaseSelector*>(selector.get())->updateTestCases(rng, Learn::LearningMode::TRAINING);
     }
 
     // Evaluate
@@ -355,8 +466,8 @@ void Learn::LexicaseAgent::trainOneGeneration(uint64_t generationNumber,
     // Does a validation or not according to the parameter doValidation
     if (params.doValidation) {
         // Update the test cases in lexicase selection.
-        if(params.selection._selectionMode == "lexicase"){
-            dynamic_cast<Selector::LexicaseSelector*>(selector.get())->updateTestCases(rng, Learn::LearningMode::VALIDATION);
+        if(params.selection._selectionMode == "lexicase" || params.selection._isHierarchical){
+            //dynamic_cast<Selector::LexicaseSelector*>(selector.get())->updateTestCases(rng, Learn::LearningMode::VALIDATION);
         }
 
         std::multimap<std::shared_ptr<Learn::EvaluationResult>,
@@ -367,49 +478,12 @@ void Learn::LexicaseAgent::trainOneGeneration(uint64_t generationNumber,
             generationNumber == params.nbGenerations - 1) {
             validationResults = evaluateAllRoots(
                 generationNumber, Learn::LearningMode::VALIDATION);
-    
-            std::map<const std::vector<size_t>, double> bs;
 
-            for(auto& r : validationResults){
-                if(bs.empty()){
-                    for(auto& v: dynamic_cast<Learn::LexicaseEvaluationResult*>(r.first.get())->getScores()){
-                        bs[v.first] = v.second;
-                    }
-                }
 
-                for(auto& v: dynamic_cast<Learn::LexicaseEvaluationResult*>(r.first.get())->getScores()){
-                    if(v.second > bs[v.first]){
-                        bs[v.first] = v.second;
-                    }
-                }
-            }
-            std::ifstream infile(csvFile);
-            std::stringstream buffer;
-            buffer << infile.rdbuf();
-            infile.close();
-
-            std::ofstream outfile(csvFile, std::ios::app);
-            if (outfile.tellp() == 0) {
-                // Write header if file is empty
-                for (auto it = bs.begin(); it != bs.end(); ++it) {
-                    outfile << "\"";
-                    for (size_t i = 0; i < it->first.size(); ++i) {
-                        outfile << it->first[i];
-                        if (i < it->first.size() - 1) outfile << "-";
-                    }
-                    outfile << "\"";
-                    if (std::next(it) != bs.end()) outfile << ",";
-                }
-                outfile << std::endl;
-            }
-            for (auto it = bs.begin(); it != bs.end(); ++it) {
-                outfile << it->second;
-                if (std::next(it) != bs.end()) outfile << ",";
-            }
-            outfile << std::endl;
-            outfile.close();
+            
         }
 
+        this->lastValidationResults = validationResults;
 
         for (auto logger : loggers) {
             logger.get().logAfterValidate(validationResults);
@@ -422,7 +496,7 @@ void Learn::LexicaseAgent::trainOneGeneration(uint64_t generationNumber,
         // Populate Sequentially
         Mutator::TPGMutator::populateTPG(
             *this->tpg, *this->selector, this->archive, this->params.mutation,
-            this->rng, this->learningEnvironment.getNbActions(), maxNbThreads);
+            this->rng, this->trainingTestCases.size(), maxNbThreads);
     }
 
     for (auto logger : loggers) {
@@ -431,5 +505,24 @@ void Learn::LexicaseAgent::trainOneGeneration(uint64_t generationNumber,
 
     for (auto logger : loggers) {
         logger.get().logEndOfTraining();
+    }
+}
+
+void Learn::LexicaseAgent::init(uint64_t seed)
+{
+    LearningAgent::init(seed);
+
+    // Update the ids of the actions in hierarchical selection
+    if(params.selection._isHierarchical && params.mutation.tpg.ratioTeamsOverActions != 0 && params.mutation.tpg.ratioTeamsOverActions != 1){
+
+        size_t nbCases = trainingTestCases.size();
+        std::vector<const TPG::TPGAction *> rootActions(tpg->getRootActions());
+        size_t idx = 0;
+        for(const TPG::TPGAction* action: rootActions){
+            tpg->changeActionID(*action, idx % nbCases);
+            idx++;
+        }
+    } else if (params.selection._isHierarchical){
+        throw std::runtime_error("Hierarchical selection requires a mix of teams and actions (ratioTeamsOverActions != 0 and != 1)");
     }
 }

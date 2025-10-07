@@ -8,8 +8,9 @@ class MujocoHalfCheetahWrapper : public MujocoWrapper
 {
 protected:
 
-
+	/// Path to the MuJoCo XML model file
 	const std::string xmlFile;
+	/// Whether to use obstacle reward in the utility calculation
 	bool useObstacleReward = false;
 
     // Parameters
@@ -18,12 +19,7 @@ protected:
     double reset_noise_scale_ = 0.1;
     bool exclude_current_positions_from_observation_ = true;
 
-
-
-
 public:
-
-
 
 	MujocoHalfCheetahWrapper(const char *pXmlFile, bool useObstacleReward=true, std::vector<size_t> obstacleUsed={}, bool exclude_current_positions_from_observation = true) :
 		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 19:18), xmlFile{pXmlFile},
@@ -37,7 +33,7 @@ public:
 		};
 
     /**
-    * \brief Copy constructor for the armLearnWrapper.
+    * \brief Copy constructor for the MujocoHalfCheetahWrapper.
     */ 
     MujocoHalfCheetahWrapper(const MujocoHalfCheetahWrapper &other) : MujocoWrapper(other),
 	xmlFile{other.xmlFile}, useObstacleReward{other.useObstacleReward},
@@ -48,7 +44,7 @@ public:
 	}
 
     ~MujocoHalfCheetahWrapper() {
-        // Free visualization storage
+        // Free visualization storage (commented out, see platform notes)
         //mjv_freeScene(&scn_);
         //mjr_freeContext(&con_);
 
@@ -66,7 +62,6 @@ public:
 	virtual void reset(size_t seed = 0, Learn::LearningMode mode = Learn::LearningMode::TRAINING,
 					   uint16_t iterationNumber = 0, uint64_t generationNumber = 0) override;
 
-
 	/// Inherited via LearningEnvironment
 	virtual void doActions(std::vector<double> actionsID) override;
 
@@ -77,16 +72,16 @@ public:
 	virtual LearningEnvironment* clone() const;
 
 	/**
-	* \brief Get a score for the pendulum stabilization.
+	* \brief Get a score for the agent.
 	*
 	* The score returned at any time can either be positive or negative.
 	*
-	* A positive score is returned if the pendulum has been stabilized, that is,
+	* A positive score is returned if the agent has succeeded, that is,
 	* the isTerminal() method returns true.
 	* In such a case, the returned score will be $10 / ln(nbActionExecuted)$
 	* such that shorter convergence time leads to higher scores.
 	*
-	* A negative score is returned if the pendulum has not been stabilized
+	* A negative score is returned if the agent has not succeeded
 	* (yet).
 	* In such a case, the returned score simply is the average reward since
 	* the last reset.
@@ -100,22 +95,21 @@ public:
 	virtual bool isUsingUtility() const override;
 
 	/**
-	* \brief Is the pendulum considered stabilized.
+	* \brief Is the agent considered successful (healthy).
 	*
 	* If the mean reward over the recent rewardHistory is lower than a fixed
-	* threshold, then the pendulum is considered to be stable in the upward
-	* position and the learningAgent has succeded in stabilizing it.
+	* threshold, then the agent is considered to be stable and has succeeded.
 	*
-	* \return true if the pendulum has been stabilized, false otherwise.
+	* \return true if the agent is healthy, false otherwise.
 	*/
 	virtual bool isTerminal() const override;
     bool is_healthy() const;
 
+    /// Compute the control cost for a given action
     double control_cost(std::vector<double>& action);
 
-
+	/// Compute and update the current state
 	void computeState();
-
 
 };
 

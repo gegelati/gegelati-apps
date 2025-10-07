@@ -22,17 +22,19 @@ protected:
 	double totalReward = 0.0;
     double totalUtility = 0.0;
 
-	/// Number of actions since the last reset
+	/// Number of actions executed since the last reset
 	uint64_t nbActionsExecuted = 0;
 
+	/// Current state of the environment
 	Data::PrimitiveTypeArray<double> currentState;
 	uint64_t stateSize;
 
+	/// Saved state and action data for analysis or debugging
 	std::vector<std::vector<double>> stateData;
 	std::vector<std::vector<double>> actionData;
 	bool saveStateAndAction = false;
 
-	
+	/// All possible obstacles and grounds, mapped by index to their names
 	std::multimap<size_t, std::string> allObstacles = {
 		{0, "obstacle0"}, {1, "obstacle1"}, {2, "obstacle2"}, {3, "obstacle3"}, {4, "obstacle4"}
 	};
@@ -40,15 +42,18 @@ protected:
 		{0, "obstacle0-ground"}, {1, "obstacle1-ground"}, {2, "obstacle2-ground"}, {3, "obstacle3-ground"}, {4, "obstacle4-ground"}
 	};
 
-
+	/// Currently active obstacles and grounds
 	std::multimap<size_t, std::string> obstacles;
 	std::multimap<size_t, std::string> grounds;
-	int64_t obstacleIndex = 0;
+	size_t obstacleIndex = 0; // No more -1, size_t type
 	uint64_t currentObstacleArea = 0;
 	double sizeObstacleArea = 0.0;
 	double obstaclePos = 0.0;
 	double additionObstacle = 0.0;
-	bool noObstacleArea = false;
+
+	/// List of indices of usable obstacles
+	std::vector<size_t> activeObstacles;
+	bool noObstacleActive = true;
 
 public:
 
@@ -90,32 +95,43 @@ public:
     std::vector<double> init_qvel_;  // Initial velocities
 
     std::string model_path_;  // Absolute path to model xml file
-    int frame_skip_ = 5;  // Number of frames per simlation step
+    int frame_skip_ = 5;  // Number of frames per simulation step
     int obs_size_;  // Number of variables in observation vector
 
+    /// Initialize the MuJoCo simulation
     void initialize_simulation();
 
+    /// Set the state of the MuJoCo simulation
     void set_state(std::vector<double>& qpos, std::vector<double>& qvel);
 
+    /// Perform simulation steps with given controls
     void do_simulation(std::vector<double>& ctrl, int n_frames);
 
 
+	/// Get the current state array
 	Data::PrimitiveTypeArray<double>& getCurrentState();
 	uint64_t getStateSize(){
 		return stateSize;
 	}
 
+	/// Expand environment variables in a string (e.g., $HOME)
 	std::string ExpandEnvVars(const std::string &str);
 
 
+	/// Register the current state and action (for logging)
 	virtual void registerStateAndAction(const std::vector<double>& actionsID);
+	/// Print the saved state and action data to a file
 	virtual void printStateAndAction(std::string path) const;
 
-	virtual void updateObstaclesPosition(int64_t indexObstacle, double xposMin, double xposMax, double middle);
+	/// Compute the state of obstacles, update state accordingly
+	virtual bool computeObstaclesState(uint64_t index, double xposMin, double xposMax, bool resetCall=false);
 
-	virtual bool computeObstaclesState(uint64_t index, double xposMin, double xposMax);
-
-	virtual void setObstacles(std::vector<size_t>& obs);
+	/// Set the list of active obstacles
+	virtual void setObstacles(const std::vector<size_t>& obs);
+	/// Deactivate all obstacles (move them out of the scene)
+	void deactivateAllObstacles();
+	/// Activate the current obstacle (and ground), deactivate others
+	void activateCurrentObstacle(double xposMin, double xposMax, double middle);
 
 };
 

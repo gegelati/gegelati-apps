@@ -13,20 +13,11 @@ namespace Selector {
      * \brief Selection class that will do a selection with a truncation. This
      * is the classic selection methods used in the earliest works of TPGs
      */
-    class LexicaseSelector : public Selector
+    class LexicaseSelector : public virtual Selector
     {
 
       protected: 
-        std::vector<std::vector<size_t>> allTestCases;// = {
-            //{1}, {2}//, {3}, {4}, {0},
-            //{1,2}, {1,3}, {1,4}, {1,0}, {2,3}, {2,4}, {2,0}, {3,4}, {3,0}, {4,0},
-            //{1,2,3}, {1,2,4}, {1,2,0}, {1,3,4}, {1,3,0}, {1,4,0}, {2,3,4}, {2,3,0}, {2,4,0}, {3,4,0},
-            //{1,2,3,4}, {1,2,3,0}, {1,2,4,0}, {1,3,4,0}, {2,3,4,0},
-            //{1,2,3,4,0}
-        //};
-
-        std::vector<std::vector<size_t>> currentTestCases;
-
+        std::vector<std::vector<size_t>> testCases;
 
       public:
         /**
@@ -38,7 +29,8 @@ namespace Selector {
         LexicaseSelector(std::shared_ptr<TPG::TPGGraph> graph,
                          const Learn::LearningParameters& params,
                          const std::vector<std::vector<size_t>>& testCases)
-            : Selector{graph, params}, allTestCases{testCases}{}
+            : Selector{graph, params}, testCases{testCases} {
+            }
 
         /**
          * \brief override of doSelection method
@@ -60,7 +52,7 @@ namespace Selector {
         /**
          * \brief select the test cases for the new generation
          */
-        virtual void updateTestCases(Mutator::RNG& rng, Learn::LearningMode mode);
+        //virtual void updateTestCases(Mutator::RNG& rng, Learn::LearningMode mode);
 
 
         /**
@@ -68,6 +60,8 @@ namespace Selector {
          */
         const std::vector<std::vector<size_t>>& getCurrentTestCases() const;
 
+
+        /** */
 
         /**
          * \brief add a vertex to the verticesToDelete set.
@@ -98,6 +92,33 @@ namespace Selector {
          */
         //virtual const std::set<const TPG::TPGVertex*>& getVerticesToDelete();
     };
+
+
+
+    class HierarchicalSelector: public virtual LexicaseSelector, public virtual TournamentSelector
+    {
+        public:
+            HierarchicalSelector(std::shared_ptr<TPG::TPGGraph> graph,
+                         const Learn::LearningParameters& params,
+                         const std::vector<std::vector<size_t>>& testCases)
+            : Selector{graph, params}, LexicaseSelector{graph, params, testCases}, TournamentSelector{graph, params} {}
+
+            
+        virtual void launchSelection(
+            std::multimap<std::shared_ptr<Learn::EvaluationResult>,
+                          const TPG::TPGVertex*>& results,
+            Mutator::RNG& rng) override;
+
+        virtual void doSelection(
+            std::multimap<std::shared_ptr<Learn::EvaluationResult>,
+                          const TPG::TPGVertex*>& results,
+            Mutator::RNG& rng) override;
+
+        virtual const SelectionContext& updateContext() override {
+            return TournamentSelector::updateContext();
+        }
+    };
+
 }; // namespace Selector
 
 
@@ -107,20 +128,29 @@ namespace Learn {
     class LexicaseAgent : public ParallelLearningAgent
     {
         protected:
-            std::vector<std::vector<size_t>> testCases;
-            std::string csvFile;
+            std::vector<std::vector<size_t>> trainingTestCases;
+            std::vector<std::vector<size_t>> validationTestCases;
+            std::multimap<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex *> lastValidationResults;
 
 
         public:
             LexicaseAgent(
                 LearningEnvironment& le, const Instructions::Set& iSet,
-                const LearningParameters& p, const std::vector<std::vector<size_t>>& testCases,
-                std::string csvFile = "results.csv", const TPG::TPGFactory& factory = TPG::TPGFactory())
-                : ParallelLearningAgent(le, iSet, p, factory), testCases{testCases}, csvFile{csvFile}
+                const LearningParameters& p, 
+                         const std::vector<std::vector<size_t>>& trainingTestCases,
+                         const std::vector<std::vector<size_t>>& validationTestCases = {}, const TPG::TPGFactory& factory = TPG::TPGFactory())
+                : ParallelLearningAgent(le, iSet, p, factory), trainingTestCases{trainingTestCases}, validationTestCases{validationTestCases}
             {
                 // There is probably a cleaner way to do that, but using the factory
                 // was creating import issues.
-                if (p.selection._selectionMode == "truncation") {
+                
+                if(validationTestCases.size() == 0){
+                    this->validationTestCases = trainingTestCases;
+                }
+
+                if (p.selection._isHierarchical){
+                    selector = std::make_shared<Selector::HierarchicalSelector>(tpg, p, trainingTestCases);
+                } else if  (p.selection._selectionMode == "truncation") {
                     selector =
                         std::make_shared<Selector::TruncationSelector>(tpg, p);
                 }
@@ -129,19 +159,11 @@ namespace Learn {
                         std::make_shared<Selector::TournamentSelector>(tpg, p);
                 }
                 else if (p.selection._selectionMode == "lexicase"){
-                    selector = std::make_shared<Selector::LexicaseSelector>(tpg, p, testCases);
+                    selector = std::make_shared<Selector::LexicaseSelector>(tpg, p, trainingTestCases);
                 } else {
                     throw std::runtime_error("Selection mode not found");
                 }
 
-                // Init csv file with column names score, 0, 1, 2, 3, 4 and 01234
-                std::ofstream file(csvFile);
-                if (file.is_open()) {
-                    file << "score,0,1,2,3,4,01234\n";
-                    file.close();
-                } else if (csvFile != "renderMode"){
-                    std::cerr << "Could not open file " + csvFile + " for writing, it will not be used"<<std::endl;
-                }
             }
 
             virtual std::shared_ptr<EvaluationResult> evaluateJob(
@@ -153,6 +175,11 @@ namespace Learn {
             virtual void trainOneGeneration(uint64_t generationNumber,
                                             bool doPopulate = true) override;
 
+            virtual void init(uint64_t seed) override; 
+
+            const std::multimap<std::shared_ptr<Learn::EvaluationResult>, const TPG::TPGVertex *>& getLastValidationResults() const {
+                return lastValidationResults;
+            }
 
     };
 

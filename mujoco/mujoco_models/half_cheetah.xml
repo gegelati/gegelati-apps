@@ -119,12 +119,13 @@
             type="box" size="1.5 0.6 0.1"   
             rgba="0.9 0.9 0.9 1"
             contype="1" conaffinity="1"
-            euler="0 -0.174533 0"/>
+            friction="0.8 0.1 0.1" 
+            euler="0 -0.174533 0"/> 
       <geom name="obstacle2b-geom" pos="-3.5 0 -0.4" mass = "0.001"
             type="box" size="2.5 0.5 0.1"
             rgba="0.7 0.7 0.7 1"
             contype="1" conaffinity="1"/>
-      <geom name="obstacle2c-geom" pos="5 0 -0.4" mass = "0.001"
+      <geom name="obstacle2c-geom" pos="5.5 0 -0.4" mass = "0.001"
             type="box" size="2.5 0.5 0.1"
             rgba="0.7 0.7 0.7 1"
             contype="1" conaffinity="1"/>
@@ -141,19 +142,11 @@
     </body>
     
     <body name="obstacle3" pos="-100 0 0">
-      <geom name="obstacle3a_geom" pos="-1.2 0 -0.18" mass = "0.001"
+      <geom name="obstacle3a_geom" pos="-1.2 0 -0.30" mass = "0.001"
             type="box" size="0.2 0.6 0.12"
             rgba="0.9 0.9 0.9 1"
             contype="1" conaffinity="1"/>
-      <geom name="obstacle3b_geom" pos="-0.4 0 0.06" mass = "0.001"
-            type="box" size="0.2 0.6 0.12"
-            rgba="0.9 0.9 0.9 1"
-            contype="1" conaffinity="1"/>
-      <geom name="obstacle3e_geom" pos="0.4 0 0.06" mass = "0.001"
-            type="box" size="0.2 0.6 0.12"
-            rgba="0.9 0.9 0.9 1"
-            contype="1" conaffinity="1"/>
-      <geom name="obstacle3d_geom" pos="1.2 0 -0.18" mass = "0.001"
+      <geom name="obstacle3b_geom" pos="-0.4 0 -0.18" mass = "0.001"
             type="box" size="0.2 0.6 0.12"
             rgba="0.9 0.9 0.9 1"
             contype="1" conaffinity="1"/>
@@ -161,7 +154,7 @@
             type="box" size="2.5 0.5 0.1"
             rgba="0.7 0.7 0.7 1"
             contype="1" conaffinity="1"/>
-      <geom name="obstacle3f-geom" pos="4.3 0 -0.4" mass = "0.001"
+      <geom name="obstacle3f-geom" pos="2.8 0 -0.4" mass = "0.001"
             type="box" size="2.5 0.5 0.1"
             rgba="0.7 0.7 0.7 1"
             contype="1" conaffinity="1"/>

@@ -15,7 +15,7 @@
 	// Maximum number of actions performed on the learning environment during the
 	// each evaluation of a root.
 	// "maxNbActionsPerEval" : 1000, // Default value
-	"maxNbActionsPerEval" : 100,
+	"maxNbActionsPerEval" : 10,
 	// Maximum number of times a given root is evaluated.After this number is
 	// reached, possibly after several generations, the score of the root will be
 	// fixed, and no further evaluation will be done.
@@ -76,7 +76,7 @@
 			"nbActionEdgeInit" : 3,
 			// Number of root TPGTeams to maintain when populating the TPGGraph
 			// "nbRoots" : 100, // Default value
-			"nbRoots" : 200,
+			"nbRoots" : 1000,
 			// Probability of adding an outgoing Action Edge to a Action.
 			// "pActionEdgeAddition" : 0.7, // Default value
 			"pActionEdgeAddition" : 0.2,
@@ -113,7 +113,7 @@
 			// Ratio of teams roots over the number of actions roots.
 			// If set to 1, there will be no action roots, if set to 0, there will be no team root.
 			// "ratioTeamsOverActions" : 1.0, // Default value
-			"ratioTeamsOverActions" : 0.0,
+			"ratioTeamsOverActions" : 0.3333,
 			// During mutation of a team, setting this parameter to true allow a team
 			//to change destination toward any other actions. If set to false, it can only
 			//change destination toward a root action.
@@ -129,7 +129,7 @@
 	},
 	// Number of generations of the training.
 	// "nbGenerations" : 500, // Default value
-	"nbGenerations" : 20,
+	"nbGenerations" : 3,
 	// [Only used in AdversarialLearningAgent.]
 	// Number of times each job is evaluated in the learning process.
 	// Each root may belong to several jobs, hence this parameter should be lower
@@ -138,7 +138,7 @@
 	"nbIterationsPerJob" : 1,
 	// Number of evaluation of each root per generation.
 	// "nbIterationsPerPolicyEvaluation" : 5, // Default value
-	"nbIterationsPerPolicyEvaluation" : 1,
+	"nbIterationsPerPolicyEvaluation" : 10,
 	// Number of evaluation of each root per generation.
 	// "nbIterationsPerPolicyValidation" : 5, // Default value
 	"nbIterationsPerPolicyValidation" : 5,
@@ -156,12 +156,15 @@
 	"nbThreads" : 20,
 	"selection" : 
 	{
+		// Indicates if the selection is hierarchical.
+		// "_isHierarchical" : false, // Default value
+		"_isHierarchical" : true,
 		// Selection mode used. Available modes are:
 		//   - "lexicase"
 		//   - "truncation"
 		//   - "tournament"
 		// "_selectionMode" : Truncation, // Default value
-		"_selectionMode" : "tournament",
+		"_selectionMode" : "lexicase",
 		"lexicase" : 
 		{
 			// Coefficient multiply to epsilon to change the effect of epsilon lexicase.

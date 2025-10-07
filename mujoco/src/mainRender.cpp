@@ -299,7 +299,7 @@ int main(int argc, char ** argv) {
     }
 
 	// Instantiate and init the learning agent
-	Learn::LexicaseAgent la(*mujocoLE, set, params, obstacleUsed, "renderMode");
+	Learn::LexicaseAgent la(*mujocoLE, set, params, obstacleUsed);
 	la.init(seed);
 
     auto &tpg = *la.getTPGGraph();
@@ -310,9 +310,6 @@ int main(int argc, char ** argv) {
 
     if(tpg.getNbRootVertices() > 1){
         
-        if(params.selection._selectionMode == "lexicase"){
-            dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get())->updateTestCases(la.getRNG(), Learn::LearningMode::TRAINING);
-        }
         std::cout<<"Multiple roots identified. One generation training launched to identified the best root"<<std::endl;
         // Basic logger
         Log::LABasicLogger basicLogger(la);
@@ -343,13 +340,13 @@ int main(int argc, char ** argv) {
     }
 
     tpg.clearProgramIntrons();
-    char clearDot[250];
+    /*char clearDot[250];
     // Export the graph    
     strncpy(clearDot, dotPath, strstr(dotPath, ".dot") - dotPath);
     strcat(clearDot, ".clear.dot");
     File::TPGGraphDotExporter dotExporter(clearDot, *la.getTPGGraph());
     dotExporter.print();
-    std::cout<<"Save cleared root in "<<dotPath<<" --- ";
+    std::cout<<"Save cleared root in "<<dotPath<<" --- ";*/
 
     // Print graph
     if(saveCodeGen){
@@ -374,7 +371,7 @@ int main(int argc, char ** argv) {
 
     // Update the test cases in lexicase selection.
     if(params.selection._selectionMode == "lexicase"){
-        dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get())->updateTestCases(la.getRNG(), Learn::LearningMode::TRAINING);
+        //dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get())->updateTestCases(la.getRNG(), Learn::LearningMode::TRAINING);
         auto testCases = dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get())->getCurrentTestCases();
         mujocoLE->setObstacles(testCases.at(0));
     }

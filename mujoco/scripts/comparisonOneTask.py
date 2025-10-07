@@ -6,12 +6,21 @@ from typing import Optional, List, Dict, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm  # Pour une barre de progression plus propre
 
-def run_mujoco_and_get_score(env: str, w: int, wTest: int, sTrain: int, sTest: int) -> Optional[Dict[str, Any]]:
+    
+obsFile = [f"oneObstacle_{i}" for i in range(5)] + ["noObstacle"]
+correspondingObsFile = {obsFile[i]: i for i in range(5)}
+correspondingObsFile["noObstacle"] = "none"
+
+def run_mujoco_and_get_score(env: str, w: str, wTest: int, sTrain: int, sTest: int) -> Optional[Dict[str, Any]]:
     """Exécute la commande Mujoco et retourne un dictionnaire avec les métadonnées + score (ou None)."""
+
+    defaultP = 0
+
+
     cmd = [
         "./bin/Release/renderMujoco",
         "-u", env,
-        "-d", f"logs/{env}/test/obs{w}/out_best.{sTrain}.p0.{env}.dot",
+        "-d", f"logs/mainLogs/{env}/{w}/out_best.{sTrain}.p{defaultP}.{env}.dot",
         "-w", str(wTest),
         "-v", "2",
         "-s", str(sTest)
@@ -22,7 +31,7 @@ def run_mujoco_and_get_score(env: str, w: int, wTest: int, sTrain: int, sTest: i
         if match:
             return {
                 "environment": env,
-                "obstacleTrain": w,
+                "obstacleTrain": correspondingObsFile[w],
                 "obstacleTest": wTest,
                 "seedTraining": sTrain,
                 "seedTesting": sTest,
@@ -37,12 +46,14 @@ def run_mujoco_and_get_score(env: str, w: int, wTest: int, sTrain: int, sTest: i
         print(e.stderr)
         return None
 
-def generate_tasks(envs: List[str], nb_obsTrain: int, nb_obsTest: int, nb_seed_train: int, nb_seed_test: int) -> List[tuple]:
+def generate_tasks(envs: List[str], obsFile: List[str], nb_obsTest: int, nb_seed_train: int, nb_seed_test: int) -> List[tuple]:
     """Génère toutes les combinaisons de paramètres pour les tâches."""
     tasks = []
     for env in envs:
-        for obs in range(nb_obsTrain):
+        for obs in obsFile:
             for obsTest in range(nb_obsTest):
+                if "all_tournament" in obs:
+                    nb_seed_train = 1
                 for sTrain in range(nb_seed_train):
                     for sTest in range(nb_seed_test):
                         tasks.append((env, obs, obsTest, sTrain, sTest))
@@ -51,11 +62,10 @@ def generate_tasks(envs: List[str], nb_obsTrain: int, nb_obsTest: int, nb_seed_t
 def main():
     # Configuration
     envs = ["half_cheetah"]
-    nb_obsTrain = 5
     nb_obsTest = 5
-    nb_seed_train = 2
+    nb_seed_train = 5
     nb_seed_test = 10
-    max_workers = 20  # Ajuste selon ta machine (ex: 4-16)
+    max_workers = 16  # Ajuste selon ta machine (ex: 4-16)
 
     # Initialisation du DataFrame
     df = pd.DataFrame(columns=[
@@ -64,7 +74,7 @@ def main():
     ])
 
     # Génération des tâches
-    tasks = generate_tasks(envs, nb_obsTrain, nb_obsTest, nb_seed_train, nb_seed_test)
+    tasks = generate_tasks(envs, obsFile, nb_obsTest, nb_seed_train, nb_seed_test)
     total_tasks = len(tasks)
 
     # Exécution multi-threadée
@@ -93,7 +103,7 @@ def main():
     print("Résultats finaux:")
     print(df.describe())
     print(f"\nSauvegarde de {len(df)} résultats dans logs/dataOneObstacle.csv")
-    df.to_csv("logs/dataOneObstacle.csv", index=False)
+    df.to_csv("logs/mainLogs/dataOneObstacle.csv", index=False)
 
 if __name__ == "__main__":
     warnings.filterwarnings("ignore", category=FutureWarning)

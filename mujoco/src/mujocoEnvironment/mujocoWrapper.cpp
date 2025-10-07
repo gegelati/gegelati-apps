@@ -13,7 +13,7 @@ std::vector<std::reference_wrapper<const Data::DataHandler>> MujocoWrapper::getD
 
 void MujocoWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterationNumber, uint64_t generationNumber)
 {
-	// Create seed from seed and mode
+	// Create a seed from the input seed and mode
 	size_t hash_seed = Data::Hash<size_t>()(seed) ^ Data::Hash<Learn::LearningMode>()(mode);
 	if(mode == Learn::LearningMode::VALIDATION){
 		hash_seed = 6416846135168433+iterationNumber;
@@ -21,20 +21,18 @@ void MujocoWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterat
 
 	saveStateAndAction = mode == Learn::LearningMode::TESTING;
 
-	// Reset the RNG
+	// Reset the RNG and environment state
 	this->rng.setSeed(hash_seed);
 	this->nbActionsExecuted = 0;
 	this->totalReward = 0.0;
 	this->totalUtility = 0.0;
 
-	this->obstacleIndex = -1;
+	this->obstacleIndex = 0;
 	this->obstaclePos = 0;
 	this->currentObstacleArea = 0;
+
+	this->deactivateAllObstacles();
 }
-
-
-
-
 
 void MujocoWrapper::initialize_simulation() {
 
@@ -55,7 +53,7 @@ void MujocoWrapper::initialize_simulation() {
 
 void MujocoWrapper::set_state(std::vector<double>& qpos, std::vector<double>& qvel) {
 	// Set the joints position qpos and velocity qvel of the model.
-	// Note: `qpos` and `qvel` is not the full physics state for all mujoco
+	// Note: `qpos` and `qvel` are not the full physics state for all mujoco
 	// models/environments
 	// https://mujoco.readthedocs.io/en/stable/APIreference/APItypes.html#mjtstate
 
@@ -155,7 +153,7 @@ void MujocoWrapper::printStateAndAction(std::string path) const
 		size_t nbActionData = actionData[0].size();
 		size_t nbStateData = stateData[0].size();
 
-		// Header
+		// Write CSV header
 		outFile << "step,";
 		for(size_t i = 0; i < nbActionData; i++){
 			outFile << "action"<<i<<",";
@@ -183,129 +181,84 @@ void MujocoWrapper::printStateAndAction(std::string path) const
 
 }
 
-void MujocoWrapper::updateObstaclesPosition(
-	int64_t currIndexObstacle, double xposMin, double xposMax, double middle)
+
+bool MujocoWrapper::computeObstaclesState(uint64_t index, double xposMin, double xposMax, bool resetCall)
 {
-	// Place the obstacles selected at a random position, and the other obstacles at -100
-	auto it = obstacles.begin();
-	auto itGrounds = grounds.begin();
-	auto itAll = allObstacles.begin();
-	auto itAllGrounds = allGrounds.begin();
-	while(itAll != allObstacles.end() && itAllGrounds != allGrounds.end()){
-		double xpos = -100.0;
-		double groundPos = -100.0;
-
-
-		std::string nameObstacle = itAll->second;
-		if((int64_t)itAll->first == currIndexObstacle){
-			xpos = this->rng.getDouble(xposMin, xposMax) + additionObstacle;
-			if(currIndexObstacle != -1){
-				obstaclePos = xpos - additionObstacle;
-			} else {
-				obstaclePos = 0;
-			}
-
-			if(noObstacleArea){
-				nameObstacle = "empty";
-			}
-
-			groundPos = middle;
-
-			it++;
-			itGrounds++;	
-		}
-
-
-		
-		int obstacle_id = mj_name2id(m_, mjOBJ_BODY, nameObstacle.c_str());
-		if(obstacle_id == -1) {
-			std::cerr << "Error: obstacle '" << nameObstacle.c_str() << "' not found in model." << std::endl;
-		} else {
-			m_->body_pos[3 * obstacle_id] = xpos; // X
-
-
-		}
-
-		// Get IDs
-		int ground_id = mj_name2id(m_, mjOBJ_BODY, itAllGrounds->second.c_str());
-		if(ground_id == -1) {
-			std::cerr << "Error: ground '" << itAllGrounds->second.c_str() << "' not found in model." << std::endl;
-		} else {
-
-			m_->body_pos[3 * ground_id] = groundPos; // X
-		}
-
-
-		itAll++;
-		itAllGrounds++;
-	}
-
-	/*if(it != obstacles.end() || itGrounds != grounds.end()){
-		throw std::runtime_error("Obstacles and grounds should have the same size");
-	}*/
-}
-
-bool MujocoWrapper::computeObstaclesState(uint64_t index, double xposMin, double xposMax)
-{
-	
 	double dist_x = 0.0;
 	bool obstacleSucced = false;
-	if(obstacleIndex != -1) {
-		dist_x = obstaclePos - d_->qpos[0];
-	} 
 
-	if(obstacles.size() == 0){
-		std::vector<size_t> nullVect;
-		this->setObstacles(nullVect);
-	}
+	// If no possible obstacle
 
-	if((obstacleIndex == -1 || d_->qpos[0] > sizeObstacleArea * (currentObstacleArea + 1)) && obstacles.size() > 0){
-		
-		if(d_->qpos[0] > sizeObstacleArea * (currentObstacleArea + 1)){
+	// Move to the next area?
+	if (resetCall || d_->qpos[0] > sizeObstacleArea * (currentObstacleArea + 1)) {
+		if (d_->qpos[0] > sizeObstacleArea * (currentObstacleArea + 1)) {
 			currentObstacleArea++;
 			obstacleSucced = true;
-
 		}
-		size_t index = this->rng.getUnsignedInt64(0, obstacles.size() - 1);
-		
-		auto it = obstacles.begin();
-		std::advance(it, index);
-		obstacleIndex =  it->first;
-		this->updateObstaclesPosition(
-			obstacleIndex, 
-			(sizeObstacleArea * currentObstacleArea) + xposMin,
-			(sizeObstacleArea * (currentObstacleArea + 1)) - xposMax,
-			(sizeObstacleArea * currentObstacleArea) + sizeObstacleArea / 2);
-		
+
+		if (activeObstacles.empty()) {
+			// Set ground 0 for no obstacle
+			this->activateCurrentObstacle(0, 0, (sizeObstacleArea * currentObstacleArea) + sizeObstacleArea / 2);
+			currentState.setDataAt(typeid(double), index, -1); // obstacleIndex has no meaning here
+			currentState.setDataAt(typeid(double), index + 1, 0.0);
+			return false;
+		} else {
+			// Randomly select an obstacle from the list
+			size_t idx = this->rng.getUnsignedInt64(0, activeObstacles.size() - 1);
+			this->obstacleIndex = activeObstacles[idx];
+			this->activateCurrentObstacle(
+				(sizeObstacleArea * currentObstacleArea) + xposMin,
+				(sizeObstacleArea * (currentObstacleArea + 1)) - xposMax,
+				(sizeObstacleArea * currentObstacleArea) + sizeObstacleArea / 2);
+			dist_x = obstaclePos - d_->qpos[0];
+		}
+	}
+	else if (!activeObstacles.empty()) {
 		dist_x = obstaclePos - d_->qpos[0];
-	} 
-	currentState.setDataAt(typeid(double), index, obstacleIndex);
+	}
+	currentState.setDataAt(typeid(double), index, this->obstacleIndex);
 	currentState.setDataAt(typeid(double), index + 1, dist_x);
 
 	return obstacleSucced;
 }
 
-void MujocoWrapper::setObstacles(std::vector<size_t>& obs){
-	size_t obstacleUsedIdx = 0;
-	grounds.clear();
-	obstacles.clear();
-    std::sort(obs.begin(), obs.end()); // Ensure deterministic order
-	for(size_t idx = 0; obstacleUsedIdx < obs.size(); idx++){
-		if(idx == obs[obstacleUsedIdx]){
-			std::string obs = "obstacle" + std::to_string(idx);
-			std::string obsGround = obs + "-ground";
-			obstacles.emplace(idx, obs);
-			grounds.emplace(idx, obsGround);
-			obstacleUsedIdx++;
-		}
+// Move all obstacles and grounds to -100 (out of play)
+void MujocoWrapper::deactivateAllObstacles() {
+	for (const auto& [idx, name] : allObstacles) {
+		int id = mj_name2id(m_, mjOBJ_BODY, name.c_str());
+		if (id != -1) m_->body_pos[3 * id] = -100.0;
 	}
+	for (const auto& [idx, name] : allGrounds) {
+		int id = mj_name2id(m_, mjOBJ_BODY, name.c_str());
+		if (id != -1) m_->body_pos[3 * id] = -100.0;
+	}
+}
 
-	if(obs.size() == 0){
-		std::string obs = "obstacle" + std::to_string(0)+ "-ground";
-		obstacles.emplace(0, "empty");
-		grounds.emplace(0, obs);
-		noObstacleArea = true;
+// Active the current obstacle in the sequence, deactivate the others
+void MujocoWrapper::activateCurrentObstacle(double xposMin, double xposMax, double middle) {
+	this->deactivateAllObstacles();
+	if(activeObstacles.size() == 0) {
+		std::string groundName = "obstacle0-ground";
+		int ground_id = mj_name2id(m_, mjOBJ_BODY, groundName.c_str());
+		if (ground_id != -1) m_->body_pos[3 * ground_id] = middle;
 	} else {
-		noObstacleArea = false;
+		double xpos = this->rng.getDouble(xposMin, xposMax) + additionObstacle;
+		obstaclePos = xpos - additionObstacle;
+
+		std::string obsName = "obstacle" + std::to_string(obstacleIndex);
+		int obs_id = mj_name2id(m_, mjOBJ_BODY, obsName.c_str());
+		if (obs_id != -1) m_->body_pos[3 * obs_id] = xpos;
+
+		std::string groundName = obsName + "-ground";
+		int ground_id = mj_name2id(m_, mjOBJ_BODY, groundName.c_str());
+		if (ground_id != -1) m_->body_pos[3 * ground_id] = middle;
 	}
+}
+
+// Prepare the sequence of obstacles to use (in the given order)
+void MujocoWrapper::setObstacles(const std::vector<size_t>& obs) {
+	activeObstacles = obs;
+	this->deactivateAllObstacles();
+	noObstacleActive = obs.empty();
+	// obstacleIndex is not modified here, it will be updated during selection
 }
