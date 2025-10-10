@@ -15,7 +15,7 @@
 	// Maximum number of actions performed on the learning environment during the
 	// each evaluation of a root.
 	// "maxNbActionsPerEval" : 1000, // Default value
-	"maxNbActionsPerEval" : 1000,
+	"maxNbActionsPerEval" : 10,
 	// Maximum number of times a given root is evaluated.After this number is
 	// reached, possibly after several generations, the score of the root will be
 	// fixed, and no further evaluation will be done.
@@ -76,7 +76,7 @@
 			"nbActionEdgeInit" : 3,
 			// Number of root TPGTeams to maintain when populating the TPGGraph
 			// "nbRoots" : 100, // Default value
-			"nbRoots" : 1000,
+			"nbRoots" : 220,
 			// Probability of adding an outgoing Action Edge to a Action.
 			// "pActionEdgeAddition" : 0.7, // Default value
 			"pActionEdgeAddition" : 0.2,
@@ -113,7 +113,7 @@
 			// Ratio of teams roots over the number of actions roots.
 			// If set to 1, there will be no action roots, if set to 0, there will be no team root.
 			// "ratioTeamsOverActions" : 1.0, // Default value
-			"ratioTeamsOverActions" : 0.0,
+			"ratioTeamsOverActions" : 0.09090909,
 			// During mutation of a team, setting this parameter to true allow a team
 			//to change destination toward any other actions. If set to false, it can only
 			//change destination toward a root action.
@@ -153,18 +153,18 @@
 	// When undefined in the json file, this parameter is automatically set to the
 	// number of cores of the CPU.
 	// /* "nbThreads" : 0,*/ // Commented by default
-	"nbThreads" : 64,
+	"nbThreads" : 1,
 	"selection" : 
 	{
 		// Indicates if the selection is hierarchical.
 		// "_isHierarchical" : false, // Default value
-		"_isHierarchical" : false,
+		"_isHierarchical" : true,
 		// Selection mode used. Available modes are:
 		//   - "lexicase"
 		//   - "truncation"
 		//   - "tournament"
 		// "_selectionMode" : Truncation, // Default value
-		"_selectionMode" : "tournament",
+		"_selectionMode" : "lexicase",
 		"lexicase" : 
 		{
 			// Coefficient multiply to epsilon to change the effect of epsilon lexicase.
@@ -172,8 +172,11 @@
 			"alpha" : 0.1,
 			// Ratio of root selected (not deleted) by the lexicase selction.
 			// "ratioSelectedRoots" : 0.9, // Default value
-			"ratioSelectedRoots" : 0.05
+			"ratioSelectedRoots" : 0.1
 		},
+		// To select only edge with same action ID in hierarchical mode.
+		// "pOnlyActionID" : 0, // Default value
+		"pOnlyActionID" : 1.0,
 		"tournament" : 
 		{
 			// Indicates if the elites are used in the reproduction process.

@@ -199,10 +199,17 @@ void Selector::HierarchicalSelector::launchSelection(
             }
         }
 
+        
+
+        
+        std::cout<<std::endl;
+        std::cout<<"Number of action roots "<< graph->getRootActions().size()<< "And number of roots" << graph->getNbRootVertices()<<std::endl;
+
         // Sélection tournoi spécifique à chaque testCase
         for (auto& actionGroup : resultsActionPerTestCase) {
             if (!actionGroup.empty()) {
                 TournamentSelector::doSelection(actionGroup, rng);
+                std::cout<<"Number of action roots "<< graph->getRootActions().size()<< "And number of roots" << graph->getNbRootVertices()<< " and number of vertices to delete " << this->getVerticesToDelete().size()<<std::endl;;
             }
         }
 
@@ -245,13 +252,17 @@ void Selector::HierarchicalSelector::doSelection(
 }
 
 
-
-
 /* UTILS PART */
 
 std::map<std::vector<size_t>, double> Learn::LexicaseEvaluationResult::getScores() const
 {
     return this->scores;
+}
+
+
+std::map<std::vector<size_t>, double> Learn::LexicaseEvaluationResult::getSuccess() const
+{
+    return this->success;
 }
 
 Learn::EvaluationResult& Learn::LexicaseEvaluationResult::operator+=(
@@ -285,10 +296,21 @@ Learn::EvaluationResult& Learn::LexicaseEvaluationResult::operator+=(
 
         auto it1 = this->scores.begin();
         while (it1 != this->scores.end()) {
-            auto it2 = lexiOther->scores.find(it1->first); // Utilisez `find` pour une recherche efficace
+            auto it2 = lexiOther->scores.find(it1->first);
 
             if (it2 != lexiOther->scores.end()) {
-                // Pondération avec normalisation
+                it1->second = (it1->second * (double)this->nbEvaluation +
+                            it2->second * (double)lexiOther->nbEvaluation) /
+                            (double)(this->nbEvaluation + lexiOther->nbEvaluation);
+            }
+            it1++;
+        }
+
+        it1 = this->success.begin();
+        while (it1 != this->success.end()) {
+            auto it2 = lexiOther->success.find(it1->first);
+
+            if (it2 != lexiOther->success.end()) {
                 it1->second = (it1->second * (double)this->nbEvaluation +
                             it2->second * (double)lexiOther->nbEvaluation) /
                             (double)(this->nbEvaluation + lexiOther->nbEvaluation);
@@ -326,6 +348,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
     double utility = 0.0;
 
     std::map<std::vector<size_t>, double> allScores;
+    std::map<std::vector<size_t>, double> allSuccess;
 
     // Number of evaluations
     uint64_t nbEvaluation = (mode == LearningMode::TRAINING)
@@ -359,14 +382,19 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
         currentTestCases = validationTestCases;
         nbTestCase = currentTestCases.size();
     }
+    if(nbTestCase == 0) nbTestCase++;
 
     // print if team is action or team, if mode is training or validation and the number of test cases
-    //std::cout << "Evaluating " << (dynamic_cast<const TPG::TPGAction*>(root) ? "action" : "team") << " in " << (mode == Learn::LearningMode::TRAINING ? "training" : "validation") << " mode with " << nbTestCase << " test cases." << std::endl;
+    std::cout << "Evaluating " << (dynamic_cast<const TPG::TPGAction*>(root) ? "action" : "team") << " in " << (mode == Learn::LearningMode::TRAINING ? "training" : "validation") << " mode with " << nbTestCase << " test cases." << std::endl;
+    if(dynamic_cast<const TPG::TPGAction*>(root) != nullptr){
+        std::cout<<"evaluating an action of ID "<<dynamic_cast<const TPG::TPGAction*>(root)->getActionID()<<std::endl;
+    }
 
     for(size_t taskNumber = 0; taskNumber < nbTestCase; taskNumber++){
 
 
         double rTask = 0;
+        double successTask = 0;
 
         // Evaluate nbIteration times
         for (size_t iterationNumber = 0; iterationNumber < nbEvaluation;
@@ -407,6 +435,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
             // Update results
             result += le.getScore();
             rTask += le.getScore();
+            successTask += dynamic_cast<MujocoWrapper*>(&le)->getNbSuccess();
 
             // Update utility if used.
             if (le.isUsingUtility()) {
@@ -417,13 +446,15 @@ std::shared_ptr<Learn::EvaluationResult> Learn::LexicaseAgent::evaluateJob(
         
         if(dynamic_cast<Selector::LexicaseSelector*>(selector.get()) != nullptr || mode != Learn::LearningMode::TRAINING){
             allScores.insert(std::make_pair(currentTestCases.at(taskNumber), rTask / nbEvaluation));
+            allSuccess.insert(std::make_pair(currentTestCases.at(taskNumber), successTask / nbEvaluation));
+
         }
     }
 
 
     // Create the EvaluationResult
     auto evaluationResult = std::shared_ptr<LexicaseEvaluationResult>(
-        new LexicaseEvaluationResult(allScores, result / (double)(nbEvaluation * nbTestCase), nbEvaluation,
+        new LexicaseEvaluationResult(allScores, allSuccess, result / (double)(nbEvaluation * nbTestCase), nbEvaluation,
                              utility / (double)(nbEvaluation*nbTestCase)));
 
 

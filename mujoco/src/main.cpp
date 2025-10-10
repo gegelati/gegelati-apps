@@ -61,6 +61,7 @@ void analyseValidationResults(
     File::TPGGraphDotExporter& dotExporter) {
     
     std::map<const std::vector<size_t>, std::pair<double, const TPG::TPGVertex*>> bestResults;
+	std::map<const std::vector<size_t>, double> bestSuccess;
 
 	// Erase from validationResults the vertex not in the graph
 	for (auto it = validationResults.begin(); it != validationResults.end(); ) {
@@ -78,15 +79,18 @@ void analyseValidationResults(
 
 	// Find best individuals for each test case
 	for(auto& r : validationResults){
+		Learn::LexicaseEvaluationResult* lexiEval = dynamic_cast<Learn::LexicaseEvaluationResult*>(r.first.get());
 		if(bestResults.empty()){
-			for(auto& v: dynamic_cast<Learn::LexicaseEvaluationResult*>(r.first.get())->getScores()){
+			for(auto& v: lexiEval->getScores()){
 				bestResults[v.first] = std::make_pair(v.second, r.second);
+				bestSuccess[v.first] = lexiEval->getSuccess().at(v.first);
 			}
 		}
 
-		for(auto& v: dynamic_cast<Learn::LexicaseEvaluationResult*>(r.first.get())->getScores()){
+		for(auto& v: lexiEval->getScores()){
 			if(v.second > bestResults[v.first].first){
 				bestResults[v.first] = std::make_pair(v.second, r.second);
+				bestSuccess[v.first] = lexiEval->getSuccess().at(v.first);
 			}
 		}
 	}
@@ -101,7 +105,11 @@ void analyseValidationResults(
 	outfile << generationNumber << ",";
 	for (auto it = bestResults.begin(); it != bestResults.end(); ++it) {
 		outfile << it->second.first;
-		if (std::next(it) != bestResults.end()) outfile << ",";
+		outfile << ",";
+	}
+	for (auto it = bestSuccess.begin(); it != bestSuccess.end(); ++it) {
+		outfile << it->second;
+		if (std::next(it) != bestSuccess.end()) outfile << ",";
 	}
 	outfile << std::endl;
 	outfile.close();
@@ -212,7 +220,7 @@ int main(int argc, char ** argv) {
     std::string token;
 
     while (std::getline(ss, token, ',')) {
-        if (token.empty()) continue;
+        if (token.empty() || token=="none") continue;
 
         std::vector<size_t> currentGroup;
         for (char c : token) {
@@ -229,7 +237,7 @@ int main(int argc, char ** argv) {
 	std::vector<std::vector<size_t>> validationObstacleUsed;
 	std::stringstream ssVal(validationObstacleUsedStr);
 	while (std::getline(ssVal, token, ',')) {
-		if (token.empty()) continue;
+		if (token.empty() || token=="none") continue;
 		std::vector<size_t> currentGroup;
 		for (char c : token) {
 			if (isdigit(c)) {
@@ -345,7 +353,13 @@ int main(int argc, char ** argv) {
 		if (file.is_open()) {
 			file << "gen";
 			for(auto& v: validationObstacleUsed){
-				file << ",";
+				file << ",scoreObs";
+				for(auto& i : v){
+					file << i;
+				}
+			}
+			for(auto& v: validationObstacleUsed){
+				file << ",successObs";
 				for(auto& i : v){
 					file << i;
 				}

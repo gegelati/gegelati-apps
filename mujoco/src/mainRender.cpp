@@ -403,8 +403,8 @@ int main(int argc, char ** argv) {
 
 	std::string actionAndStateData = dotDir + "/stateAndActionData_" + dotFileName + "." + std::to_string(seed) + ".csv";
     mujocoLE->printStateAndAction(actionAndStateData);
-    
-    std::cout<<"Score: "<<mujocoLE->getScore() << " And utility " << mujocoLE->getUtility() << " with "<<nbActions<<" actions taken"<<std::endl;;
+
+    std::cout<<"Score: "<<mujocoLE->getScore() << " And utility " << mujocoLE->getUtility() << " with "<<nbActions<<" actions taken and success: " << mujocoLE->getNbSuccess() << std::endl;
 
     if(isRenderVideoSaved){
         int fps = static_cast<int>(1.0 / frameDuration);

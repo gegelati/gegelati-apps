@@ -21,6 +21,7 @@ protected:
 	/// Total reward accumulated since the last reset
 	double totalReward = 0.0;
     double totalUtility = 0.0;
+	size_t nbSuccess = 0;
 
 	/// Number of actions executed since the last reset
 	uint64_t nbActionsExecuted = 0;
@@ -112,6 +113,10 @@ public:
 	Data::PrimitiveTypeArray<double>& getCurrentState();
 	uint64_t getStateSize(){
 		return stateSize;
+	}
+
+	size_t getNbSuccess() const {
+		return nbSuccess;
 	}
 
 	/// Expand environment variables in a string (e.g., $HOME)

@@ -26,6 +26,7 @@ void MujocoWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterat
 	this->nbActionsExecuted = 0;
 	this->totalReward = 0.0;
 	this->totalUtility = 0.0;
+	this->nbSuccess = 0;
 
 	this->obstacleIndex = 0;
 	this->obstaclePos = 0;
@@ -194,6 +195,7 @@ bool MujocoWrapper::computeObstaclesState(uint64_t index, double xposMin, double
 		if (d_->qpos[0] > sizeObstacleArea * (currentObstacleArea + 1)) {
 			currentObstacleArea++;
 			obstacleSucced = true;
+			nbSuccess++;
 		}
 
 		if (activeObstacles.empty()) {

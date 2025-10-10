@@ -187,18 +187,24 @@ namespace Learn {
     {
         protected:
             std::map<std::vector<size_t>, double> scores;
+            std::map<std::vector<size_t>, double> success;
 
         public: 
-            LexicaseEvaluationResult(const std::map<std::vector<size_t>, double>& scores, const double& res, const size_t& nbEval,
+            LexicaseEvaluationResult(const std::map<std::vector<size_t>, double>& scores, const std::map<std::vector<size_t>, double>& success, const double& res, const size_t& nbEval,
                             const double& uti = std::nan(""))
-            : EvaluationResult {res, nbEval, uti}, scores{scores} {};
+            : EvaluationResult {res, nbEval, uti}, scores{scores}, success{success} {};
             
             
             /**
              * \brief Virtual method to get the default double equivalent of
-             * the reward of the EvaluationResult.
+             * the score of the EvaluationResult.
              */
             virtual std::map<std::vector<size_t>, double> getScores() const;
+            /**
+             * \brief Virtual method to get the default double equivalent of
+             * the success of the EvaluationResult.
+             */
+            virtual std::map<std::vector<size_t>, double> getSuccess() const;
             /**
              * \brief Polymorphic addition assignement operator for
              * EvaluationResult.

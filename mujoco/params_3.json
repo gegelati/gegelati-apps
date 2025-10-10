@@ -164,7 +164,7 @@
 		//   - "truncation"
 		//   - "tournament"
 		// "_selectionMode" : Truncation, // Default value
-		"_selectionMode" : "tournament",
+		"_selectionMode" : "lexicase",
 		"lexicase" : 
 		{
 			// Coefficient multiply to epsilon to change the effect of epsilon lexicase.

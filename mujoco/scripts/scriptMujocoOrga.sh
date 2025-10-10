@@ -1,6 +1,8 @@
+#!/bin/bash
+
 # Vérification du nombre d'arguments
 if [ "$#" -lt 1 ]; then
-    echo "Usage: $0 <output-directory> <usecase>"
+    echo "Usage: $0 <output-directory> <usecase> <obstacle> <paramsFile> <NbSeed>"
     exit 1
 fi
 
@@ -8,6 +10,8 @@ fi
 OUTPUT_PATH=$1
 USECASE=${2:-ant}
 OBSTACLES=${3:-0,1,2,3,4}    # Valeur par défaut : "_"
+PARAMS=$4
+NB_SEED=$5
 
 
 # Paramètres pour la soumission SLURM
@@ -15,7 +19,7 @@ MEMORY="4G"
 NTASKS=1
 CPUS_PER_TASK=64
 TIME="1440"
-OUTPUT_DIR="/scratch/vacherq/obstacles/"
+OUTPUT_DIR="./scratch/vacherq/obstacles/"
 JOB_NAME_BASE="TPG_${USECASE,,}"
 
 
@@ -27,23 +31,23 @@ mkdir -p "$OUTPUT_DIR/err"
 
 
 list_params=$(seq 6 6 | sed "s/^/params_/" | sed 's/$/.json/')
-seeds=$(seq 0 2)
+seeds=$(seq 0 ${NB_SEED})
 
 # Boucle sur chaque ensemble de paramètres
-for params in ${list_params[@]}; do
-    echo "Params used $params"
+params=${PARAMS}
+echo "Params used $params"
 
-    # Extraire l'index du fichier JSON
-    index_param=$(basename "$params" | grep -oE '[0-9]+' | tail -n1)
+# Extraire l'index du fichier JSON
+index_param=$(basename "$params" | grep -oE '[0-9]+' | tail -n1)
 
-    for i in ${seeds[*]}; do
-        echo "Seed used $i"
+for i in ${seeds[*]}; do
+    echo "Seed used $i"
 
-        # Crée un fichier temporaire pour la soumission SLURM
-        job_file=$(mktemp /tmp/job_XXXX.sh)
+    # Crée un fichier temporaire pour la soumission SLURM
+    job_file=$(mktemp /tmp/job_XXXX.sh)
 
-        # Écrire le contenu du job SLURM dans le fichier temporaire
-        cat <<EOF > $job_file
+    # Écrire le contenu du job SLURM dans le fichier temporaire
+    cat <<EOF > $job_file
 #!/bin/bash
 #SBATCH --mem=${MEMORY}
 #SBATCH --ntasks=${NTASKS}
@@ -58,13 +62,12 @@ for params in ${list_params[@]}; do
 
 EOF
 
-        # Soumettre le job SLURM
-        sbatch $job_file
+    # Soumettre le job SLURM
+    sbatch $job_file
 
-        # Nettoyer le fichier temporaire après soumission
-        rm -f $job_file
+    # Nettoyer le fichier temporaire après soumission
+    rm -f $job_file
 
-    done
 done
 
 echo "All jobs submitted."
