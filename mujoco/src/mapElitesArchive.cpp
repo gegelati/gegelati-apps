@@ -19,7 +19,7 @@ const std::vector<std::pair<std::shared_ptr<Learn::EvaluationResult>, const TPG:
 uint64_t MapElitesArchive::getIndexArchive(double value) const
 {
     uint64_t idx = 0;
-    while (idx < archiveLimits.size() && value > archiveLimits[idx]) {
+    while (idx < archiveParams.archiveLimits.size() && value > archiveParams.archiveLimits[idx]) {
         idx++;
     }
     return idx >= dim1 ? dim1 - 1 : idx;
@@ -139,9 +139,9 @@ void MapElitesArchive::updateCSVArchive(std::string path, uint64_t generationNum
 
     if (generationNumber == 0) {
         outFile << ",";
-        for (size_t i = 0; i < archiveLimits.size(); ++i) {
-            outFile << archiveLimits[i];
-            if (i != archiveLimits.size() - 1)
+        for (size_t i = 0; i < archiveParams.archiveLimits.size(); ++i) {
+            outFile << archiveParams.archiveLimits[i];
+            if (i != archiveParams.archiveLimits.size() - 1)
                 outFile << ";";
         }
     }

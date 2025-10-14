@@ -254,8 +254,9 @@ int main(int argc, char ** argv) {
 		throw std::runtime_error("Use case not found");
 	}
 
+    ArchiveParametrization archive(mujocoLE->getNbDescriptors());
 	// Instantiate and init the learning agent
-	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, params);
+	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, archive, params);
 	la.init(seed);
 
     auto &tpg = *la.getTPGGraph();

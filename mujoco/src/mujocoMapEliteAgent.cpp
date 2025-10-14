@@ -12,34 +12,12 @@ void Learn::MujocoMapEliteLearningAgent::init(uint64_t seed){
         throw std::runtime_error("MapElites only support mujoco environments for now");
     }
 
-    // Compute the number of descriptors analysed
-    nbDescriptorsAnalysis = useMeanDescriptor + useMedianDescriptor +
-        useAbsMeanDescriptor + useQuantileDescriptor * 2 + useMinMaxDescriptor * 2;
 
-    if(nbDescriptorsAnalysis != 1 && descriptorName == "programLines"){
-        throw std::runtime_error("Only one analysis for program lines descriptors");
-    }
-
-    size_t nbDescriptors = dynamic_cast<MujocoWrapper*>(&learningEnvironment)->getNbDescriptors();
-    if(this->nbMainDescriptors > 0){
-        nbDescriptors = this->nbMainDescriptors;
-    }
-
-    if(!useCVT){
-        mapEliteArchive = new MapElitesArchive(archiveLimits, nbDescriptors * nbDescriptorsAnalysis);
+    if (dynamic_cast<const CVTArchiveParametrization*>(&archiveParams) != nullptr) {
+        mapEliteArchive = new CvtMapElitesArchive(*dynamic_cast<const CVTArchiveParametrization*>(&archiveParams), this->rng);
     } else {
-
-        double minRange = -1.0;
-        double maxRange = 1.0;
-        if(useAbsMeanDescriptor || descriptorName != "actionValues"){
-            minRange = 0.0;
-        }
-
-        mapEliteArchive = new CvtMapElitesArchive(
-            archiveLimits, nbDescriptors * nbDescriptorsAnalysis,
-            sizeCVT, this->rng, minRange, maxRange);
+        mapEliteArchive = new MapElitesArchive(archiveParams);
     }
-    //
 }
 
 void Learn::MujocoMapEliteLearningAgent::trainOneGeneration(uint64_t generationNumber)
@@ -135,7 +113,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
     
 
     // Vector of size of descriptors and initialized to 0
-    std::vector<double> descriptors = std::vector<double>(mujocoLE->getNbDescriptors() * nbDescriptorsAnalysis, 0.0);
+    std::vector<double> descriptors = std::vector<double>(mujocoLE->getNbDescriptors() * archiveParams.nbDescriptorsAnalysis, 0.0);
 
     // Evaluate nbIteration times
     for (size_t iterationNumber = 0; iterationNumber < nbEvaluation; iterationNumber++) {
@@ -170,51 +148,51 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
                 
 
                 size_t descriptorIndex = 0;
-                if(useAbsMeanDescriptor){
+                if(archiveParams.useAbsMeanDescriptor){
                     
                     double value = 0.0;
                     for(size_t idx2 = 0; idx2 < currentDescriptor.size(); idx2++){
                         value += std::abs(currentDescriptor[idx2][idx1]);
                     }
-                    descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] 
+                    descriptors[descriptorIndex + archiveParams.nbDescriptorsAnalysis * idx1] 
                         += value / currentDescriptor.size();
                     descriptorIndex += 1;
                 }
 
-                if(useMeanDescriptor){
+                if(archiveParams.useMeanDescriptor){
 
                     double value = 0.0;
                     for(size_t idx2 = 0; idx2 < currentDescriptor.size(); idx2++){
                         value += currentDescriptor[idx2][idx1];
                     }
-                    descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] 
+                    descriptors[descriptorIndex + archiveParams.nbDescriptorsAnalysis * idx1] 
                         += value / currentDescriptor.size();
                     descriptorIndex += 1;
                 }
 
-                if(useMedianDescriptor || useQuantileDescriptor || useMinMaxDescriptor){
+                if(archiveParams.useMedianDescriptor || archiveParams.useQuantileDescriptor || archiveParams.useMinMaxDescriptor){
                     std::vector<double> currentDescriptorValues;
                     for(size_t idx2 = 0; idx2 < currentDescriptor.size(); idx2++){
                         currentDescriptorValues.push_back(currentDescriptor[idx2][idx1]);
                     }
                     std::sort(currentDescriptorValues.begin(), currentDescriptorValues.end());
 
-                    if(useMedianDescriptor){
-                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] += currentDescriptorValues[currentDescriptorValues.size() / 2];
+                    if(archiveParams.useMedianDescriptor){
+                        descriptors[descriptorIndex + archiveParams.nbDescriptorsAnalysis * idx1] += currentDescriptorValues[currentDescriptorValues.size() / 2];
                         descriptorIndex += 1;
                     }
-                    if(useQuantileDescriptor){
+                    if(archiveParams.useQuantileDescriptor){
                         // 25% quantile
-                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] += currentDescriptorValues[currentDescriptorValues.size() / 4];
+                        descriptors[descriptorIndex + archiveParams.nbDescriptorsAnalysis * idx1] += currentDescriptorValues[currentDescriptorValues.size() / 4];
                         descriptorIndex += 1;
                         // 75% quantile
-                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] += currentDescriptorValues[3 * currentDescriptorValues.size() / 4];
+                        descriptors[descriptorIndex + archiveParams.nbDescriptorsAnalysis * idx1] += currentDescriptorValues[3 * currentDescriptorValues.size() / 4];
                         descriptorIndex += 1;
                     }
-                    if(useMinMaxDescriptor){
-                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] += currentDescriptorValues.front();
+                    if(archiveParams.useMinMaxDescriptor){
+                        descriptors[descriptorIndex + archiveParams.nbDescriptorsAnalysis * idx1] += currentDescriptorValues.front();
                         descriptorIndex += 1;
-                        descriptors[descriptorIndex + nbDescriptorsAnalysis * idx1] += currentDescriptorValues.back();
+                        descriptors[descriptorIndex + archiveParams.nbDescriptorsAnalysis * idx1] += currentDescriptorValues.back();
                         descriptorIndex += 1;
                     }
                 }
@@ -228,20 +206,20 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
         descriptors[i] /= nbEvaluation;
     } 
 
-    if(this->descriptorName == "programLines"){
-        descriptors = std::vector<double>(mujocoLE->getNbDescriptors() * nbDescriptorsAnalysis, 0.0);
-        if(typeProgramDescriptor == "nbInstr" || typeProgramDescriptor == "nbInstrUseful"){
+    if(archiveParams.descriptorName == "programLines"){
+        descriptors = std::vector<double>(mujocoLE->getNbDescriptors() * archiveParams.nbDescriptorsAnalysis, 0.0);
+        if(archiveParams.typeProgramDescriptor == "nbInstr" || archiveParams.typeProgramDescriptor == "nbInstrUseful"){
             for(auto edge: root->getOutgoingEdges()){
                 size_t actionID = dynamic_cast<TPG::TPGActionEdge*>(edge)->getActionClass();
                 size_t nbLines = edge->getProgramSharedPointer()->getNbLines();
                 for(size_t idx = 0; idx < nbLines; idx++){
-                    if(typeProgramDescriptor == "nbInstr" || !edge->getProgramSharedPointer()->isIntron(idx)){
+                    if(archiveParams.typeProgramDescriptor == "nbInstr" || !edge->getProgramSharedPointer()->isIntron(idx)){
                         descriptors.at(actionID)++;
                     }
                 }
                 descriptors.at(actionID) /= params.mutation.prog.maxProgramSize;
             }
-        } else if (typeProgramDescriptor == "nbUniqueInstr" || typeProgramDescriptor == "nbUniqueInstrUseful"){
+        } else if (archiveParams.typeProgramDescriptor == "nbUniqueInstr" || archiveParams.typeProgramDescriptor == "nbUniqueInstrUseful"){
             for(auto edge: root->getOutgoingEdges()){
                 size_t actionID = dynamic_cast<TPG::TPGActionEdge*>(edge)->getActionClass();
                 size_t nbLines = edge->getProgramSharedPointer()->getNbLines();
@@ -250,7 +228,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
                     instructionUsed.insert(std::make_pair(idx, 0));
                 }
                 for(size_t idx = 0; idx < nbLines; idx++){
-                    if(typeProgramDescriptor == "nbUniqueInstr" || !edge->getProgramSharedPointer()->isIntron(idx)){
+                    if(archiveParams.typeProgramDescriptor == "nbUniqueInstr" || !edge->getProgramSharedPointer()->isIntron(idx)){
                         auto line = edge->getProgramSharedPointer()->getLine(idx);
                         instructionUsed.at(line.getInstructionIndex())++;
                     }
@@ -292,19 +270,19 @@ std::vector<double> Learn::MujocoMapEliteLearningAgent::updateDescriptorWithMain
     std::sort(descriptors.begin(), descriptors.end());
 
     // Compute mean value
-    if(useMainMeanDescriptor || useMainStdDescriptor){
+    if(archiveParams.useMainMeanDescriptor || archiveParams.useMainStdDescriptor){
         double meanValue = 0.0;
         for(size_t i = 0; i < descriptors.size(); i++){
             meanValue += descriptors[i];
         }
         meanValue /= descriptors.size();
 
-        if(useMainMeanDescriptor){
+        if(archiveParams.useMainMeanDescriptor){
             mainDescriptors.push_back(meanValue);
         }
 
         // Compute std value if it is used
-        if(useMainStdDescriptor){
+        if(archiveParams.useMainStdDescriptor){
             double stdValue = 0.0;
             for(size_t i = 0; i < descriptors.size(); i++){
                 stdValue += (descriptors[i] - meanValue) * (descriptors[i] - meanValue);
@@ -315,16 +293,16 @@ std::vector<double> Learn::MujocoMapEliteLearningAgent::updateDescriptorWithMain
     }
 
     // Compute median value
-    if(useMainMedianDescriptor){
+    if(archiveParams.useMainMedianDescriptor){
         mainDescriptors.push_back(descriptors[descriptors.size() / 2]);
     }
 
     // Compute max value
-    if(useMainMaxDescriptor){
+    if(archiveParams.useMainMaxDescriptor){
         mainDescriptors.push_back(descriptors.back());
     }   
     // Compute min value
-    if(useMainMinDescriptor){
+    if(archiveParams.useMainMinDescriptor){
         mainDescriptors.push_back(descriptors.front());
     }
     return mainDescriptors;
@@ -379,7 +357,7 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
         const TPG::TPGVertex* root = it->second;
 
         std::vector<double> descriptorUsed(castEval->getDescriptors());
-        if(this->nbMainDescriptors > 0){
+        if(this->archiveParams.nbMainDescriptors > 0){
             descriptorUsed = updateDescriptorWithMainValues(descriptorUsed);
         }
 

@@ -61,7 +61,6 @@ int main(int argc, char ** argv) {
 	char usecase[150];
 	bool useHealthyReward = 1;
 	bool saveAllGenerationsDots = 1;
-	bool usePonderationSelection = 0;
 	bool useOnlyCloseAddEdges = 0;
 	bool useCVT = 0;
 	bool useMeanDescriptor = 0;
@@ -105,7 +104,7 @@ int main(int argc, char ** argv) {
 	strcpy(usecase, "ant");
     strcpy(xmlFile, "none");
 	int long_index = 0;
-	while((option = getopt_long(argc, argv, "s:p:l:x:h:c:u:a:g:w:o:d:", long_options, &long_index)) != -1){
+	while((option = getopt_long(argc, argv, "s:p:l:x:h:c:u:a:g:o:d:", long_options, &long_index)) != -1){
 		switch (option) {
 			case 's': seed= atoi(optarg); break;
 			case 'p': strcpy(paramFile, optarg); break;
@@ -115,7 +114,6 @@ int main(int argc, char ** argv) {
 			case 'x': strcpy(xmlFile, optarg); break;
 			case 'a': archiveValuesStr = optarg; break;
 			case 'g': saveAllGenerationsDots = atoi(optarg); break;
-			case 'w': usePonderationSelection = atoi(optarg); break;
 			case 'o': useOnlyCloseAddEdges = atoi(optarg); break;
 			case 'd': descriptorType = optarg; break;
 			case 1: useMeanDescriptor = atoi(optarg); break;      // --dMean
@@ -136,7 +134,7 @@ int main(int argc, char ** argv) {
 					"'-s seed' '-p paramFile.json' '-u useCase' "
 					"'-l logsFolder' '-x xmlFile' '-h useHealthyReward' "
 					"'-a sizeArchive' '-g saveAllGenDotFiles' "
-					"'-w usePonderationSelection' '-o useOnlyCloseAddEdges' '-d descriptorType' "
+					"'-o useOnlyCloseAddEdges' '-d descriptorType' "
 					"'--dMean useMeanDescriptor' '--dMed useMedianDescriptor' "
 					"'--dAbsMean useAbsMeanDescriptor' '--dQ useQuantileDescriptor' "
 					"'--dMinMax useMinMaxDescriptor' '--cvt useCVT' '--scvt sizeCVT' "
@@ -271,25 +269,40 @@ int main(int argc, char ** argv) {
 		throw std::runtime_error("Use case not found");
 	}
 
+	ArchiveParametrization* archiveParams;
+	if(useCVT){
+		archiveParams = new CVTArchiveParametrization(
+			mujocoLE->getNbDescriptors(), archiveValues, 0.0, 1.0, sizeCVT, descriptorType,
+			
+			// Descriptor statistics options
+			useMeanDescriptor, useMedianDescriptor,
+			useAbsMeanDescriptor, useQuantileDescriptor, useMinMaxDescriptor, 
+
+			// Main descriptor statistics options
+			useMainMeanDescriptor, useMainMedianDescriptor,
+			useMainStdDescriptor, useMainMaxDescriptor, useMainMinDescriptor,
+		
+			// For program descriptor
+			typeProgramDescriptor);
+	} else {
+		archiveParams = new ArchiveParametrization(
+			mujocoLE->getNbDescriptors(), archiveValues, descriptorType,
+			
+			// Descriptor statistics options
+			useMeanDescriptor, useMedianDescriptor,
+			useAbsMeanDescriptor, useQuantileDescriptor, useMinMaxDescriptor, 
+
+			// Main descriptor statistics options
+			useMainMeanDescriptor, useMainMedianDescriptor,
+			useMainStdDescriptor, useMainMaxDescriptor, useMainMinDescriptor,
+		
+			// For program descriptor
+			typeProgramDescriptor);
+	}
 
 	// Instantiate and init the learning agent
 	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, 
-		params, archiveValues, 
-		usePonderationSelection, useOnlyCloseAddEdges,
-		// CVT and descriptor options
-		useCVT, sizeCVT, descriptorType, 
-		
-		// Descriptor statistics options
-		useMeanDescriptor, useMedianDescriptor,
-		useAbsMeanDescriptor, useQuantileDescriptor, useMinMaxDescriptor, 
-
-		// Main descriptor statistics options
-		useMainMeanDescriptor, useMainMedianDescriptor,
-		useMainStdDescriptor, useMainMaxDescriptor, useMainMinDescriptor,
-	
-		// For program descriptor
-		typeProgramDescriptor
-	);
+		*archiveParams, params, useOnlyCloseAddEdges);
 	la.init(seed);
 
 

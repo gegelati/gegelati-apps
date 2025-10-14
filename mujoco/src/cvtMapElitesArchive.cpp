@@ -9,7 +9,6 @@
 
 #include "cvtMapElitesArchive.h"
 
-// Distance euclidienne au carré
 double CvtMapElitesArchive::dist_squared(const std::vector<double>& a, const std::vector<double>& b) {
     double sum = 0.0;
     for (size_t i = 0; i < dim2; ++i)
@@ -17,7 +16,6 @@ double CvtMapElitesArchive::dist_squared(const std::vector<double>& a, const std
     return sum;
 }
 
-// Addition de vecteurs
 std::vector<double> CvtMapElitesArchive::add(const std::vector<double>& a, const std::vector<double>& b) {
     std::vector<double> res(dim2);
     for (size_t i = 0; i < dim2; ++i)
@@ -25,7 +23,6 @@ std::vector<double> CvtMapElitesArchive::add(const std::vector<double>& a, const
     return res;
 }
 
-// Multiplication scalaire
 std::vector<double> CvtMapElitesArchive::scalar_mult(const std::vector<double>& a, double s) {
     std::vector<double> res(dim2);
     for (size_t i = 0; i < dim2; ++i)
@@ -33,7 +30,6 @@ std::vector<double> CvtMapElitesArchive::scalar_mult(const std::vector<double>& 
     return res;
 }
 
-// Moyenne d'un ensemble de vecteurs
 std::vector<double> CvtMapElitesArchive::average(const std::vector<std::vector<double>>& points) {
     std::vector<double> avg(dim2, 0.0);
     if (points.empty()) return avg;
@@ -42,15 +38,13 @@ std::vector<double> CvtMapElitesArchive::average(const std::vector<std::vector<d
     return scalar_mult(avg, 1.0 / points.size());
 }
 
-// Génère un point aléatoire uniforme dans [DOMAIN_MIN, DOMAIN_MAX]^dim2
 std::vector<double> CvtMapElitesArchive::random_point(Mutator::RNG& rng) {
     std::vector<double> point(dim2);
     for (size_t i = 0; i < dim2; ++i)
-        point[i] = rng.getDouble(minRange, maxRange);
+        point[i] = rng.getDouble(archiveParams.minRange, archiveParams.maxRange);
     return point;
 }
 
-// Trouve l'indice du centroïde le plus proche
 size_t CvtMapElitesArchive::nearest(const std::vector<double>& point, const std::vector<std::vector<double>>& centroids) {
     double best_dist = std::numeric_limits<double>::max();
     int64_t best_idx = -1;
@@ -72,36 +66,36 @@ void CvtMapElitesArchive::initialize_cvt(Mutator::RNG& rng)
     for (auto& c : centroids)
         c = random_point(rng);
 
-    std::vector<size_t> j(nbCentroids, 1); // Compteur d'updates par centroïde
+    std::vector<size_t> j(archiveParams.nbCentroids, 1); // Compteur d'updates par centroïde
 
-    for (size_t iter = 0; iter < nbIterationInit; ++iter) {
+    for (size_t iter = 0; iter < archiveParams.nbIterationInit; ++iter) {
 
         // print progress with a line overrite at each iteration
-        std::cout << "\rIteration " << iter + 1 << "/" << nbIterationInit << " (centroids initialized: " << j.size() << ")"<< std::flush;
-        std::vector<std::vector<double>> samples(nbDotsInit);
-        std::vector<std::vector<std::vector<double>>> assignments(nbCentroids);
+        std::cout << "\rIteration " << iter + 1 << "/" << archiveParams.nbIterationInit << " (centroids initialized: " << j.size() << ")"<< std::flush;
+        std::vector<std::vector<double>> samples(archiveParams.nbDotsInit);
+        std::vector<std::vector<std::vector<double>>> assignments(archiveParams.nbCentroids);
 
-        // Générer nbDotsInit points aléatoires
-        for (size_t i = 0; i < nbDotsInit; ++i)
+        // Create random dots
+        for (size_t i = 0; i < archiveParams.nbDotsInit; ++i)
             samples[i] = random_point(rng);
 
-        // Assigner chaque point à son centroïde le plus proche
+        // Assign each dot to the closest centroid
         for (const auto& p : samples) {
             size_t idx = nearest(p, centroids);
             assignments[idx].push_back(p);
         }
 
-        // Mettre à jour les centroïdes
-        for (size_t i = 0; i < nbCentroids; ++i) {
+        // Update the centroids
+        for (size_t i = 0; i < archiveParams.nbCentroids; ++i) {
             if (!assignments[i].empty()) {
                 std::vector<double> u_i = average(assignments[i]);
                 std::vector<double> z_i = centroids[i];
                 size_t j_i = j[i];
 
-                // Formule de mise à jour
+                // Update
                 std::vector<double> new_z(dim2);
                 for (size_t d = 0; d < dim2; ++d) {
-                    new_z[d] = ((a1 * j_i + b1) * z_i[d] + (a2 * j_i + b2) * u_i[d]) / (j_i + 1);
+                    new_z[d] = ((archiveParams.a1 * j_i + archiveParams.b1) * z_i[d] + (archiveParams.a2 * j_i + archiveParams.b2) * u_i[d]) / (j_i + 1);
                 }
 
                 centroids[i] = new_z;

@@ -4,28 +4,58 @@
 #include <gegelati.h>
 #include "mapElitesArchive.h"
 
+class CVTArchiveParametrization : public ArchiveParametrization{
+    public:
+
+        size_t nbCentroids;   
+        double minRange;
+        double maxRange;
+
+        size_t nbDotsInit;              
+        size_t nbIterationInit; 
+
+        double a1; 
+        double a2;
+        double b1;
+        double b2;
+
+        CVTArchiveParametrization(
+            size_t nbDescriptors, std::vector<double> archiveLimits = {}, double minRange = 0.0, double maxRange = 1.0,
+            size_t nbCentroids = 100, std::string descriptorName = "feetContact",
+            bool useMeanDescriptor = false, bool useMedianDescriptor = false,
+            bool useAbsMeanDescriptor = true, bool useQuantileDescriptor = false,
+            bool useMinMaxDescriptor = false, bool useMainMeanDescriptor = false,
+            bool useMainMedianDescriptor = false, bool useMainStdDescriptor = false,
+            bool useMainMaxDescriptor = false, bool useMainMinDescriptor = false,
+            std::string typeProgramDescriptor = "None",
+            size_t nbDotsInit = 1000, size_t nbIterationInit = 300, double a1 = 0.5, double a2 = 0.5, double b1 = 0.5, double b2 = 0.5
+        ): ArchiveParametrization(nbDescriptors, archiveLimits, descriptorName, useMeanDescriptor, 
+                                  useMedianDescriptor, useAbsMeanDescriptor, useQuantileDescriptor, 
+                                  useMinMaxDescriptor, useMainMeanDescriptor, useMainMedianDescriptor, 
+                                  useMainStdDescriptor, useMainMaxDescriptor, useMainMinDescriptor, 
+                                  typeProgramDescriptor), nbCentroids{nbCentroids}, minRange{minRange}, maxRange{maxRange}, nbDotsInit{nbDotsInit}, 
+                                  nbIterationInit{nbIterationInit}, a1{a1}, a2{a2}, b1{b1}, b2{b2} 
+        {
+            if(!useAbsMeanDescriptor && descriptorName == "actionValues" && minRange == 0.0){
+                minRange = maxRange * -1;
+            }
+        }
+
+};
+
 class CvtMapElitesArchive : public MapElitesArchive {
     protected:
     
+        const CVTArchiveParametrization& archiveParams;
         std::vector<std::vector<double>> centroids;
-
-        size_t nbCentroids;             
-        size_t nbDotsInit = 1000;              
-        size_t nbIterationInit = 300; 
-
-        double minRange, maxRange;
-
-        const double a1 = 0.5, a2 = 0.5;
-        const double b1 = 0.5, b2 = 0.5;
 
     public:
 
-        CvtMapElitesArchive(std::vector<double>& archiveLimits, size_t dim, uint64_t size, Mutator::RNG& rng,
-            double min, double max)
-            : MapElitesArchive(archiveLimits, dim), nbCentroids{size}, minRange{min}, maxRange{max} 
+        CvtMapElitesArchive(const CVTArchiveParametrization& archiveParams, Mutator::RNG& rng)
+            : MapElitesArchive(archiveParams), archiveParams{archiveParams}
         {
-            centroids.resize(nbCentroids);
-            archive.resize(size);
+            centroids.resize(archiveParams.nbCentroids);
+            archive.resize(archiveParams.nbCentroids);
             initialize_cvt(rng);
         }
 
@@ -37,10 +67,6 @@ class CvtMapElitesArchive : public MapElitesArchive {
         size_t nearest(const std::vector<double>& point, const std::vector<std::vector<double>>& centroids);
 
         void initialize_cvt(Mutator::RNG& rng);
-
-        uint64_t size() const;
-
-        std::pair<uint64_t, uint64_t> getDimensions() const;
 
 
         size_t getIndexForDescriptor(const std::vector<double>& descriptors) const;
