@@ -31,7 +31,7 @@ public:
 			initialize_simulation();
 			if(descriptorType_ == DescriptorType::FeetContact){
 				throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoReacherWrapper.");
-			} else if(descriptorType_ == DescriptorType::ActionValues){
+			} else {
 				// Initialize the descriptors
 				initialize_descriptors();
 			}
@@ -46,7 +46,7 @@ public:
 		initialize_simulation();
 		if(descriptorType_ == DescriptorType::FeetContact){
 			throw std::runtime_error("Descriptor type FeetContact is not supported for MujocoReacherWrapper.");
-		} else if(descriptorType_ == DescriptorType::ActionValues){
+		} else {
 			// Initialize the descriptors
 			initialize_descriptors();
 		}

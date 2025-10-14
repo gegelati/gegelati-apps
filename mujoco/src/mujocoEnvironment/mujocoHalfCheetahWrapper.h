@@ -13,7 +13,7 @@ protected:
 
     // Parameters
     double forward_reward_weight = 1.0;
-    double control_cost_weight_ = 0.5;
+    double control_cost_weight_ = 0.1;
     double reset_noise_scale_ = 0.1;
     bool exclude_current_positions_from_observation_ = true;
 

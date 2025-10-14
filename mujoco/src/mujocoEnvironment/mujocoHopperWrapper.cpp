@@ -146,7 +146,7 @@ void MujocoHopperWrapper::initialize_descriptors() {
 		for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
 			footGeomToIndex[feet_geom_ids_[j]] = j;
 		}
-	} else if (descriptorType_ == DescriptorType::ActionValues){
+	} else {
 		MujocoWrapper::initialize_descriptors();
 	}
 }
@@ -155,7 +155,7 @@ void MujocoHopperWrapper::initialize_descriptors() {
 const size_t MujocoHopperWrapper::getNbDescriptors(){
 	if(descriptorType_ == DescriptorType::FeetContact){
 		return 1;
-	} else if (descriptorType_ == DescriptorType::ActionValues) {
+	} else {
 		return MujocoWrapper::getNbDescriptors();
 	}
 	return 0;

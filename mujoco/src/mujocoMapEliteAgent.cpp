@@ -16,18 +16,27 @@ void Learn::MujocoMapEliteLearningAgent::init(uint64_t seed){
     nbDescriptorsAnalysis = useMeanDescriptor + useMedianDescriptor +
         useAbsMeanDescriptor + useQuantileDescriptor * 2 + useMinMaxDescriptor * 2;
 
+    if(nbDescriptorsAnalysis != 1 && descriptorName == "programLines"){
+        throw std::runtime_error("Only one analysis for program lines descriptors");
+    }
+
+    size_t nbDescriptors = dynamic_cast<MujocoWrapper*>(&learningEnvironment)->getNbDescriptors();
+    if(this->nbMainDescriptors > 0){
+        nbDescriptors = this->nbMainDescriptors;
+    }
+
     if(!useCVT){
-        mapEliteArchive = new MapElitesArchive(archiveLimits, dynamic_cast<MujocoWrapper*>(&learningEnvironment)->getNbDescriptors() * nbDescriptorsAnalysis);
+        mapEliteArchive = new MapElitesArchive(archiveLimits, nbDescriptors * nbDescriptorsAnalysis);
     } else {
 
         double minRange = -1.0;
         double maxRange = 1.0;
-        if(useAbsMeanDescriptor){
+        if(useAbsMeanDescriptor || descriptorName != "actionValues"){
             minRange = 0.0;
         }
 
         mapEliteArchive = new CvtMapElitesArchive(
-            archiveLimits, dynamic_cast<MujocoWrapper*>(&learningEnvironment)->getNbDescriptors() * nbDescriptorsAnalysis,
+            archiveLimits, nbDescriptors * nbDescriptorsAnalysis,
             sizeCVT, this->rng, minRange, maxRange);
     }
     //
@@ -155,6 +164,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
         utility += mujocoLE->getUtility();
 
         if(mapEliteArchive->getDimensions().first > 0){
+                
             auto& currentDescriptor = mujocoLE->getDescriptors();
             for(size_t idx1 = 0; idx1 < mujocoLE->getNbDescriptors(); idx1++){
                 
@@ -209,6 +219,7 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
                     }
                 }
             }
+
         }
     }
 
@@ -216,6 +227,47 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
     for(size_t i = 0; i< descriptors.size() && mapEliteArchive->getDimensions().first > 0; i++){
         descriptors[i] /= nbEvaluation;
     } 
+
+    if(this->descriptorName == "programLines"){
+        descriptors = std::vector<double>(mujocoLE->getNbDescriptors() * nbDescriptorsAnalysis, 0.0);
+        if(typeProgramDescriptor == "nbInstr" || typeProgramDescriptor == "nbInstrUseful"){
+            for(auto edge: root->getOutgoingEdges()){
+                size_t actionID = dynamic_cast<TPG::TPGActionEdge*>(edge)->getActionClass();
+                size_t nbLines = edge->getProgramSharedPointer()->getNbLines();
+                for(size_t idx = 0; idx < nbLines; idx++){
+                    if(typeProgramDescriptor == "nbInstr" || !edge->getProgramSharedPointer()->isIntron(idx)){
+                        descriptors.at(actionID)++;
+                    }
+                }
+                descriptors.at(actionID) /= params.mutation.prog.maxProgramSize;
+            }
+        } else if (typeProgramDescriptor == "nbUniqueInstr" || typeProgramDescriptor == "nbUniqueInstrUseful"){
+            for(auto edge: root->getOutgoingEdges()){
+                size_t actionID = dynamic_cast<TPG::TPGActionEdge*>(edge)->getActionClass();
+                size_t nbLines = edge->getProgramSharedPointer()->getNbLines();
+                std::map<size_t, size_t> instructionUsed;
+                for(size_t idx = 0; idx < env.getInstructionSet().getNbInstructions(); idx++){
+                    instructionUsed.insert(std::make_pair(idx, 0));
+                }
+                for(size_t idx = 0; idx < nbLines; idx++){
+                    if(typeProgramDescriptor == "nbUniqueInstr" || !edge->getProgramSharedPointer()->isIntron(idx)){
+                        auto line = edge->getProgramSharedPointer()->getLine(idx);
+                        instructionUsed.at(line.getInstructionIndex())++;
+                    }
+                }
+                for(auto& pair: instructionUsed){
+                    if(pair.second > 0){
+                        descriptors.at(actionID)++;
+                    } 
+                }
+                descriptors.at(actionID) /= instructionUsed.size();
+            }
+        } else {
+            throw std::runtime_error("typeProgramDescriptor not known");
+        }
+
+    }            
+
 
     // Create the EvaluationResult
     auto evaluationResult =
@@ -232,10 +284,65 @@ std::shared_ptr<Learn::EvaluationResult> Learn::MujocoMapEliteLearningAgent::eva
     return evaluationResult;
 }
 
+std::vector<double> Learn::MujocoMapEliteLearningAgent::updateDescriptorWithMainValues(std::vector<double>& descriptors)
+{
+    std::vector<double> mainDescriptors;
+
+    // Sort descriptors values
+    std::sort(descriptors.begin(), descriptors.end());
+
+    // Compute mean value
+    if(useMainMeanDescriptor || useMainStdDescriptor){
+        double meanValue = 0.0;
+        for(size_t i = 0; i < descriptors.size(); i++){
+            meanValue += descriptors[i];
+        }
+        meanValue /= descriptors.size();
+
+        if(useMainMeanDescriptor){
+            mainDescriptors.push_back(meanValue);
+        }
+
+        // Compute std value if it is used
+        if(useMainStdDescriptor){
+            double stdValue = 0.0;
+            for(size_t i = 0; i < descriptors.size(); i++){
+                stdValue += (descriptors[i] - meanValue) * (descriptors[i] - meanValue);
+            }
+            stdValue = std::sqrt(stdValue / descriptors.size());
+            mainDescriptors.push_back(stdValue);
+        }
+    }
+
+    // Compute median value
+    if(useMainMedianDescriptor){
+        mainDescriptors.push_back(descriptors[descriptors.size() / 2]);
+    }
+
+    // Compute max value
+    if(useMainMaxDescriptor){
+        mainDescriptors.push_back(descriptors.back());
+    }   
+    // Compute min value
+    if(useMainMinDescriptor){
+        mainDescriptors.push_back(descriptors.front());
+    }
+    return mainDescriptors;
+
+}
+
 void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
     std::multimap<std::shared_ptr<EvaluationResult>,
                     const TPG::TPGVertex*>& results)
 {
+    
+    for(auto pair: mapEliteArchive->getAllArchive()){
+        if(pair.second!=nullptr){
+            if(!tpg->hasVertex(*pair.second)){
+                std::cout<<"not normal here"<<std::endl;
+            }
+        }
+    }
 
 
     if(mapEliteArchive->getDimensions().first == 0){
@@ -246,6 +353,7 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
     std::multimap<std::shared_ptr<EvaluationResult>, const TPG::TPGVertex*>
         preservedRoots;
 
+
     size_t numberNewValues = 0;
 
     for(auto it = results.begin(); it != results.end(); it++){
@@ -255,6 +363,7 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
             this->mapEliteArchive->removeRootFromArchiveIfNotComplete(it->second, params.maxNbEvaluationPerPolicy);
         }
     }
+
 
     while(results.size() > 0){
 
@@ -269,39 +378,40 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
         MapElitesEvaluationResult* castEval = dynamic_cast<MapElitesEvaluationResult*>(eval.get());
         const TPG::TPGVertex* root = it->second;
 
+        std::vector<double> descriptorUsed(castEval->getDescriptors());
+        if(this->nbMainDescriptors > 0){
+            descriptorUsed = updateDescriptorWithMainValues(descriptorUsed);
+        }
+
         // Get the saved evaluation and root
-        const std::pair<std::shared_ptr<EvaluationResult>, const TPG::TPGVertex*>& pairSaved = mapEliteArchive->getArchiveFromDescriptors(castEval->getDescriptors());
+        std::pair<std::shared_ptr<EvaluationResult>, const TPG::TPGVertex*> pairSaved = mapEliteArchive->getArchiveFromDescriptors(descriptorUsed);
 
         // The value saved in the archive is better than the current root
         // There is also a verification that the root is not the same
-        if(pairSaved.second != nullptr && pairSaved.second != root && pairSaved.first->getResult() > castEval->getResult()){
+        if(pairSaved.second != nullptr && pairSaved.second != root && pairSaved.first->getResult() >= castEval->getResult()){
 
-            // Delete the root
-            tpg->removeVertex(*root);
             // Removed stored result (if any)
             this->resultsPerRoot.erase(root);
+            // Delete the root
+            tpg->removeVertex(*root);
 
         // The current root is better than the values saved
         } else if (pairSaved.second != root) {
 
-            // Save the new root and delete the old one
-            tpg->removeVertex(*pairSaved.second);
+
 
             // Removed stored result (if any)
             this->resultsPerRoot.erase(pairSaved.second);
 
-            if(pairSaved.second != nullptr){
-                // Erase it from preserved roots too if the value is in it
-                auto itPreserved = preservedRoots.find(pairSaved.first);
-                if(itPreserved != preservedRoots.end() && itPreserved->second == pairSaved.second){
-                    preservedRoots.erase(itPreserved);
-                }
-            }
+
             numberNewValues++;
 
             // Saving
-            this->mapEliteArchive->setArchiveFromDescriptors(root, eval, castEval->getDescriptors());
+            this->mapEliteArchive->setArchiveFromDescriptors(root, eval, descriptorUsed);
 
+            // Save the new root and delete the old one
+            tpg->removeVertex(*pairSaved.second);
+            
             // Preserved the root
             preservedRoots.insert(*it); // Root are preserved if they are override in this same generation !
         }
@@ -313,6 +423,21 @@ void Learn::MujocoMapEliteLearningAgent::decimateWorstRoots(
     
     // Restore root actions
     results.insert(preservedRoots.begin(), preservedRoots.end());
+    std::cout<<preservedRoots.size()<<" ";
+
+    for(auto pair: mapEliteArchive->getAllArchive()){
+        if(pair.second!=nullptr){
+            if(!tpg->hasVertex(*pair.second)){
+                std::cout<<"not normal here"<<std::endl;
+                for(auto v: preservedRoots){
+                    if(pair.second == v.second){
+                        std::cout<<"root was preserved"<<std::endl;
+                    }
+                }
+
+            }
+        }
+    }
 }
 
 

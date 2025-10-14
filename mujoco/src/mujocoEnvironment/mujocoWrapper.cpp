@@ -129,12 +129,6 @@ std::string MujocoWrapper::ExpandEnvVars(const std::string &str) {
 	return result;
 }
 
-
-void  MujocoWrapper::initialize_descriptors()
-{
-	
-}
-
 const size_t MujocoWrapper::getNbDescriptors()
 {
 	return nbActions;

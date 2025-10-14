@@ -29,6 +29,12 @@ void exportIndividual(const TPG::TPGVertex* vertex,
     sprintf(dotFile, "%s/out_best_%zu.%" PRIu64 ".p%d.%s.dot",
             basePathDots.c_str(), index, seed, indexParam, usecase.c_str());
     dotExporter.setNewFilePath(dotFile);
+	if(vertex == nullptr){
+		std::cout<<"meh"<<std::endl;
+	}
+	if(!graph->hasVertex(*vertex)){
+		std::cout<<"meeeej"<<std::endl;
+	}
     dotExporter.printSubGraph(vertex);
 
     TPG::PolicyStats ps;
@@ -63,6 +69,16 @@ int main(int argc, char ** argv) {
 	bool useAbsMeanDescriptor = 1;
 	bool useQuantileDescriptor = 0;
 	bool useMinMaxDescriptor = 0;
+	
+	bool useMainMeanDescriptor = 0;
+	bool useMainMedianDescriptor = 0;
+	bool useMainStdDescriptor = 0;
+	bool useMainMaxDescriptor = 0;
+	bool useMainMinDescriptor = 0;
+
+	std::string typeProgramDescriptor = "None";
+
+
 	std::string archiveValuesStr = "";
 	std::string descriptorType = "";
 	size_t sizeCVT = 1000;
@@ -75,6 +91,12 @@ int main(int argc, char ** argv) {
 		{"dMinMax",  required_argument, 0,  5 },
 		{"cvt",      required_argument, 0,  6 },
 		{"scvt",      required_argument, 0,  7 },
+		{"dMainMean", required_argument, 0,  8 },
+		{"dMainMed", required_argument, 0,  9 },
+		{"dMainStd", required_argument, 0, 10 },
+		{"dMainMax", required_argument, 0, 11 },
+		{"dMainMin", required_argument, 0, 12 },
+		{"dTypeProg", required_argument, 0, 13 },
 		{0, 0, 0, 0}
 	};
 
@@ -103,6 +125,12 @@ int main(int argc, char ** argv) {
 			case 5: useMinMaxDescriptor = atoi(optarg); break;    // --dMinMax
 			case 6: useCVT = atoi(optarg); break;                 // --cvt
 			case 7: sizeCVT = atoi(optarg); break;                // --scvt
+			case 8: useMainMeanDescriptor = atoi(optarg); break;  // --dMainMean
+			case 9: useMainMedianDescriptor = atoi(optarg); break; // --dMainMed
+			case 10: useMainStdDescriptor = atoi(optarg); break;   // --dMainStd
+			case 11: useMainMaxDescriptor = atoi(optarg); break;   // --dMainMax
+			case 12: useMainMinDescriptor = atoi(optarg); break;   // --dMainMin
+			case 13: typeProgramDescriptor = optarg; break;   // --dTypeProg
 			default:
 				std::cout << "Unrecognised option. Valid options are "
 					"'-s seed' '-p paramFile.json' '-u useCase' "
@@ -111,7 +139,10 @@ int main(int argc, char ** argv) {
 					"'-w usePonderationSelection' '-o useOnlyCloseAddEdges' '-d descriptorType' "
 					"'--dMean useMeanDescriptor' '--dMed useMedianDescriptor' "
 					"'--dAbsMean useAbsMeanDescriptor' '--dQ useQuantileDescriptor' "
-					"'--dMinMax useMinMaxDescriptor' '--cvt useCVT'." << std::endl;
+					"'--dMinMax useMinMaxDescriptor' '--cvt useCVT' '--scvt sizeCVT' "
+					"'--dMainMean useMainMeanDescriptor' '--dMainMed useMainMedianDescriptor' "
+					"'--dMainStd useMainStdDescriptor' '--dMainMax useMainMaxDescriptor' "
+					"'--dMainMin useMainMinDescriptor' '--dTypeProg typeProgramDescriptor'."  << std::endl;
 				exit(1);
 		}
 	}
@@ -245,13 +276,31 @@ int main(int argc, char ** argv) {
 	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, 
 		params, archiveValues, 
 		usePonderationSelection, useOnlyCloseAddEdges,
-		useCVT, sizeCVT, useMeanDescriptor, useMedianDescriptor,
-		useAbsMeanDescriptor, useQuantileDescriptor, useMinMaxDescriptor);
+		// CVT and descriptor options
+		useCVT, sizeCVT, descriptorType, 
+		
+		// Descriptor statistics options
+		useMeanDescriptor, useMedianDescriptor,
+		useAbsMeanDescriptor, useQuantileDescriptor, useMinMaxDescriptor, 
+
+		// Main descriptor statistics options
+		useMainMeanDescriptor, useMainMedianDescriptor,
+		useMainStdDescriptor, useMainMaxDescriptor, useMainMinDescriptor,
+	
+		// For program descriptor
+		typeProgramDescriptor
+	);
 	la.init(seed);
 
 
     std::cout << "SELECTED SEED : " << seed << std::endl;
     std::cout << "SELECTED PARAMS FILE: " << paramFile << std::endl;
+	std::cout << "SELECTED DESCRIPTORS :" << descriptorType;
+	if(descriptorType == "programLines"){
+		std::cout<<" TYPE "<<typeProgramDescriptor;
+	}
+	
+	std::cout << std::endl;
 	std::cout << "SELECTION METHOD :";
 	if(archiveValues.size() > 0){
 		if(useCVT){
@@ -342,12 +391,12 @@ int main(int argc, char ** argv) {
 			la.getMapElitesArchive().updateCSVArchive(archivePath, i);
 		}
 
-		if(i % params.stepValidation && params.doValidation){
+		if(i % params.stepValidation == 0 && params.doValidation){
 			if (!archiveValues.empty()) {
 
 				size_t index = 0;
 				for (const auto& elem: la.getMapElitesArchive().getAllArchive()) {
-					if (elem.second != nullptr) {
+					if (elem.second != nullptr && la.getTPGGraph()->hasVertex(*elem.second)) {
 						exportIndividual(elem.second, archiveDots, archiveStats, index, seed, indexParam, usecase,
 										la.getTPGGraph(), dotExporter);
 					}
@@ -358,7 +407,7 @@ int main(int argc, char ** argv) {
 	}
 
 	
-	la.getTPGGraph()->clearProgramIntrons();
+	//la.getTPGGraph()->clearProgramIntrons();
 
 	if (!archiveValues.empty()) {
 		size_t index = 0;

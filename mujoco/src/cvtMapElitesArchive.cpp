@@ -61,6 +61,9 @@ size_t CvtMapElitesArchive::nearest(const std::vector<double>& point, const std:
             best_idx = i;
         }
     }
+    if(best_idx == -1){
+        throw std::runtime_error("Should have found a best centroid");
+    }
     return best_idx;
 }
 

@@ -38,7 +38,7 @@ protected:
 
 public:
 
-	enum class DescriptorType { FeetContact, ActionValues, Unused };
+	enum class DescriptorType { FeetContact, ActionValues, ProgNbLines, Unused };
 
 	/**
 	* \brief Default constructor.
@@ -53,6 +53,8 @@ public:
 			descriptorType_ = DescriptorType::FeetContact;
 		} else if (descriptorType == "actionValues"){
 			descriptorType_ = DescriptorType::ActionValues;
+		} else if (descriptorType == "programLines"){
+			descriptorType_ = DescriptorType::ProgNbLines;
 		} else if (descriptorType == "unused" || descriptorType.empty()){
 			descriptorType_ = DescriptorType::Unused;
 		} else {
@@ -109,7 +111,7 @@ public:
 
 	std::string ExpandEnvVars(const std::string &str);
 
-	virtual void initialize_descriptors();
+	virtual void initialize_descriptors() {}
 	virtual const size_t getNbDescriptors();
 	virtual void computeDescriptors(std::vector<double>& actionsID);
 	virtual const std::vector<std::vector<double>>& getDescriptors() const {

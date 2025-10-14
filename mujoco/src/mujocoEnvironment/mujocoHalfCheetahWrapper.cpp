@@ -117,7 +117,7 @@ void MujocoHalfCheetahWrapper::initialize_descriptors() {
 		for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
 			footGeomToIndex[feet_geom_ids_[j]] = j;
 		}
-	} else if (descriptorType_ == DescriptorType::ActionValues){
+	} else {
 		MujocoWrapper::initialize_descriptors();
 	}
 }
@@ -126,7 +126,7 @@ void MujocoHalfCheetahWrapper::initialize_descriptors() {
 const size_t MujocoHalfCheetahWrapper::getNbDescriptors(){
 	if(descriptorType_ == DescriptorType::FeetContact){
 		return 2;
-	} else if (descriptorType_ == DescriptorType::ActionValues) {
+	} else  {
 		return MujocoWrapper::getNbDescriptors();
 	}
 	return 0;

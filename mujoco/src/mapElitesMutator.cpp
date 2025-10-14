@@ -209,24 +209,24 @@ void Mutator::MapElitesMutator::populateTPG(TPG::TPGGraph& graph,
 
     // Create an empty list to store Programs to mutate.
     std::list<std::shared_ptr<Program::Program>> newPrograms;
-
     uint64_t nbRootsToCreate = params.tpg.nbRoots;
     std::set<size_t> validIndices = getValidAndWeightedIndices(mapElitesArchive);
-
     uint64_t nbRootsCreated = 0;
     while (nbRootsCreated < nbRootsToCreate) {
+        size_t reduc = 1;
+        if(validIndices.size() > 1){
+            reduc = 2;
+        }
 
         // Select a random existing root in the archive
         size_t index1 = rng.getUnsignedInt64(0, validIndices.size() - 1);
-        size_t index2 = rng.getUnsignedInt64(0, validIndices.size() - 2);
-
-        if(index1 == index2){
+        size_t index2 = rng.getUnsignedInt64(0, validIndices.size() - reduc);
+        if(index1 == index2 && validIndices.size() > 1){
             index2++;
         }
 
         size_t indexCloned1 = *std::next(validIndices.begin(), index1);
         size_t indexCloned2 = *std::next(validIndices.begin(), index2);
-
         // Clone the agent
         const TPG::TPGAction* child1 = (const TPG::TPGAction*)(&graph.cloneVertex(
             *mapElitesArchive.getAllArchive().at(indexCloned1).second
@@ -234,13 +234,13 @@ void Mutator::MapElitesMutator::populateTPG(TPG::TPGGraph& graph,
         const TPG::TPGAction* child2 = (const TPG::TPGAction*)(&graph.cloneVertex(
             *mapElitesArchive.getAllArchive().at(indexCloned2).second
         ));
-
         // Get parents and create childs
         std::vector<const TPG::TPGAction*> childs{child1, child2};
         
-        // Do the crossover over the childs
-        Mutator::TPGMutator::crossTPGAction(graph, childs, params, rng);
-
+        if(index1 != index2){
+            // Do the crossover over the childs
+            Mutator::TPGMutator::crossTPGAction(graph, childs, params, rng);
+        }
         // Then do the mutation over the childs
         if(child1->getOutgoingEdges().size() != 0){
             mutateTPGAction(graph, *child1, mapElitesArchive, indexCloned1, validIndices, newPrograms,
