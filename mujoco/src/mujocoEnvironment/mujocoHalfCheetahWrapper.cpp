@@ -26,7 +26,7 @@ void MujocoHalfCheetahWrapper::reset(size_t seed, Learn::LearningMode mode, uint
 	this->computeState();
 
 	// Debug code (commented out)
-	if(Learn::LearningMode::TRAINING == mode){
+	/*if(Learn::LearningMode::TRAINING == mode){
 		std::cout<<"Training mode  ";
 	} else {
 		std::cout<<"Not training mode  ";
@@ -34,7 +34,7 @@ void MujocoHalfCheetahWrapper::reset(size_t seed, Learn::LearningMode mode, uint
 	for(auto b: activeObstacles){
 		std::cout<<b<<" - ";
 	}std::cout<<std::endl;
-	std::cout<<"current obstacle index "<< obstacleIndex<<std::endl;
+	std::cout<<"current obstacle index "<< obstacleIndex<<std::endl;*/
 }
 
 void MujocoHalfCheetahWrapper::doActions(std::vector<double> actionsID)

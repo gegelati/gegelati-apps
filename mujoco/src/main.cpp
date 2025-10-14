@@ -12,7 +12,7 @@
 
 #include "mujocoEnvironment/mujocoWrappers.h"
 #include "instructions.h"
-#include "lexicaseSelector.h"
+#include "multiLearningAgent.h"
 
 void exportIndividual(const TPG::TPGVertex* vertex,
                       const std::string& basePathDots,
@@ -58,7 +58,9 @@ void analyseValidationResults(
 	const std::string& usecase,
 	std::vector<std::vector<size_t>>& obstacleUsed,
 	std::shared_ptr<TPG::TPGGraph> graph,
-    File::TPGGraphDotExporter& dotExporter) {
+    File::TPGGraphDotExporter& dotExporter,
+    bool lastGenDot
+) {
     
     std::map<const std::vector<size_t>, std::pair<double, const TPG::TPGVertex*>> bestResults;
 	std::map<const std::vector<size_t>, double> bestSuccess;
@@ -79,7 +81,7 @@ void analyseValidationResults(
 
 	// Find best individuals for each test case
 	for(auto& r : validationResults){
-		Learn::LexicaseEvaluationResult* lexiEval = dynamic_cast<Learn::LexicaseEvaluationResult*>(r.first.get());
+		Learn::MultiEvaluationResult* lexiEval = dynamic_cast<Learn::MultiEvaluationResult*>(r.first.get());
 		if(bestResults.empty()){
 			for(auto& v: lexiEval->getScores()){
 				bestResults[v.first] = std::make_pair(v.second, r.second);
@@ -124,8 +126,16 @@ void analyseValidationResults(
 		for (const auto& idx : indices) {
 			suffix  << idx;
 		}
-		sprintf(dotFile, "%s/out_best.s%" PRIu64 ".g%" PRIu64 ".%s.p%d.%s.dot",
-				basePathDots.c_str(), seed, generationNumber, suffix.str().c_str(), indexParam, usecase.c_str());
+
+		char charGen[8];
+		if (lastGenDot) {
+			strcpy(charGen, "lastGen");
+		} else {
+			snprintf(charGen, sizeof(charGen), "%lu", generationNumber);
+		}
+	
+		sprintf(dotFile, "%s/out_best.s%" PRIu64 ".g%s.%s.p%d.%s.dot",
+				basePathDots.c_str(), seed, charGen, suffix.str().c_str(), indexParam, usecase.c_str());
 		dotExporter.setNewFilePath(dotFile);
 		dotExporter.printSubGraph(pair.second);
 
@@ -374,7 +384,7 @@ int main(int argc, char ** argv) {
 
 	
 	// Instantiate and init the learning agent
-	Learn::LexicaseAgent la(*mujocoLE, set, params, obstacleUsed, validationObstacleUsed);
+	Learn::MultiLearningAgent la(*mujocoLE, set, params, obstacleUsed, validationObstacleUsed);
 	la.init(seed);
 
 	if(dynamic_cast<Selector::LexicaseSelector*>(la.getSelector().get()) == nullptr && params.selection._selectionMode == "lexicase"){
@@ -443,7 +453,7 @@ int main(int argc, char ** argv) {
 		if(validationResults.size() > 0){
 			analyseValidationResults(
 				validationResults, i, csvFile, validationFolder, validationFolder, 
-				seed, indexParam, usecase, obstacleUsed, la.getTPGGraph(), dotExporter);
+				seed, indexParam, usecase, obstacleUsed, la.getTPGGraph(), dotExporter, !saveAllGenerationsDots);
 		}
 	}
 

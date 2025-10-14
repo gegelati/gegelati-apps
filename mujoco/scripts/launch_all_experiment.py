@@ -20,13 +20,15 @@ NAIVE_LEXICASE_MATPG = False
 HIERARCHICAL_TOURNAMNENT = False
 HIERARCHICAL_LEXICASE = False
 HIERARCHICAL_TOURNAMNENT_INDEPENDANT = False
-HIERARCHICAL_LEXICASE_INDEPENDANT = True
+HIERARCHICAL_LEXICASE_INDEPENDANT = False
 HIERARCHICAL_TOURNAMNENT_HYBRID = False
-HIERARCHICAL_LEXICASE_HYBRID = True
+HIERARCHICAL_LEXICASE_HYBRID = False
+HIERARCHICAL_TOURNAMNENT_FULL_INDEPENDANT = False
+HIERARCHICAL_LEXICASE_FULL_INDEPENDANT = True
 
 NB_OBSTACLE = 5
 
-mainLog = "logs/contribTest"
+mainLog = "logs/contribTestFixed"
 environment = "half_cheetah"
 
 if(NO_OBSTACLE):
@@ -77,4 +79,12 @@ if(HIERARCHICAL_TOURNAMNENT_HYBRID):
 if(HIERARCHICAL_LEXICASE_HYBRID):
     print("Launching Hierarchical Lexicase hybrid MATPG test")
     launchingTest(mainLog + "/hierarchical_lexicase_hybrid/", environment, "0,1,2,3,4", "params_10.json", 10)
+
+if(HIERARCHICAL_TOURNAMNENT_FULL_INDEPENDANT):
+    print("Launching Hierarchical Tournament fully independant MATPG test")
+    launchingTest(mainLog + "/hierarchical_tournament_full_indi/", environment, "0,1,2,3,4", "params_11.json", 10)
+
+if(HIERARCHICAL_LEXICASE_FULL_INDEPENDANT):
+    print("Launching Hierarchical Lexicase fully independant MATPG test")
+    launchingTest(mainLog + "/hierarchical_lexicase_full_indi/", environment, "0,1,2,3,4", "params_12.json", 10)
 

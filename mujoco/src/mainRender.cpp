@@ -13,7 +13,7 @@
 #include <glfw3.h>
 #include <filesystem>
 
-#include "lexicaseSelector.h"
+#include "multiLearningAgent.h"
 
 // keyboard callback
 void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods) {
@@ -299,7 +299,7 @@ int main(int argc, char ** argv) {
     }
 
 	// Instantiate and init the learning agent
-	Learn::LexicaseAgent la(*mujocoLE, set, params, obstacleUsed);
+	Learn::MultiLearningAgent la(*mujocoLE, set, params, obstacleUsed);
 	la.init(seed);
 
     auto &tpg = *la.getTPGGraph();
