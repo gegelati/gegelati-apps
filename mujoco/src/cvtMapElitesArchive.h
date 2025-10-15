@@ -20,23 +20,23 @@ class CVTArchiveParametrization : public ArchiveParametrization{
         double b2;
 
         CVTArchiveParametrization(
-            size_t nbDescriptors, std::vector<double> archiveLimits = {}, double minRange = 0.0, double maxRange = 1.0,
-            size_t nbCentroids = 100, std::string descriptorName = "feetContact",
+            size_t nbDescriptors, std::vector<double> archiveLimits = {}, 
+            double minRange = 0.0, double maxRange = 1.0, size_t nbCentroids = 100, 
+            Descriptor::DescriptorType descriptorType = Descriptor::DescriptorType::FeetContact,
             bool useMeanDescriptor = false, bool useMedianDescriptor = false,
             bool useAbsMeanDescriptor = true, bool useQuantileDescriptor = false,
             bool useMinMaxDescriptor = false, bool useMainMeanDescriptor = false,
             bool useMainMedianDescriptor = false, bool useMainStdDescriptor = false,
             bool useMainMaxDescriptor = false, bool useMainMinDescriptor = false,
-            std::string typeProgramDescriptor = "None",
             size_t nbDotsInit = 1000, size_t nbIterationInit = 300, double a1 = 0.5, double a2 = 0.5, double b1 = 0.5, double b2 = 0.5
-        ): ArchiveParametrization(nbDescriptors, archiveLimits, descriptorName, useMeanDescriptor, 
+        ): ArchiveParametrization(nbDescriptors, archiveLimits, descriptorType, useMeanDescriptor, 
                                   useMedianDescriptor, useAbsMeanDescriptor, useQuantileDescriptor, 
                                   useMinMaxDescriptor, useMainMeanDescriptor, useMainMedianDescriptor, 
-                                  useMainStdDescriptor, useMainMaxDescriptor, useMainMinDescriptor, 
-                                  typeProgramDescriptor), nbCentroids{nbCentroids}, minRange{minRange}, maxRange{maxRange}, nbDotsInit{nbDotsInit}, 
+                                  useMainStdDescriptor, useMainMaxDescriptor, useMainMinDescriptor), 
+                                  nbCentroids{nbCentroids}, minRange{minRange}, maxRange{maxRange}, nbDotsInit{nbDotsInit}, 
                                   nbIterationInit{nbIterationInit}, a1{a1}, a2{a2}, b1{b1}, b2{b2} 
         {
-            if(!useAbsMeanDescriptor && descriptorName == "actionValues" && minRange == 0.0){
+            if(!useAbsMeanDescriptor && descriptorType == Descriptor::DescriptorType::ActionValues && minRange == 0.0){
                 minRange = maxRange * -1;
             }
         }

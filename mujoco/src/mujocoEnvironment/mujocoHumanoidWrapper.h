@@ -23,10 +23,10 @@ protected:
 public:
 
     // Constructeur
-    MujocoHumanoidWrapper(const char *pXmlFile, std::string descriptorType = "unused", 
+    MujocoHumanoidWrapper(const char *pXmlFile, std::vector<Descriptor::DescriptorType> descriptorTypes={}, 
                           bool useHealthyReward = true,
                           bool excludeCurrentPositionsFromObservation = true) :
-        MujocoWrapper(17, excludeCurrentPositionsFromObservation ? 376 : 378, descriptorType),
+        MujocoWrapper(17, excludeCurrentPositionsFromObservation ? 376 : 378, descriptorTypes),
         xmlFile{pXmlFile},
         use_healthy_reward{useHealthyReward},
         exclude_current_positions_from_observation_{excludeCurrentPositionsFromObservation}
@@ -88,8 +88,6 @@ public:
 
     
 	virtual void initialize_descriptors() override;
-
-	virtual const size_t getNbDescriptors() override;
 };
 
 #endif // MUJOCO_HUMANOID_WRAPPER_H

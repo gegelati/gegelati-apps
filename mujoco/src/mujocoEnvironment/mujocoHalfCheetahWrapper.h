@@ -21,8 +21,8 @@ public:
 
 
 
-	MujocoHalfCheetahWrapper(const char *pXmlFile, std::string descriptorType = "unused", bool exclude_current_positions_from_observation = true) :
-		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 17:18, descriptorType), xmlFile{pXmlFile},
+	MujocoHalfCheetahWrapper(const char *pXmlFile, std::vector<Descriptor::DescriptorType> descriptorTypes={}, bool exclude_current_positions_from_observation = true) :
+		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 17:18, descriptorTypes), xmlFile{pXmlFile},
 		exclude_current_positions_from_observation_{exclude_current_positions_from_observation}
 		{
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
@@ -111,8 +111,6 @@ public:
 
 
 	virtual void initialize_descriptors() override;
-
-	virtual const size_t getNbDescriptors() override;
 
 };
 

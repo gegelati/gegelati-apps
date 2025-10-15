@@ -5,41 +5,10 @@
 
 void Mutator::MapElitesMutator::addRandomActionEdge(
     TPG::TPGGraph& graph, const TPG::TPGAction& action,
-    const MapElitesArchive& mapElitesArchive,
-    const uint64_t& indicesCloned,
-    const std::set<uint64_t>& validIndices,
-    Mutator::RNG& rng, bool useOnlyCloseAddEdges)
+    const std::vector<const TPG::TPGAction*>& preExistingActions,
+    Mutator::RNG& rng)
 {
 
-    std::vector<uint64_t> pickableIndices;
-    //std::pair<uint64_t, uint64_t> dim = mapElitesArchive.getDimensions(); // dim.first = dim1, dim.second = dim2
-
-    /*if(useOnlyCloseAddEdges){
-        for (size_t d = 0; d < dim.second; ++d) {
-            // -1
-            if (indicesCloned[d] > 0) {
-                std::vector<uint64_t> neighbor = indicesCloned;
-                neighbor[d] -= 1;
-                if (std::find(validIndices.begin(), validIndices.end(), neighbor) != validIndices.end()) {
-                    pickableIndices.push_back(neighbor);
-                }
-            }
-            // +1
-            if (indicesCloned[d] + 1 < dim.first) {
-                std::vector<uint64_t> neighbor = indicesCloned;
-                neighbor[d] += 1;
-                if (std::find(validIndices.begin(), validIndices.end(), neighbor) != validIndices.end()) {
-                    pickableIndices.push_back(neighbor);
-                }
-            }
-        }
-    } else {
-        */for (const auto& indices : validIndices) {
-            if (indices != indicesCloned) {
-                pickableIndices.push_back(indices);
-            }
-        }
-    //}
 
 
     // Pick an edge (excluding ones from the team and edges with the team as a
@@ -47,11 +16,11 @@ void Mutator::MapElitesMutator::addRandomActionEdge(
     std::list<const TPG::TPGEdge*> pickableEdges;
     const std::set<uint64_t>& assessedActions = action.getAssessedActions();
 
-    // For each index
-    for(auto indices: pickableIndices){
+    // For each Action
+    for(const TPG::TPGAction* existingAction: preExistingActions){
 
-        // FOr each edge
-        for(auto edge: mapElitesArchive.getAllArchive().at(indices).second->getOutgoingEdges()){
+        // For each edge
+        for(auto edge: existingAction->getOutgoingEdges()){
 
             // If the action value is not assessed by the action node, add the edge
             if(assessedActions.find(dynamic_cast<const TPG::TPGActionEdge*>(edge)->getActionClass()) == assessedActions.end()){
@@ -88,12 +57,9 @@ void Mutator::MapElitesMutator::addRandomActionEdge(
 
 void Mutator::MapElitesMutator::mutateTPGAction(
     TPG::TPGGraph& graph, const TPG::TPGAction& action,
-    const MapElitesArchive& mapElitesArchive,
-    const uint64_t& indicesCloned,
-    const std::set<uint64_t>& validIndices,
+    const std::vector<const TPG::TPGAction*>& preExistingActions,
     std::list<std::shared_ptr<Program::Program>>& newPrograms,
-    const Mutator::MutationParameters& params, Mutator::RNG& rng,
-    bool useOnlyCloseAddEdges)
+    const Mutator::MutationParameters& params, Mutator::RNG& rng)
 { 
     if(params.tpg.useMultiActionProgram){
         // 1. Remove randomly selected edges
@@ -117,7 +83,7 @@ void Mutator::MapElitesMutator::mutateTPGAction(
             proba > rng.getDouble(0.0, 1.0)) {
 
             // Add an edge (by duplication of an existing one)
-            addRandomActionEdge(graph, action, mapElitesArchive, indicesCloned, validIndices, rng, useOnlyCloseAddEdges);
+            addRandomActionEdge(graph, action, preExistingActions, rng);
 
             // Decrement the proba of adding another edge
             proba *= params.tpg.pActionEdgeAddition;
@@ -172,68 +138,66 @@ void Mutator::MapElitesMutator::mutateTPGAction(
 
 }
 
-std::set<size_t>
-    Mutator::MapElitesMutator::getValidAndWeightedIndices(
-        const MapElitesArchive& mapElitesArchive)
+std::vector<const TPG::TPGAction*> Mutator::MapElitesMutator::getPreExistingActions(
+    const std::map<Descriptor::DescriptorType, MapElitesArchive*>& mapElitesArchives)
 {
 
-    std::set<size_t> validIndices;
+    std::vector<const TPG::TPGAction*> preExistingActions;
+    std::set<const TPG::TPGAction*> setPreExistingActions;
+    for(auto pairDescriptor: mapElitesArchives){
+        auto& archive = pairDescriptor.second->getAllArchive();
+        for(auto& pairElem: archive){
+            if (pairElem.second != nullptr) {
+                if(dynamic_cast<const TPG::TPGAction*>(pairElem.second) == nullptr){
+                    throw std::runtime_error("Element should be an action");
+                }
+                size_t currentSetSize = setPreExistingActions.size();
+                setPreExistingActions.insert(dynamic_cast<const TPG::TPGAction*>(pairElem.second));
 
-
-    for (size_t flatIndex = 0; flatIndex < mapElitesArchive.size(); ++flatIndex) {
-        //size_t idx = flatIndex;
-
-
-        // Get element
-        const auto& elem = mapElitesArchive.getAllArchive().at(flatIndex);
-        if (elem.second != nullptr) {
-            validIndices.insert(flatIndex);
+                // The size change, meaning that the element was not already in the set.
+                if(currentSetSize != setPreExistingActions.size()){
+                    preExistingActions.push_back(dynamic_cast<const TPG::TPGAction*>(pairElem.second));
+                }
+            }
         }
     }
 
-    return validIndices;
+    return preExistingActions;
 }
 
 void Mutator::MapElitesMutator::populateTPG(TPG::TPGGraph& graph,
                                       const Archive& archive,
-                                      const MapElitesArchive& mapElitesArchive,
+                                      const std::map<Descriptor::DescriptorType, MapElitesArchive*>& mapElitesArchives,
                                       const Mutator::MutationParameters& params,
                                       Mutator::RNG& rng, uint64_t nbGenerations,
-                                      uint64_t maxNbThreads,
-                                      bool useOnlyCloseAddEdges)
+                                      uint64_t maxNbThreads)
 {
-
     if(nbGenerations == 0){
         return;
     }
 
+
     // Create an empty list to store Programs to mutate.
     std::list<std::shared_ptr<Program::Program>> newPrograms;
     uint64_t nbRootsToCreate = params.tpg.nbRoots;
-    std::set<size_t> validIndices = getValidAndWeightedIndices(mapElitesArchive);
+    std::vector<const TPG::TPGAction*> preExistingVertices = getPreExistingActions(mapElitesArchives);
     uint64_t nbRootsCreated = 0;
     while (nbRootsCreated < nbRootsToCreate) {
         size_t reduc = 1;
-        if(validIndices.size() > 1){
+        if(preExistingVertices.size() > 1){
             reduc = 2;
         }
 
         // Select a random existing root in the archive
-        size_t index1 = rng.getUnsignedInt64(0, validIndices.size() - 1);
-        size_t index2 = rng.getUnsignedInt64(0, validIndices.size() - reduc);
-        if(index1 == index2 && validIndices.size() > 1){
+        size_t index1 = rng.getUnsignedInt64(0, preExistingVertices.size() - 1);
+        size_t index2 = rng.getUnsignedInt64(0, preExistingVertices.size() - reduc);
+        if(index1 == index2 && preExistingVertices.size() > 1){
             index2++;
         }
 
-        size_t indexCloned1 = *std::next(validIndices.begin(), index1);
-        size_t indexCloned2 = *std::next(validIndices.begin(), index2);
-        // Clone the agent
-        const TPG::TPGAction* child1 = (const TPG::TPGAction*)(&graph.cloneVertex(
-            *mapElitesArchive.getAllArchive().at(indexCloned1).second
-        ));
-        const TPG::TPGAction* child2 = (const TPG::TPGAction*)(&graph.cloneVertex(
-            *mapElitesArchive.getAllArchive().at(indexCloned2).second
-        ));
+        // Clone the agents
+        const TPG::TPGAction* child1 = (const TPG::TPGAction*)(&graph.cloneVertex(*preExistingVertices.at(index1)));
+        const TPG::TPGAction* child2 = (const TPG::TPGAction*)(&graph.cloneVertex(*preExistingVertices.at(index2)));
         // Get parents and create childs
         std::vector<const TPG::TPGAction*> childs{child1, child2};
         
@@ -243,15 +207,15 @@ void Mutator::MapElitesMutator::populateTPG(TPG::TPGGraph& graph,
         }
         // Then do the mutation over the childs
         if(child1->getOutgoingEdges().size() != 0){
-            mutateTPGAction(graph, *child1, mapElitesArchive, indexCloned1, validIndices, newPrograms,
-                params, rng, useOnlyCloseAddEdges);
+            mutateTPGAction(graph, *child1, preExistingVertices, newPrograms,
+                params, rng);
                 nbRootsCreated++;
         } else {
             graph.removeVertex(*child1);
         }
         if(child2->getOutgoingEdges().size() != 0){
-            mutateTPGAction(graph, *child2, mapElitesArchive, indexCloned2, validIndices, newPrograms,
-                params, rng, useOnlyCloseAddEdges);
+            mutateTPGAction(graph, *child2, preExistingVertices, newPrograms,
+                params, rng);
                 nbRootsCreated++;
         } else {
             graph.removeVertex(*child2);

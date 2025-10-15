@@ -4,6 +4,7 @@
 #define MAP_ELITE_EVAL_RES_H
 
 #include <gegelati.h>
+#include "descriptors.h"
 
 
 namespace Learn {
@@ -18,10 +19,10 @@ namespace Learn {
     {
       protected:
         /**
-         * \brief Vector storing a double value per descriptor (i.e. per Action) of
+         * \brief Map storing a descriptor and a Vector storing a double value per descriptor (i.e. per Action) of
          * a classification LearningEnvironment.
          */
-        std::vector<double> descriptors;
+        std::map<Descriptor::DescriptorType, std::vector<double>> mapDescriptors;
 
       public:
         /**
@@ -40,14 +41,14 @@ namespace Learn {
          */
         MapElitesEvaluationResult(
             const double& res, const size_t& nbEval, const double& uti,
-            const std::vector<double>& descriptors)
-            : EvaluationResult(res, nbEval, uti), descriptors{descriptors}
+            const std::map<Descriptor::DescriptorType, std::vector<double>>& mapDescriptors)
+            : EvaluationResult(res, nbEval, uti), mapDescriptors{mapDescriptors}
         {}
 
         /**
          * \brief Get a const ref to the scorePerClass attribute.
          */
-        const std::vector<double>& getDescriptors() const;
+        const std::map<Descriptor::DescriptorType, std::vector<double>>& getMapDescriptors() const;
 
         /**
          * \brief Override from EvaluationResult

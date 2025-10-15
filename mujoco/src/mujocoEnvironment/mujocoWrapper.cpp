@@ -28,8 +28,10 @@ void MujocoWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterat
 	this->totalUtility = 0.0;
 
 	// Reset descriptors
-	if(descriptorType_ != DescriptorType::Unused){
-		descriptors.clear();
+	this->descriptors.clear();
+	for(auto descriptorType: this->descriptorTypes){
+		std::vector<std::vector<double>> vect;
+		this->descriptors.insert(std::make_pair(descriptorType, vect));
 	}
 }
 
@@ -129,26 +131,38 @@ std::string MujocoWrapper::ExpandEnvVars(const std::string &str) {
 	return result;
 }
 
-const size_t MujocoWrapper::getNbDescriptors()
+const std::map<Descriptor::DescriptorType, size_t> MujocoWrapper::getNbDescriptors()
 {
-	return nbActions;
+	std::map<Descriptor::DescriptorType, size_t> nbDescriptors;
+	for(auto descriptorType: this->descriptorTypes){
+		if(descriptorType == Descriptor::DescriptorType::FeetContact){
+			nbDescriptors.insert(std::make_pair(descriptorType, feet_geom_ids_.size()));
+		} else {
+			nbDescriptors.insert(std::make_pair(descriptorType, nbActions));
+		}
+	}
+	return nbDescriptors;
 }
+
 
 
 void MujocoWrapper::computeDescriptors(std::vector<double>& actionsID) {
-	if(descriptorType_ == DescriptorType::FeetContact){
-		//std::cout<<descriptors.size()<<" Compute."<<std::endl;
-		computeFeetContact();
-	} else if (descriptorType_ == DescriptorType::ActionValues) {
-		std::vector<double> descriptorValues;
-		for(size_t i = 0; i < actionsID.size(); ++i) {
-			descriptorValues.push_back(actionsID[i]);
+	auto itDescriptors = descriptors.begin();
+	while(itDescriptors != descriptors.end()){
+		if(itDescriptors->first == Descriptor::DescriptorType::FeetContact){
+			computeFeetContact(itDescriptors->second);
+		} else if (itDescriptors->first == Descriptor::DescriptorType::ActionValues) {
+			std::vector<double> descriptorValues;
+			for(size_t i = 0; i < actionsID.size(); ++i) {
+				descriptorValues.push_back(actionsID[i]);
+			}
+			itDescriptors->second.push_back(descriptorValues);
 		}
-		descriptors.push_back(descriptorValues);
+		itDescriptors++;
 	}
 }
 
-void MujocoWrapper::computeFeetContact() {
+void MujocoWrapper::computeFeetContact(std::vector<std::vector<double>>& currentDescriptors) {
     
 	std::vector<double> descriptorsValues(feet_geom_ids_.size(), 0.0);
 	std::set<uint64_t> increasedLegs;
@@ -174,7 +188,7 @@ void MujocoWrapper::computeFeetContact() {
         }
     }
 
-	descriptors.push_back(descriptorsValues);
+	currentDescriptors.push_back(descriptorsValues);
 }
 
 

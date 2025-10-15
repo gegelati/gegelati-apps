@@ -4,6 +4,8 @@
 #include <gegelati.h>
 #include <mujoco.h>
 
+#include "../descriptors.h"
+
 /**
 * \brief Inverted pendulum LearningEnvironment.
 *
@@ -11,6 +13,9 @@
 * under CECILL-C License.
 * Link: https://github.com/preesm/preesm-apps/tree/master/org.ietr.preesm.reinforcement_learning
 */
+
+
+
 class MujocoWrapper : public Learn::LearningEnvironment
 {
 protected:
@@ -32,35 +37,21 @@ protected:
 	std::vector<std::vector<double>> actionData;
 	bool saveStateAndAction = false;
 
-	std::vector<int> feet_geom_ids_; // À initialiser avec les indices MuJoCo des pieds
+	std::vector<int> feet_geom_ids_;
 	std::vector<bool> feet_in_contact_;
 	std::unordered_map<int, size_t> footGeomToIndex;
 
 public:
-
-	enum class DescriptorType { FeetContact, ActionValues, ProgNbLines, Unused };
 
 	/**
 	* \brief Default constructor.
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoWrapper(uint64_t nbActions, uint64_t stateSize, std::string descriptorType="unused") :
+	MujocoWrapper(uint64_t nbActions, uint64_t stateSize, std::vector<Descriptor::DescriptorType> descriptorTypes={}) :
 		LearningEnvironment(nbActions, false),
-		currentState{ stateSize }, stateSize{stateSize}
-	{
-		if(descriptorType == "feetContact"){
-			descriptorType_ = DescriptorType::FeetContact;
-		} else if (descriptorType == "actionValues"){
-			descriptorType_ = DescriptorType::ActionValues;
-		} else if (descriptorType == "programLines"){
-			descriptorType_ = DescriptorType::ProgNbLines;
-		} else if (descriptorType == "unused" || descriptorType.empty()){
-			descriptorType_ = DescriptorType::Unused;
-		} else {
-			throw std::runtime_error("Unknown descriptor type: " + descriptorType + ". Valid types are: feetContact and actionValues, 'unused' or nothing should be used to disable it .");
-		}	
-	};
+		currentState{ stateSize }, stateSize{stateSize}, descriptorTypes{descriptorTypes}
+	{};
 
 	/**
 	* \brief Copy constructor for the MujocoWrapper.
@@ -69,7 +60,7 @@ public:
 	*/
 	MujocoWrapper(const MujocoWrapper& other) : LearningEnvironment(other.nbActions, false),
 		currentState{other.currentState}, stateSize{other.stateSize}, 
-		descriptorType_{other.descriptorType_} {}
+		descriptorTypes{other.descriptorTypes} {}
 	
 
 	/// Inherited via LearningEnvironment
@@ -94,8 +85,8 @@ public:
     int frame_skip_ = 5;  // Number of frames per simlation step
     int obs_size_;  // Number of variables in observation vector
 
-	std::vector<std::vector<double>> descriptors; // Descriptors
-	DescriptorType descriptorType_ = DescriptorType::Unused;
+	std::map<Descriptor::DescriptorType, std::vector<std::vector<double>>> descriptors; // Descriptors
+	std::vector<Descriptor::DescriptorType> descriptorTypes;
 
     void initialize_simulation();
 
@@ -112,14 +103,14 @@ public:
 	std::string ExpandEnvVars(const std::string &str);
 
 	virtual void initialize_descriptors() {}
-	virtual const size_t getNbDescriptors();
+	virtual const std::map<Descriptor::DescriptorType, size_t> getNbDescriptors();
 	virtual void computeDescriptors(std::vector<double>& actionsID);
-	virtual const std::vector<std::vector<double>>& getDescriptors() const {
+	virtual const std::map<Descriptor::DescriptorType, std::vector<std::vector<double>>>& getDescriptors() const {
 		return descriptors;
 	}
 
 	
-	void computeFeetContact();
+	void computeFeetContact(std::vector<std::vector<double>>& currentDescriptors);
 
 	virtual void registerStateAndAction(const std::vector<double>& actionsID);
 	virtual void printStateAndAction(std::string path) const;

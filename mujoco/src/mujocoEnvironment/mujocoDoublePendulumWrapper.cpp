@@ -77,9 +77,7 @@ void MujocoDoublePendulumWrapper::doActions(std::vector<double> actionsID)
 	this->nbActionsExecuted++;
 
 
-	if(descriptorType_ != DescriptorType::Unused){
-		computeDescriptors(actionsID);
-	}
+	computeDescriptors(actionsID);
 }
 
 

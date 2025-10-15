@@ -23,12 +23,6 @@ void MujocoAntWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t ite
 	set_state(qpos, qvel);
 	this->computeState();
 
-
-	// Reset descriptors
-	if(descriptorType_ != DescriptorType::Unused){
-		descriptors.clear();
-	}
-
 }
 
 void MujocoAntWrapper::doActions(std::vector<double> actionsID)
@@ -55,9 +49,7 @@ void MujocoAntWrapper::doActions(std::vector<double> actionsID)
 
 	this->nbActionsExecuted++;
 
-	if(descriptorType_ != DescriptorType::Unused){
-		computeDescriptors(actionsID);
-	}
+	computeDescriptors(actionsID);
 
 }
 
@@ -132,27 +124,15 @@ void MujocoAntWrapper::computeState(){
 void MujocoAntWrapper::initialize_descriptors() {
 
 	// Initialize values for feet contact
-	if(descriptorType_ == DescriptorType::FeetContact){
-		feet_geom_ids_.clear();
-		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "left_ankle_geom"));
-		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "right_ankle_geom"));
-		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "third_ankle_geom"));
-		feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "fourth_ankle_geom"));
+	feet_geom_ids_.clear();
+	feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "left_ankle_geom"));
+	feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "right_ankle_geom"));
+	feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "third_ankle_geom"));
+	feet_geom_ids_.push_back(mj_name2id(m_, mjOBJ_GEOM, "fourth_ankle_geom"));
 
-		for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
-			footGeomToIndex[feet_geom_ids_[j]] = j;
-		}
-	} else {
-		MujocoWrapper::initialize_descriptors();
+	for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
+		footGeomToIndex[feet_geom_ids_[j]] = j;
 	}
-}
 
-
-const size_t MujocoAntWrapper::getNbDescriptors(){
-	if(descriptorType_ == DescriptorType::FeetContact){
-		return 4;
-	} else {
-		return MujocoWrapper::getNbDescriptors();
-	}
-	return 0;
+	MujocoWrapper::initialize_descriptors();
 }

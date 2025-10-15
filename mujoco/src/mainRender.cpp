@@ -233,28 +233,29 @@ int main(int argc, char ** argv) {
 	File::ParametersParser::loadParametersFromJson(paramFile, params);
 
 
-    std::string descriptorType;
+    std::vector<Descriptor::DescriptorType> descriptorTypes;
 	// Instantiate the LearningEnvironment
 	MujocoWrapper* mujocoLE = nullptr;
 	if(strcmp(usecase, "humanoid") == 0){
-		mujocoLE = new MujocoHumanoidWrapper(xmlFile, descriptorType, useHealthyReward, useContactForce);
+		mujocoLE = new MujocoHumanoidWrapper(xmlFile, descriptorTypes, useHealthyReward, useContactForce);
 	} else if (strcmp(usecase, "half_cheetah") == 0) {
-		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile, descriptorType);
+		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile, descriptorTypes);
 	} else if (strcmp(usecase, "hopper") == 0) {
-		mujocoLE = new MujocoHopperWrapper(xmlFile, descriptorType, useHealthyReward);
+		mujocoLE = new MujocoHopperWrapper(xmlFile, descriptorTypes, useHealthyReward);
 	} else if (strcmp(usecase, "walker2d") == 0) {
-		mujocoLE = new MujocoWalker2DWrapper(xmlFile, descriptorType, useHealthyReward);
+		mujocoLE = new MujocoWalker2DWrapper(xmlFile, descriptorTypes, useHealthyReward);
 	} else if (strcmp(usecase, "reacher") == 0) {
-		mujocoLE = new MujocoReacherWrapper(xmlFile, descriptorType);
+		mujocoLE = new MujocoReacherWrapper(xmlFile, descriptorTypes);
 	} else if (strcmp(usecase, "inverted_double_pendulum") == 0) {
-		mujocoLE = new MujocoDoublePendulumWrapper(xmlFile, descriptorType);
+		mujocoLE = new MujocoDoublePendulumWrapper(xmlFile, descriptorTypes);
 	} else if (strcmp(usecase, "ant") == 0) {
-		mujocoLE = new MujocoAntWrapper(xmlFile, descriptorType, useHealthyReward, useContactForce);
+		mujocoLE = new MujocoAntWrapper(xmlFile, descriptorTypes, useHealthyReward, useContactForce);
 	} else {
 		throw std::runtime_error("Use case not found");
 	}
 
-    ArchiveParametrization archive(mujocoLE->getNbDescriptors());
+    std::map<Descriptor::DescriptorType, const ArchiveParametrization*> archive;
+    archive.insert(std::make_pair(Descriptor::DescriptorType::ActionValues, new ArchiveParametrization(1)));
 	// Instantiate and init the learning agent
 	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, archive, params);
 	la.init(seed);

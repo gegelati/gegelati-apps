@@ -4,6 +4,7 @@
 #define MAP_ELITES_ARCHIVE_H
 
 #include <gegelati.h>
+#include "descriptors.h"
 
 class ArchiveParametrization
 {
@@ -13,7 +14,7 @@ class ArchiveParametrization
 
         std::vector<double> archiveLimits;
         
-        std::string descriptorName;
+        Descriptor::DescriptorType descriptorType;
         
         bool useMeanDescriptor;
         bool useMedianDescriptor;
@@ -28,27 +29,24 @@ class ArchiveParametrization
         bool useMainMaxDescriptor;
         bool useMainMinDescriptor;
 
-        std::string typeProgramDescriptor;
-
         size_t nbDescriptorsAnalysis;
         size_t nbMainDescriptors;
 
         ArchiveParametrization(
             size_t nbDescriptors, std::vector<double> archiveLimits = {},
-            std::string descriptorName = "feetContact",
+            Descriptor::DescriptorType descriptorType = Descriptor::DescriptorType::FeetContact,
             bool useMeanDescriptor = false, bool useMedianDescriptor = false,
             bool useAbsMeanDescriptor = true, bool useQuantileDescriptor = false,
             bool useMinMaxDescriptor = false, bool useMainMeanDescriptor = false,
             bool useMainMedianDescriptor = false, bool useMainStdDescriptor = false,
-            bool useMainMaxDescriptor = false, bool useMainMinDescriptor = false,
-            std::string typeProgramDescriptor = "None"
-        ): nbDescriptors{nbDescriptors}, archiveLimits{archiveLimits}, descriptorName{descriptorName},
+            bool useMainMaxDescriptor = false, bool useMainMinDescriptor = false
+        ): nbDescriptors{nbDescriptors}, archiveLimits{archiveLimits}, descriptorType{descriptorType},
             useMeanDescriptor{useMeanDescriptor}, useMedianDescriptor{useMedianDescriptor},
             useAbsMeanDescriptor{useAbsMeanDescriptor}, useQuantileDescriptor{useQuantileDescriptor},
             useMinMaxDescriptor{useMinMaxDescriptor}, useMainMeanDescriptor{useMainMeanDescriptor},
             useMainMedianDescriptor{useMainMedianDescriptor}, useMainStdDescriptor{useMainStdDescriptor},
-            useMainMaxDescriptor{useMainMaxDescriptor}, useMainMinDescriptor{useMainMinDescriptor},
-            typeProgramDescriptor{typeProgramDescriptor} {
+            useMainMaxDescriptor{useMainMaxDescriptor}, useMainMinDescriptor{useMainMinDescriptor}
+             {
             // Compute the number of descriptors analysed
             this->nbDescriptorsAnalysis = useMeanDescriptor + useMedianDescriptor +
                 useAbsMeanDescriptor + useQuantileDescriptor * 2 + useMinMaxDescriptor * 2;
@@ -59,8 +57,8 @@ class ArchiveParametrization
                 throw std::runtime_error("At least one descriptor type must be used.");
             }
 
-            if(this->nbDescriptorsAnalysis != 1 && this->descriptorName == "programLines"){
-                throw std::runtime_error("Only one analysis for program lines descriptors");
+            if(this->nbDescriptorsAnalysis != 1 && Descriptor::isGenotypicDescriptor(this->descriptorType)){
+                throw std::runtime_error("Only one analysis for program lines descriptors, average value will be computed anyway");
             }
 
 

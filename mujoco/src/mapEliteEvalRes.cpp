@@ -1,9 +1,9 @@
 
 #include "mapEliteEvalRes.h"
 
-const std::vector<double>& Learn::MapElitesEvaluationResult::getDescriptors() const
+const std::map<Descriptor::DescriptorType, std::vector<double>>& Learn::MapElitesEvaluationResult::getMapDescriptors() const
 {
-    return descriptors;
+    return this->mapDescriptors;
 }
 
 
@@ -20,19 +20,22 @@ Learn::EvaluationResult& Learn::MapElitesEvaluationResult::operator+=(
     auto otherConverted = (const MapElitesEvaluationResult&)other;
 
     // Size Check
-    if (otherConverted.descriptors.size() != this->descriptors.size()) {
+    if (otherConverted.mapDescriptors.size() != this->mapDescriptors.size()) {
         throw std::runtime_error(
-            "Size mismatch between AdversarialEvaluationResults.");
+            "Size mismatch between Rresults.");
     }
 
     // Weighted addition of descriptors
-    for (size_t i = 0; i < descriptors.size(); i++) {
-        this->descriptors[i] =
-            this->descriptors[i] * (double)this->nbEvaluation +
-            otherConverted.descriptors[i] * (double)otherConverted.nbEvaluation;
-        this->descriptors[i] /=
-            (double)this->nbEvaluation + (double)otherConverted.nbEvaluation;
+    for(auto& pairDescriptor: mapDescriptors){
+        for (size_t i = 0; i < pairDescriptor.second.size(); i++) {
+            pairDescriptor.second[i] =
+                pairDescriptor.second[i] * (double)this->nbEvaluation +
+                otherConverted.mapDescriptors.at(pairDescriptor.first)[i] * (double)otherConverted.nbEvaluation;
+            pairDescriptor.second[i] /=
+                (double)this->nbEvaluation + (double)otherConverted.nbEvaluation;
+        }
     }
+
 
     this->result = this->result * (double)this->nbEvaluation +
                     otherConverted.result * (double)otherConverted.nbEvaluation;

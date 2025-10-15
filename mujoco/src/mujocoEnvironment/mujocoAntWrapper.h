@@ -27,8 +27,8 @@ public:
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoAntWrapper(const char *pXmlFile, std::string descriptorType = "unused", bool useHealthyReward=true, bool p_exclude_current_positions_from_observation = true) :
-		MujocoWrapper(8, (p_exclude_current_positions_from_observation) ? 27:29, descriptorType), 
+	MujocoAntWrapper(const char *pXmlFile, std::vector<Descriptor::DescriptorType> descriptorTypes={}, bool useHealthyReward=true, bool p_exclude_current_positions_from_observation = true) :
+		MujocoWrapper(8, (p_exclude_current_positions_from_observation) ? 27:29, descriptorTypes), 
 		xmlFile{pXmlFile}, use_healthy_reward{useHealthyReward},
 		exclude_current_positions_from_observation_{p_exclude_current_positions_from_observation}
 		{
@@ -130,8 +130,6 @@ public:
 
 
 	virtual void initialize_descriptors() override;
-	
-	virtual const size_t getNbDescriptors() override;
 };
 
 #endif // !MUJOCOANTWRAPPER_H

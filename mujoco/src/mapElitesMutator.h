@@ -13,31 +13,23 @@ namespace Mutator {
 
             void addRandomActionEdge(
                 TPG::TPGGraph& graph, const TPG::TPGAction& action,
-                const MapElitesArchive& mapElitesArchive,
-                const uint64_t& indicesCloned,
-                const std::set<uint64_t>& validIndices,
-                Mutator::RNG& rng, bool useOnlyCloseAddEdges);
+                const std::vector<const TPG::TPGAction*>& preExistingActions,
+                Mutator::RNG& rng);
 
             void mutateTPGAction(
                 TPG::TPGGraph& graph, const TPG::TPGAction& action,
-                const MapElitesArchive& mapElitesArchive,
-                const uint64_t& indicesCloned,
-                const std::set<uint64_t>& validIndices,
+                const std::vector<const TPG::TPGAction*>& preExistingActions,
                 std::list<std::shared_ptr<Program::Program>>& newPrograms,
-                const Mutator::MutationParameters& params, Mutator::RNG& rng,
-                bool useOnlyCloseAddEdges);
+                const Mutator::MutationParameters& params, Mutator::RNG& rng);
 
-            std::set<size_t>
-                getValidAndWeightedIndices(const MapElitesArchive& mapElitesArchive);
+            std::vector<const TPG::TPGAction*> getPreExistingActions(const std::map<Descriptor::DescriptorType, MapElitesArchive*>& mapElitesArchives);
 
             void populateTPG(
                 TPG::TPGGraph& graph, const Archive& archive,
-                const MapElitesArchive& mapElitesArchive,
+                const std::map<Descriptor::DescriptorType, MapElitesArchive*>& mapEliteArchives,
                 const Mutator::MutationParameters& params, Mutator::RNG& rng,
                 uint64_t nbActions,
-                uint64_t maxNbThreads = std::thread::hardware_concurrency(),
-                
-                bool useOnlyCloseAddEdges = false);
+                uint64_t maxNbThreads = std::thread::hardware_concurrency());
     }
 }
 

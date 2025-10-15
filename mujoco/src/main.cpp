@@ -13,6 +13,7 @@
 #include "mujocoEnvironment/mujocoWrappers.h"
 #include "mujocoMapEliteAgent.h"
 #include "instructions.h"
+#include "descriptors.h"
 
 void exportIndividual(const TPG::TPGVertex* vertex,
                       const std::string& basePathDots,
@@ -49,6 +50,85 @@ void exportIndividual(const TPG::TPGVertex* vertex,
     statsOut.close();
 }
 
+std::vector<std::vector<double>> parseAndFillArchiveValues(const std::string& archiveValuesStr) {
+    std::vector<std::vector<double>> archiveValues;
+    std::istringstream iss(archiveValuesStr);
+    std::string segment;
+
+    while (std::getline(iss, segment, '-')) {
+        // Check integer
+        bool isInteger = true;
+        for (char c : segment) {
+            if (!std::isdigit(c)) {
+                isInteger = false;
+                break;
+            }
+        }
+
+        if (isInteger) {
+            // Integer case
+            int n = std::stoi(segment);
+            std::vector<double> subVector;
+            for (int i = 1; i <= n; ++i) {
+                double value = (n == 0) ? 0.0 : static_cast<double>(i) / n;
+                subVector.push_back(value);
+            }
+            archiveValues.push_back(subVector);
+        } else {
+            // Value case
+            std::vector<double> subVector;
+            std::istringstream segStream(segment);
+            std::string valueStr;
+            while (std::getline(segStream, valueStr, ',')) {
+                subVector.push_back(std::stod(valueStr));
+            }
+            archiveValues.push_back(subVector);
+        }
+    }
+
+    return archiveValues;
+}
+
+void initializeArchiveParams(std::vector<std::string>& archiveDots,
+                             std::vector<std::string>& archiveStats,
+                             std::vector<Descriptor::DescriptorType>& descriptorTypes,
+                             std::string descriptorTypeStr,
+                             std::string logsFolder)
+{
+
+	if (descriptorTypeStr.empty()) {
+		return;
+	}
+
+	std::istringstream iss(descriptorTypeStr);
+    std::string token;
+
+    while (std::getline(iss, token, ',')) {
+        // Remove space if any
+        token.erase(std::remove_if(token.begin(), token.end(), ::isspace), token.end());
+
+        // Convert
+        descriptorTypes.push_back(Descriptor::StringToDescriptorType(token));
+    }
+
+    // Build archive file paths for each descriptor type
+    for (auto descriptorType : descriptorTypes) {
+        std::string dotPath  = logsFolder + "/archiveDots_"  + Descriptor::descriptorTypeToString(descriptorType);
+        std::string statPath = logsFolder + "/archiveStats_" + Descriptor::descriptorTypeToString(descriptorType);
+
+        archiveDots.push_back(dotPath);
+        archiveStats.push_back(statPath);
+
+		if (!std::filesystem::exists(dotPath)) {
+			std::filesystem::create_directory(dotPath);
+		}
+		if (!std::filesystem::exists(statPath)) {
+			std::filesystem::create_directory(statPath);
+		}
+    }
+
+}
+
 
 
 int main(int argc, char ** argv) {
@@ -75,11 +155,8 @@ int main(int argc, char ** argv) {
 	bool useMainMaxDescriptor = 0;
 	bool useMainMinDescriptor = 0;
 
-	std::string typeProgramDescriptor = "None";
-
-
 	std::string archiveValuesStr = "";
-	std::string descriptorType = "";
+	std::string descriptorTypeStr = "";
 	size_t sizeCVT = 1000;
 
 	static struct option long_options[] = {
@@ -115,7 +192,7 @@ int main(int argc, char ** argv) {
 			case 'a': archiveValuesStr = optarg; break;
 			case 'g': saveAllGenerationsDots = atoi(optarg); break;
 			case 'o': useOnlyCloseAddEdges = atoi(optarg); break;
-			case 'd': descriptorType = optarg; break;
+			case 'd': descriptorTypeStr = optarg; break;
 			case 1: useMeanDescriptor = atoi(optarg); break;      // --dMean
 			case 2: useMedianDescriptor = atoi(optarg); break;    // --dMed
 			case 3: useAbsMeanDescriptor = atoi(optarg); break;   // --dAbsMean
@@ -128,19 +205,18 @@ int main(int argc, char ** argv) {
 			case 10: useMainStdDescriptor = atoi(optarg); break;   // --dMainStd
 			case 11: useMainMaxDescriptor = atoi(optarg); break;   // --dMainMax
 			case 12: useMainMinDescriptor = atoi(optarg); break;   // --dMainMin
-			case 13: typeProgramDescriptor = optarg; break;   // --dTypeProg
 			default:
 				std::cout << "Unrecognised option. Valid options are "
 					"'-s seed' '-p paramFile.json' '-u useCase' "
 					"'-l logsFolder' '-x xmlFile' '-h useHealthyReward' "
 					"'-a sizeArchive' '-g saveAllGenDotFiles' "
-					"'-o useOnlyCloseAddEdges' '-d descriptorType' "
+					"'-o useOnlyCloseAddEdges' '-d descriptorTypeStr' "
 					"'--dMean useMeanDescriptor' '--dMed useMedianDescriptor' "
 					"'--dAbsMean useAbsMeanDescriptor' '--dQ useQuantileDescriptor' "
 					"'--dMinMax useMinMaxDescriptor' '--cvt useCVT' '--scvt sizeCVT' "
 					"'--dMainMean useMainMeanDescriptor' '--dMainMed useMainMedianDescriptor' "
 					"'--dMainStd useMainStdDescriptor' '--dMainMax useMainMaxDescriptor' "
-					"'--dMainMin useMainMinDescriptor' '--dTypeProg typeProgramDescriptor'."  << std::endl;
+					"'--dMainMin useMainMinDescriptor'."  << std::endl;
 				exit(1);
 		}
 	}
@@ -161,67 +237,12 @@ int main(int argc, char ** argv) {
 	}
 
 
-	
-	char archiveDots[160];
-	snprintf(archiveDots, sizeof(archiveDots), "%s/archiveDots", logsFolder);
-	char archiveStats[160];
-	snprintf(archiveStats, sizeof(archiveStats), "%s/archiveStats", logsFolder);
-	std::vector<double> archiveValues;
-	if (!archiveValuesStr.empty()) {
-
-		if(descriptorType.empty() || descriptorType == "unused") {
-			throw std::runtime_error("Descriptor type must be specified when using archive values.");
-		}
-
-		std::stringstream ss(archiveValuesStr);
-		std::string token;
-		std::vector<std::string> tokens;
-		while (std::getline(ss, token, ',')) {
-			if (!token.empty()) tokens.push_back(token);
-		}
-
-		if (tokens.size() == 1) {
-			// Uniform range
-			try {
-				int n = std::stoi(tokens[0]);
-				if (n <= 0) throw std::invalid_argument("n doit être > 0");
-				for (int i = 1; i <= n; ++i) {
-					archiveValues.push_back(static_cast<double>(i) / n);
-				}
-			} catch (const std::invalid_argument& e) {
-				std::cerr << "Invalid value in -a : " << tokens[0] << std::endl;
-				exit(1);
-			}
-		} else {
-			// Custom ranges
-			for (const auto& t : tokens) {
-				try {
-					archiveValues.push_back(std::stod(t));
-				} catch (const std::invalid_argument& e) {
-					std::cerr << "Invalid value in a -a : " << t << std::endl;
-					exit(1);
-				}
-			}
-		}
-
-
-		
-		// Create archiveDots logs folder if needed
-		if (!std::filesystem::exists(archiveDots)) {
-			std::filesystem::create_directory(archiveDots);
-		}
-		if (!std::filesystem::exists(archiveStats)) {
-			std::filesystem::create_directory(archiveStats);
-		}
-	}
-
-
 
     // Save the index of the parameter file.
     int indexParam = 0;
 	std::string paramFileStr(paramFile);
 	std::smatch match;
-	std::regex re(R"((\d+)(?!.*\d))"); // Capture le dernier groupe de chiffres
+	std::regex re(R"((\d+)(?!.*\d))");
 
 	if (std::regex_search(paramFileStr, match, re)) {
 		indexParam = std::stoi(match[1]);
@@ -230,6 +251,17 @@ int main(int argc, char ** argv) {
 	}
 
 
+	
+	std::vector<std::string> archiveDots;
+	std::vector<std::string> archiveStats;
+	
+
+	std::vector<Descriptor::DescriptorType> descriptorTypes;
+	initializeArchiveParams(archiveDots, archiveStats, descriptorTypes, descriptorTypeStr, std::string(logsFolder));
+	std::vector<std::vector<double>> allArchiveValues;
+	if(!useCVT){
+		allArchiveValues = parseAndFillArchiveValues(archiveValuesStr);
+	}
 
 	// Create the instruction set for programs
 	Instructions::Set set;
@@ -249,87 +281,100 @@ int main(int argc, char ** argv) {
 	char jsonFilePath[200];  // Assurez-vous que ce soit assez grand pour contenir les deux parties concaténées.
 	snprintf(jsonFilePath, sizeof(jsonFilePath), "%s/exported_params.%s.p%d.json", logsFolder, usecase, indexParam);
 
+
 	// Instantiate the LearningEnvironment
 	MujocoWrapper* mujocoLE = nullptr;
 	if(strcmp(usecase, "humanoid") == 0){
-		mujocoLE = new MujocoHumanoidWrapper(xmlFile, descriptorType, useHealthyReward);
+		mujocoLE = new MujocoHumanoidWrapper(xmlFile, descriptorTypes, useHealthyReward);
 	} else if (strcmp(usecase, "half_cheetah") == 0) {
-		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile, descriptorType);
+		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile, descriptorTypes);
 	} else if (strcmp(usecase, "hopper") == 0) {
-		mujocoLE = new MujocoHopperWrapper(xmlFile, descriptorType, useHealthyReward);
+		mujocoLE = new MujocoHopperWrapper(xmlFile, descriptorTypes, useHealthyReward);
 	} else if (strcmp(usecase, "walker2d") == 0) {
-		mujocoLE = new MujocoWalker2DWrapper(xmlFile, descriptorType, useHealthyReward);
+		mujocoLE = new MujocoWalker2DWrapper(xmlFile, descriptorTypes, useHealthyReward);
 	} else if (strcmp(usecase, "inverted_double_pendulum") == 0) {
-		mujocoLE = new MujocoDoublePendulumWrapper(xmlFile, descriptorType);
+		mujocoLE = new MujocoDoublePendulumWrapper(xmlFile, descriptorTypes);
 	} else if (strcmp(usecase, "reacher") == 0) {
-		mujocoLE = new MujocoReacherWrapper(xmlFile, descriptorType);
+		mujocoLE = new MujocoReacherWrapper(xmlFile, descriptorTypes);
 	} else if (strcmp(usecase, "ant") == 0) {
-		mujocoLE = new MujocoAntWrapper(xmlFile, descriptorType, useHealthyReward);
+		mujocoLE = new MujocoAntWrapper(xmlFile, descriptorTypes, useHealthyReward);
 	} else {
 		throw std::runtime_error("Use case not found");
 	}
 
-	ArchiveParametrization* archiveParams;
-	if(useCVT){
-		archiveParams = new CVTArchiveParametrization(
-			mujocoLE->getNbDescriptors(), archiveValues, 0.0, 1.0, sizeCVT, descriptorType,
-			
-			// Descriptor statistics options
-			useMeanDescriptor, useMedianDescriptor,
-			useAbsMeanDescriptor, useQuantileDescriptor, useMinMaxDescriptor, 
-
-			// Main descriptor statistics options
-			useMainMeanDescriptor, useMainMedianDescriptor,
-			useMainStdDescriptor, useMainMaxDescriptor, useMainMinDescriptor,
-		
-			// For program descriptor
-			typeProgramDescriptor);
-	} else {
-		archiveParams = new ArchiveParametrization(
-			mujocoLE->getNbDescriptors(), archiveValues, descriptorType,
-			
-			// Descriptor statistics options
-			useMeanDescriptor, useMedianDescriptor,
-			useAbsMeanDescriptor, useQuantileDescriptor, useMinMaxDescriptor, 
-
-			// Main descriptor statistics options
-			useMainMeanDescriptor, useMainMedianDescriptor,
-			useMainStdDescriptor, useMainMaxDescriptor, useMainMinDescriptor,
-		
-			// For program descriptor
-			typeProgramDescriptor);
+	if(!useCVT && descriptorTypes.size() != allArchiveValues.size()){
+		throw std::runtime_error("Difference between number of descriptors and number of archive values");
 	}
+
+	std::map<Descriptor::DescriptorType ,const ArchiveParametrization*> archiveParams;
+	for(size_t idx = 0; idx < descriptorTypes.size(); idx++){
+		Descriptor::DescriptorType& descriptorType = descriptorTypes.at(idx);
+		std::vector<double> archiveValues;
+		if(useCVT){
+			archiveParams.insert(std::make_pair(descriptorType, new CVTArchiveParametrization(
+			mujocoLE->getNbDescriptors().at(descriptorType), archiveValues, 0.0, 1.0, sizeCVT, descriptorType,
+			
+			// Descriptor statistics options
+			useMeanDescriptor, useMedianDescriptor,
+			useAbsMeanDescriptor, useQuantileDescriptor, useMinMaxDescriptor, 
+
+			// Main descriptor statistics options
+			useMainMeanDescriptor, useMainMedianDescriptor,
+			useMainStdDescriptor, useMainMaxDescriptor, useMainMinDescriptor
+			)));
+		} else {
+			archiveValues = allArchiveValues.at(idx);
+			archiveParams.insert(std::make_pair(descriptorType, new ArchiveParametrization(
+			mujocoLE->getNbDescriptors().at(descriptorType), archiveValues, descriptorType,
+			
+			// Descriptor statistics options
+			useMeanDescriptor, useMedianDescriptor,
+			useAbsMeanDescriptor, useQuantileDescriptor, useMinMaxDescriptor, 
+
+			// Main descriptor statistics options
+			useMainMeanDescriptor, useMainMedianDescriptor,
+			useMainStdDescriptor, useMainMaxDescriptor, useMainMinDescriptor
+			)));
+		}
+	}
+	
+
 
 	// Instantiate and init the learning agent
 	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, 
-		*archiveParams, params, useOnlyCloseAddEdges);
+		archiveParams, params, useOnlyCloseAddEdges);
 	la.init(seed);
 
 
+	std::cout << "LOGGING FOLDER " << logsFolder << std::endl;
     std::cout << "SELECTED SEED : " << seed << std::endl;
     std::cout << "SELECTED PARAMS FILE: " << paramFile << std::endl;
-	std::cout << "SELECTED DESCRIPTORS :" << descriptorType;
-	if(descriptorType == "programLines"){
-		std::cout<<" TYPE "<<typeProgramDescriptor;
+	std::cout << "SELECTED DESCRIPTORS : ";
+	for(auto descriptorType: descriptorTypes){
+		std::cout<<Descriptor::descriptorTypeToString(descriptorType)<<" - ";
 	}
+
 	
 	std::cout << std::endl;
-	std::cout << "SELECTION METHOD :";
-	if(archiveValues.size() > 0){
-		if(useCVT){
-			std::cout<<" CVT MAP ELITES with " << la.getMapElitesArchive().getDimensions().second << " dimensions and a size " << la.getMapElitesArchive().size() << std::endl;
-		} else {
-			std::cout<<" MAP ELITES";
+	std::cout << "SELECTION METHOD(S) :"<<std::endl;
+	if(descriptorTypes.size() > 0){
+		for(size_t idx = 0; idx < descriptorTypes.size(); idx++){
+			if(useCVT){
+				std::cout<<" CVT MAP ELITES with " << la.getMapElitesArchiveAt(descriptorTypes.at(idx)).getDimensions().second << " dimensions and a size " << la.getMapElitesArchiveAt(descriptorTypes.at(idx)).size() << std::endl;
+			} else {
+				std::cout<<" MAP ELITES";
 
-			auto dims = la.getMapElitesArchive().getDimensions();
-			std::cout<<" with a "<<dims.first<<"-dimensional archive with "<<dims.second<<" dimensions resulting in size "<< (uint64_t)std::pow(dims.first, dims.second);
-			std::cout<<" Used range are [0; ";
-			for(size_t i = 0; i < archiveValues.size() - 1; i++){
-				double value = round(archiveValues[i] * 100) / 100;
-				std::cout<<value << "], ["<<value<<"; ";
-			} 
-			std::cout<<round(archiveValues[archiveValues.size() - 1]*100)/100<<"]."<<std::endl;
+				auto dims = la.getMapElitesArchiveAt(descriptorTypes.at(idx)).getDimensions();
+				std::cout<<" with a "<<dims.first<<"-dimensional archive with "<<dims.second<<" dimensions resulting in size "<< (uint64_t)std::pow(dims.first, dims.second);
+				std::cout<<" Used range are [0; ";
+				for(size_t i = 0; i < allArchiveValues.at(idx).size() - 1; i++){
+					double value = round(allArchiveValues.at(idx)[i] * 100) / 100;
+					std::cout<<value << "], ["<<value<<"; ";
+				} 
+				std::cout<<round(allArchiveValues.at(idx)[allArchiveValues.at(idx).size() - 1]*100)/100<<"]."<<std::endl;
+			}
 		}
+
 
 
 	} else if(params.useTournamentSelection){
@@ -358,11 +403,12 @@ int main(int argc, char ** argv) {
     Log::LABasicLogger log(la, logStream);
 
 	// Create the archive CSV file
-	char archivePath[250];
-	if(archiveValues.size() > 0){
-		sprintf(archivePath, "%s/archive.%" PRIu64 ".p%d.%s.csv", logsFolder, seed, indexParam, usecase);
-		la.getMapElitesArchive().initCSVarchive(archivePath);
+	for(auto descriptor: descriptorTypes){
+		char archivePath[250];
+		sprintf(archivePath, "%s/archive_%s.%" PRIu64 ".p%d.%s.csv", logsFolder, Descriptor::descriptorTypeToString(descriptor).c_str(), seed, indexParam, usecase);
+		la.getMapElitesArchiveAt(descriptor).initCSVarchive(archivePath);
 	}
+
 
 	// Create an exporter for all graphs
     char dotPath[400];
@@ -398,19 +444,21 @@ int main(int argc, char ** argv) {
 		dotExporter.print();
 
 		la.trainOneGeneration(i);
-
-		if(archiveValues.size() > 0){
-			// Update the archive CSV file
-			la.getMapElitesArchive().updateCSVArchive(archivePath, i);
+		
+		for(auto descriptor: descriptorTypes){
+			// Update the archive CSV file (TODO MAKE BETTER)
+			char archivePath[250];
+			sprintf(archivePath, "%s/archive_%s.%" PRIu64 ".p%d.%s.csv", logsFolder, Descriptor::descriptorTypeToString(descriptor).c_str(), seed, indexParam, usecase);
+			la.getMapElitesArchiveAt(descriptor).updateCSVArchive(archivePath, i);
 		}
 
 		if(i % params.stepValidation == 0 && params.doValidation){
-			if (!archiveValues.empty()) {
 
+			for(size_t idx = 0; idx < descriptorTypes.size(); idx++){
 				size_t index = 0;
-				for (const auto& elem: la.getMapElitesArchive().getAllArchive()) {
+				for (const auto& elem: la.getMapElitesArchiveAt(descriptorTypes.at(idx)).getAllArchive()) {
 					if (elem.second != nullptr && la.getTPGGraph()->hasVertex(*elem.second)) {
-						exportIndividual(elem.second, archiveDots, archiveStats, index, seed, indexParam, usecase,
+						exportIndividual(elem.second, archiveDots.at(idx), archiveStats.at(idx), index, seed, indexParam, usecase,
 										la.getTPGGraph(), dotExporter);
 					}
 					index++;
@@ -422,15 +470,19 @@ int main(int argc, char ** argv) {
 	
 	//la.getTPGGraph()->clearProgramIntrons();
 
-	if (!archiveValues.empty()) {
-		size_t index = 0;
-		for (const auto& elem: la.getMapElitesArchive().getAllArchive()) {
-			if (elem.second != nullptr) {
-				exportIndividual(elem.second, archiveDots, archiveStats, index, seed, indexParam, usecase,
-								la.getTPGGraph(), dotExporter);
+
+	if (!descriptorTypes.empty()) {
+		for(size_t idx = 0; idx < descriptorTypes.size(); idx++){
+			size_t index = 0;
+			for (const auto& elem: la.getMapElitesArchiveAt(descriptorTypes.at(idx)).getAllArchive()) {
+				if (elem.second != nullptr) {
+					exportIndividual(elem.second, archiveDots.at(idx), archiveStats.at(idx), index, seed, indexParam, usecase,
+									la.getTPGGraph(), dotExporter);
+				}
+				index++;
 			}
-			index++;
 		}
+
 	} else {
 		la.keepBestPolicy();
 		const auto* best = la.getBestRoot().first;
