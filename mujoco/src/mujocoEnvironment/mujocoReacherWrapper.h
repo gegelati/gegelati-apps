@@ -24,13 +24,11 @@ public:
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoReacherWrapper(const char *pXmlFile, std::vector<Descriptor::DescriptorType> descriptorTypes={}) :
-		MujocoWrapper(2, 10, descriptorTypes), xmlFile{pXmlFile}
+	MujocoReacherWrapper(const char *pXmlFile) :
+		MujocoWrapper(2, 10), xmlFile{pXmlFile}
 		{
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
 			initialize_simulation();
-
-			initialize_descriptors();
 		};
 
     /**
@@ -40,8 +38,6 @@ public:
 	{   
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		initialize_simulation();
-
-		initialize_descriptors();
     }
 
     ~MujocoReacherWrapper() {

@@ -21,14 +21,14 @@ public:
 
 
 
-	MujocoHalfCheetahWrapper(const char *pXmlFile, std::vector<Descriptor::DescriptorType> descriptorTypes={}, bool exclude_current_positions_from_observation = true) :
-		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 17:18, descriptorTypes), xmlFile{pXmlFile},
+	MujocoHalfCheetahWrapper(const char *pXmlFile, bool exclude_current_positions_from_observation = true) :
+		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 17:18), xmlFile{pXmlFile},
 		exclude_current_positions_from_observation_{exclude_current_positions_from_observation}
 		{
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
 			initialize_simulation();
 			// Initialize the descriptors
-			initialize_descriptors();
+			initialize_feet_info();
 		};
 
     /**
@@ -40,7 +40,7 @@ public:
 		model_path_ = MujocoWrapper::ExpandEnvVars(other.xmlFile);
 		initialize_simulation();
 		// Initialize the descriptors
-		initialize_descriptors();
+		initialize_feet_info();
 
     }
 
@@ -110,7 +110,7 @@ public:
 	void computeState();
 
 
-	virtual void initialize_descriptors() override;
+	virtual void initialize_feet_info();
 
 };
 

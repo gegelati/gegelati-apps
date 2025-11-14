@@ -13,7 +13,6 @@
 #include <glfw3.h>
 #include <filesystem>
 
-#include "mujocoMapEliteAgent.h"
 
 // keyboard callback
 void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods) {
@@ -232,32 +231,28 @@ int main(int argc, char ** argv) {
 	Learn::LearningParameters params;
 	File::ParametersParser::loadParametersFromJson(paramFile, params);
 
-
-    std::vector<Descriptor::DescriptorType> descriptorTypes;
 	// Instantiate the LearningEnvironment
 	MujocoWrapper* mujocoLE = nullptr;
 	if(strcmp(usecase, "humanoid") == 0){
-		mujocoLE = new MujocoHumanoidWrapper(xmlFile, descriptorTypes, useHealthyReward, useContactForce);
+		mujocoLE = new MujocoHumanoidWrapper(xmlFile, useHealthyReward, useContactForce);
 	} else if (strcmp(usecase, "half_cheetah") == 0) {
-		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile, descriptorTypes);
+		mujocoLE = new MujocoHalfCheetahWrapper(xmlFile);
 	} else if (strcmp(usecase, "hopper") == 0) {
-		mujocoLE = new MujocoHopperWrapper(xmlFile, descriptorTypes, useHealthyReward);
+		mujocoLE = new MujocoHopperWrapper(xmlFile, useHealthyReward);
 	} else if (strcmp(usecase, "walker2d") == 0) {
-		mujocoLE = new MujocoWalker2DWrapper(xmlFile, descriptorTypes, useHealthyReward);
+		mujocoLE = new MujocoWalker2DWrapper(xmlFile, useHealthyReward);
 	} else if (strcmp(usecase, "reacher") == 0) {
-		mujocoLE = new MujocoReacherWrapper(xmlFile, descriptorTypes);
+		mujocoLE = new MujocoReacherWrapper(xmlFile);
 	} else if (strcmp(usecase, "inverted_double_pendulum") == 0) {
-		mujocoLE = new MujocoDoublePendulumWrapper(xmlFile, descriptorTypes);
+		mujocoLE = new MujocoDoublePendulumWrapper(xmlFile);
 	} else if (strcmp(usecase, "ant") == 0) {
-		mujocoLE = new MujocoAntWrapper(xmlFile, descriptorTypes, useHealthyReward, useContactForce);
+		mujocoLE = new MujocoAntWrapper(xmlFile, useHealthyReward, useContactForce);
 	} else {
 		throw std::runtime_error("Use case not found");
 	}
 
-    std::map<Descriptor::DescriptorType, const ArchiveParametrization*> archive;
-    archive.insert(std::make_pair(Descriptor::DescriptorType::ActionValues, new ArchiveParametrization(1)));
 	// Instantiate and init the learning agent
-	Learn::MujocoMapEliteLearningAgent la(*mujocoLE, set, archive, params);
+	Learn::ParallelLearningAgent la(*mujocoLE, set, params);
 	la.init(seed);
 
     auto &tpg = *la.getTPGGraph();
@@ -271,17 +266,13 @@ int main(int argc, char ** argv) {
         // Basic logger
         Log::LABasicLogger basicLogger(la);
 		auto results = la.evaluateAllRoots(0, Learn::LearningMode::TRAINING);
-        // Save the best score of this generation
-        la.updateBestScoreLastGen(results);
         // Update the best
-        la.updateEvaluationRecords(results);
+        la.getSelector()->updateEvaluationRecords(results);
         // Keep best policy
-        la.keepBestPolicy();
+        la.getSelector()->keepBestPolicy();
 
         auto iter = results.begin();
         std::advance(iter, results.size() - 1);
-        double max = iter->first->getResult();
-        std::cout<<max<<std::endl;
 
 
         char bestDot[250];

@@ -30,8 +30,8 @@ protected:
 	/// Number of actions since the last reset
 	uint64_t nbActionsExecuted = 0;
 
-	Data::PrimitiveTypeArray<double> currentState;
 	uint64_t stateSize;
+	Data::PrimitiveTypeArray<double> currentState;
 
 	std::vector<std::vector<double>> stateData;
 	std::vector<std::vector<double>> actionData;
@@ -48,9 +48,9 @@ public:
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoWrapper(uint64_t nbActions, uint64_t stateSize, std::vector<Descriptor::DescriptorType> descriptorTypes={}) :
-		LearningEnvironment(nbActions, false),
-		currentState{ stateSize }, stateSize{stateSize}, descriptorTypes{descriptorTypes}
+	MujocoWrapper(uint64_t nbActions, uint64_t stateSizes) :
+		LearningEnvironment(nbActions, false), stateSize{stateSizes},
+		currentState{ stateSizes }
 	{};
 
 	/**
@@ -59,8 +59,7 @@ public:
 	* Default copy constructor since all attributes are trivially copyable.
 	*/
 	MujocoWrapper(const MujocoWrapper& other) : LearningEnvironment(other.nbActions, false),
-		currentState{other.currentState}, stateSize{other.stateSize}, 
-		descriptorTypes{other.descriptorTypes} {}
+		stateSize{other.stateSize}, currentState{other.currentState} {}
 	
 
 	/// Inherited via LearningEnvironment
@@ -85,9 +84,6 @@ public:
     int frame_skip_ = 5;  // Number of frames per simlation step
     int obs_size_;  // Number of variables in observation vector
 
-	std::map<Descriptor::DescriptorType, std::vector<std::vector<double>>> descriptors; // Descriptors
-	std::vector<Descriptor::DescriptorType> descriptorTypes;
-
     void initialize_simulation();
 
     void set_state(std::vector<double>& qpos, std::vector<double>& qvel);
@@ -102,18 +98,19 @@ public:
 
 	std::string ExpandEnvVars(const std::string &str);
 
-	virtual void initialize_descriptors() {}
-	virtual const std::map<Descriptor::DescriptorType, size_t> getNbDescriptors();
-	virtual void computeDescriptors(std::vector<double>& actionsID);
-	virtual const std::map<Descriptor::DescriptorType, std::vector<std::vector<double>>>& getDescriptors() const {
-		return descriptors;
-	}
-
-	
-	void computeFeetContact(std::vector<std::vector<double>>& currentDescriptors);
-
 	virtual void registerStateAndAction(const std::vector<double>& actionsID);
 	virtual void printStateAndAction(std::string path) const;
+
+	// Getter for  feet_geom_ids_, feet_in_contact_ and footGeomToIndex
+	const std::vector<int>& getFeetGeomIds() const {
+		return feet_geom_ids_;
+	}
+	const std::vector<bool>& getFeetInContact() const {
+		return feet_in_contact_;
+	}
+	const std::unordered_map<int, size_t>& getFootGeomToIndex() const {
+		return footGeomToIndex;
+	}
 
 };
 

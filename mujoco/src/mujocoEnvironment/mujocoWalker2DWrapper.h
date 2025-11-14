@@ -33,8 +33,8 @@ public:
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoWalker2DWrapper(const char *pXmlFile, std::vector<Descriptor::DescriptorType> descriptorTypes={}, bool useHealthyReward_p=true, bool exclude_current_positions_from_observation = true) :
-		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 17:18, descriptorTypes), 
+	MujocoWalker2DWrapper(const char *pXmlFile, bool useHealthyReward_p=true, bool exclude_current_positions_from_observation = true) :
+		MujocoWrapper(6, (exclude_current_positions_from_observation) ? 17:18), 
 		xmlFile{pXmlFile}, useHealthyReward{useHealthyReward_p},
 		exclude_current_positions_from_observation_{exclude_current_positions_from_observation}
 		{
@@ -45,8 +45,8 @@ public:
 			initialize_simulation();
 
 			
-			// Initialize the descriptors
-			initialize_descriptors();
+			// Initialize the feet info
+			initialize_feet_info();
 		};
 
     /**
@@ -63,8 +63,8 @@ public:
 		frame_skip_ = 4;
 		initialize_simulation();
 		
-		// Initialize the descriptors
-		initialize_descriptors();
+		// Initialize the feet info
+		initialize_feet_info();
     }
 
     ~MujocoWalker2DWrapper() {
@@ -139,7 +139,7 @@ public:
 
     bool is_healthy() const;
 
-	virtual void initialize_descriptors() override;
+	virtual void initialize_feet_info();
 };
 
 #endif // !MUJOCO_WALKER2D_WRAPPER_H

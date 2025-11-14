@@ -75,9 +75,6 @@ void MujocoDoublePendulumWrapper::doActions(std::vector<double> actionsID)
 	this->totalReward += reward;
 
 	this->nbActionsExecuted++;
-
-
-	computeDescriptors(actionsID);
 }
 
 

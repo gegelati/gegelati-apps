@@ -24,14 +24,12 @@ public:
 	*
 	* Attributes angle and velocity are set to 0.0 by default.
 	*/
-	MujocoDoublePendulumWrapper(const char *pXmlFile, std::vector<Descriptor::DescriptorType> descriptorTypes={}) :
-		MujocoWrapper(1, 11, descriptorTypes), 
+	MujocoDoublePendulumWrapper(const char *pXmlFile) :
+		MujocoWrapper(1, 11), 
 		xmlFile{pXmlFile}
 		{
 			model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
 			initialize_simulation();
-
-			initialize_descriptors();
 			
 		};
 
@@ -43,7 +41,6 @@ public:
 	{
 		model_path_ = MujocoWrapper::ExpandEnvVars(xmlFile);
 		initialize_simulation();
-		initialize_descriptors();
     }
 
     ~MujocoDoublePendulumWrapper() {

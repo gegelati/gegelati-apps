@@ -53,10 +53,6 @@ void MujocoWalker2DWrapper::doActions(std::vector<double> actionsID)
 
 	this->nbActionsExecuted++;
 
-
-
-	computeDescriptors(actionsID);
-
 }
 
 bool MujocoWalker2DWrapper::isCopyable() const
@@ -131,7 +127,7 @@ void MujocoWalker2DWrapper::computeState(){
 }
 
 
-void MujocoWalker2DWrapper::initialize_descriptors() {
+void MujocoWalker2DWrapper::initialize_feet_info() {
 
 	// Initialize values for feet contact
 	feet_geom_ids_.clear();
@@ -141,5 +137,4 @@ void MujocoWalker2DWrapper::initialize_descriptors() {
 	for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
 		footGeomToIndex[feet_geom_ids_[j]] = j;
 	}
-	MujocoWrapper::initialize_descriptors();
 }

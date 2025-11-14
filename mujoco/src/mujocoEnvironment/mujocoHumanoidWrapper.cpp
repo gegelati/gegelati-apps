@@ -77,9 +77,6 @@ void MujocoHumanoidWrapper::doActions(std::vector<double> actionsID)
 	this->totalReward += reward + int(use_healthy_reward) * healthy_reward();
 	this->totalUtility += reward + healthy_reward();
     this->nbActionsExecuted++;
-
-
-	computeDescriptors(actionsID);
 }
 
 
@@ -194,7 +191,7 @@ void MujocoHumanoidWrapper::computeState() {
 }
 
 
-void MujocoHumanoidWrapper::initialize_descriptors() {
+void MujocoHumanoidWrapper::initialize_feet_info() {
 
 	// Initialize values for feet contact
     feet_geom_ids_.clear();
@@ -204,6 +201,4 @@ void MujocoHumanoidWrapper::initialize_descriptors() {
     for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
         footGeomToIndex[feet_geom_ids_[j]] = j;
     }
-
-    MujocoWrapper::initialize_descriptors();
 }

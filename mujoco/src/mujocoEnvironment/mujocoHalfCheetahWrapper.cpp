@@ -48,9 +48,6 @@ void MujocoHalfCheetahWrapper::doActions(std::vector<double> actionsID)
 	this->totalReward += reward;
 
 	this->nbActionsExecuted++;
-
-
-	computeDescriptors(actionsID);
 	
 }
 
@@ -105,7 +102,7 @@ void MujocoHalfCheetahWrapper::computeState(){
 }
 
 
-void MujocoHalfCheetahWrapper::initialize_descriptors() {
+void MujocoHalfCheetahWrapper::initialize_feet_info() {
 
 	// Initialize values for feet contact
 	feet_geom_ids_.clear();
@@ -115,6 +112,4 @@ void MujocoHalfCheetahWrapper::initialize_descriptors() {
 	for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
 		footGeomToIndex[feet_geom_ids_[j]] = j;
 	}
-
-	MujocoWrapper::initialize_descriptors();
 }

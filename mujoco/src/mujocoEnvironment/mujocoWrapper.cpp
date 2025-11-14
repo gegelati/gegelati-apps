@@ -26,13 +26,6 @@ void MujocoWrapper::reset(size_t seed, Learn::LearningMode mode, uint16_t iterat
 	this->nbActionsExecuted = 0;
 	this->totalReward = 0.0;
 	this->totalUtility = 0.0;
-
-	// Reset descriptors
-	this->descriptors.clear();
-	for(auto descriptorType: this->descriptorTypes){
-		std::vector<std::vector<double>> vect;
-		this->descriptors.insert(std::make_pair(descriptorType, vect));
-	}
 }
 
 
@@ -130,68 +123,6 @@ std::string MujocoWrapper::ExpandEnvVars(const std::string &str) {
 	}
 	return result;
 }
-
-const std::map<Descriptor::DescriptorType, size_t> MujocoWrapper::getNbDescriptors()
-{
-	std::map<Descriptor::DescriptorType, size_t> nbDescriptors;
-	for(auto descriptorType: this->descriptorTypes){
-		if(descriptorType == Descriptor::DescriptorType::FeetContact){
-			nbDescriptors.insert(std::make_pair(descriptorType, feet_geom_ids_.size()));
-		} else {
-			nbDescriptors.insert(std::make_pair(descriptorType, nbActions));
-		}
-	}
-	return nbDescriptors;
-}
-
-
-
-void MujocoWrapper::computeDescriptors(std::vector<double>& actionsID) {
-	auto itDescriptors = descriptors.begin();
-	while(itDescriptors != descriptors.end()){
-		if(itDescriptors->first == Descriptor::DescriptorType::FeetContact){
-			computeFeetContact(itDescriptors->second);
-		} else if (itDescriptors->first == Descriptor::DescriptorType::ActionValues) {
-			std::vector<double> descriptorValues;
-			for(size_t i = 0; i < actionsID.size(); ++i) {
-				descriptorValues.push_back(actionsID[i]);
-			}
-			itDescriptors->second.push_back(descriptorValues);
-		}
-		itDescriptors++;
-	}
-}
-
-void MujocoWrapper::computeFeetContact(std::vector<std::vector<double>>& currentDescriptors) {
-    
-	std::vector<double> descriptorsValues(feet_geom_ids_.size(), 0.0);
-	std::set<uint64_t> increasedLegs;
-
-    for (int i = 0; i < d_->ncon; ++i) {
-        const mjContact& contact = d_->contact[i];
-        int geom1 = contact.geom1;
-        int geom2 = contact.geom2;
-
-        // Check if geom1 is a foot
-        auto it1 = footGeomToIndex.find(geom1);
-        if (it1 != footGeomToIndex.end() && increasedLegs.find(it1->second) == increasedLegs.end()) {
-            descriptorsValues[it1->second]++;
-            increasedLegs.insert(it1->second);
-            continue;
-        }
-
-        // Check if geom2 is a foot
-        auto it2 = footGeomToIndex.find(geom2);
-        if (it2 != footGeomToIndex.end() && increasedLegs.find(it2->second) == increasedLegs.end()) {
-            descriptorsValues[it2->second]++;
-            increasedLegs.insert(it2->second);
-        }
-    }
-
-	currentDescriptors.push_back(descriptorsValues);
-}
-
-
 
 
 void MujocoWrapper::registerStateAndAction(const std::vector<double>& actionsID)

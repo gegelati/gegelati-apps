@@ -48,9 +48,6 @@ void MujocoHopperWrapper::doActions(std::vector<double> actionsID)
 	this->totalUtility += reward + healthy_reward();
 
 	this->nbActionsExecuted++;
-
-
-	computeDescriptors(actionsID);
 }
 
 bool MujocoHopperWrapper::isCopyable() const
@@ -134,7 +131,7 @@ void MujocoHopperWrapper::computeState(){
 }
 
 
-void MujocoHopperWrapper::initialize_descriptors() {
+void MujocoHopperWrapper::initialize_feet_info() {
 
 	// Initialize values for feet contact
 	feet_geom_ids_.clear();
@@ -143,7 +140,5 @@ void MujocoHopperWrapper::initialize_descriptors() {
 	for (size_t j = 0; j < feet_geom_ids_.size(); ++j) {
 		footGeomToIndex[feet_geom_ids_[j]] = j;
 	}
-	
-	MujocoWrapper::initialize_descriptors();
 	
 }
