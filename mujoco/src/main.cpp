@@ -92,6 +92,8 @@ void initializeArchiveParams(std::vector<std::string>& archiveDots,
         	descriptors.push_back(std::make_shared<Selector::MapElites::DefaultDescriptors::ActionValues>());
 		} else if (token == "FeetContact"){
         	descriptors.push_back(std::make_shared<Selector::MapElites::CustomDescriptors::FeetContact>());
+		} else if (token == "NbInstr"){
+        	descriptors.push_back(std::make_shared<Selector::MapElites::CustomDescriptors::NbInstr>());
 		} else {
 			throw std::runtime_error("Descriptor type not found");
 		}
@@ -179,6 +181,12 @@ int main(int argc, char ** argv) {
 	if (!std::filesystem::exists(dotGen)) {
 		std::filesystem::create_directory(dotGen);
 	}
+	char bestDot[160];
+	snprintf(bestDot, sizeof(bestDot), "%s/bestDot", logsFolder);
+	// Create dot per generation folder of the best agent if needed
+	if (!std::filesystem::exists(bestDot)) {
+		std::filesystem::create_directory(bestDot);
+	}
 
 
 
@@ -251,19 +259,20 @@ int main(int argc, char ** argv) {
 
 	// Creates descriptors
 	std::vector<std::shared_ptr<Selector::MapElites::MapElitesDescriptor>> descriptors;
-	initializeArchiveParams(archiveDots, archiveStats, descriptors, descriptorTypeStr, std::string(logsFolder));
-
-
 	std::vector<size_t> allArchiveValues;
-	if(!useCVT){
-		allArchiveValues = parseAndFillArchiveValues(archiveValuesStr);
-		if(descriptors.size() != allArchiveValues.size()){
-			throw std::runtime_error("Difference between number of descriptors and number of archive values");
-		}
-	}
 
 	std::map<std::shared_ptr<const Selector::MapElites::MapElitesDescriptor>, std::shared_ptr<Selector::MapElites::MapElitesArchive>> archives;
 	if(params.selection._selectionMode == "mapElites") {
+
+
+		initializeArchiveParams(archiveDots, archiveStats, descriptors, descriptorTypeStr, std::string(logsFolder));
+		if(!useCVT){
+			allArchiveValues = parseAndFillArchiveValues(archiveValuesStr);
+			if(descriptors.size() != allArchiveValues.size()){
+				throw std::runtime_error("Difference between number of descriptors and number of archive values");
+			}
+		}
+
 		std::shared_ptr<Selector::Selector> selector = la.getSelector();
 		auto mapElitesSelector = std::dynamic_pointer_cast<Selector::MapElitesSelector>(selector);
 		if(mapElitesSelector == nullptr){
@@ -284,18 +293,17 @@ int main(int argc, char ** argv) {
 	std::cout << "LOGGING FOLDER " << logsFolder << std::endl;
     std::cout << "SELECTED SEED : " << seed << std::endl;
     std::cout << "SELECTED PARAMS FILE: " << paramFile << std::endl;
-	std::cout << "SELECTED DESCRIPTORS : ";
+
 
 	
-	std::cout << std::endl;
 	std::cout << "SELECTION METHOD(S) :"<<std::endl;
 	if(params.selection._selectionMode == "mapElites"){
 		for(size_t idx = 0; idx < descriptors.size(); idx++){
 			if(useCVT){
 				
-				std::cout<<" CVT MAP ELITES with " << archives.begin()->second->getDimensions().second << " dimensions and a size " << sizeCVT << std::endl;
+				std::cout<<" - CVT MAP ELITES with " << archives.begin()->second->getDimensions().second << " dimensions and a size " << sizeCVT << " for descriptor "<< descriptors[idx]->getName() << std::endl;
 			} else {
-				std::cout<<" MAP ELITES";
+				std::cout<<" - MAP ELITES";
 
 				auto dims = archives.begin()->second->getDimensions();
 				std::cout<<" with a "<<dims.first<<"-dimensional archive with "<<dims.second<<" dimensions resulting in size "<< (uint64_t)std::pow(dims.first, dims.second)<<std::endl;
@@ -305,9 +313,9 @@ int main(int argc, char ** argv) {
 
 
 	} else if(params.selection._selectionMode == "tournament"){
-		std::cout<<" TOURNAMENT SELECTION"<<std::endl;
+		std::cout<<" - TOURNAMENT SELECTION"<<std::endl;
 	} else {
-		std::cout<<" TRUNCATION SELECTION"<<std::endl;
+		std::cout<<" - TRUNCATION SELECTION"<<std::endl;
 	}
 	std::cout << "START MUJOCO APPLICATION WITH ENVIRONMENT "<< usecase << std::endl;
 	std::cout << "NUMBER OF THREADS " << params.nbThreads << std::endl;
@@ -326,17 +334,18 @@ int main(int argc, char ** argv) {
     Log::LABasicLogger log(la, logStream);
 
 
-	std::vector<Log::MapElitesArchiveLogger*> loggerArchives;
+	std::map<std::shared_ptr<Log::MapElitesArchiveLogger>, std::shared_ptr<std::ofstream>> loggerArchives;
 	// Create the archive CSV file
 	for(auto pair: archives){
 		// Basic Logger
 		char logArchive[250];
 		sprintf(logArchive, "%s/archive_%s.%" PRIu64 ".p%d.%s.csv", logsFolder, pair.first->getName().c_str(), seed, indexParam, usecase);
-		std::ofstream logArchiveStream;
-		logArchiveStream.open(logArchive);
-		Log::MapElitesArchiveLogger loggerArchive(*pair.second, la, logArchiveStream);
-		loggerArchives.push_back(&loggerArchive);
+		std::shared_ptr<std::ofstream> logArchiveStream = std::make_shared<std::ofstream>();
+		logArchiveStream->open(logArchive);
+		std::shared_ptr<Log::MapElitesArchiveLogger> loggerArchive = std::make_shared<Log::MapElitesArchiveLogger>(*pair.second, la, *logArchiveStream);
+		loggerArchives.insert({loggerArchive, logArchiveStream});
 	}
+
 
 
 	// Create an exporter for all graphs
@@ -388,6 +397,8 @@ int main(int argc, char ** argv) {
 				}
 				idxArchive++;
 			}
+			exportIndividual(la.getSelector()->getBestRoot().first, bestDot, bestDot, i, seed, indexParam, usecase,
+							la.getTPGGraph(), dotExporter);
 		}
 	}
 	

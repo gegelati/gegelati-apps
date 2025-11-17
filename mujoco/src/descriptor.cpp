@@ -78,3 +78,44 @@ void Selector::MapElites::CustomDescriptors::FeetContact::
         metrics[idx] /= nbStepsExecuted;
     }
 }
+
+
+
+void Selector::MapElites::CustomDescriptors::NbInstr::initDescriptor(
+    const TPG::TPGGraph& graph,
+    const Learn::LearningEnvironment& learningEnvironment)
+{
+    this->init = true;
+    this->minRange = 0.0;
+    this->maxRange = 1.0;
+
+    const auto& params = graph.getEnvironment().getParams();
+    if(!params.mutation.tpg.useActionProgram || !params.mutation.tpg.useMultiActionProgram || params.mutation.tpg.ratioTeamsOverActions != 0.0){
+        throw std::runtime_error("NbInstr descriptor can only be used with MAPLE");
+    }
+    
+    this->nbDescriptors = learningEnvironment.getNbActions();
+}
+
+std::string Selector::MapElites::CustomDescriptors::NbInstr::getName() const
+{
+    return "NbInstr";
+}
+
+void Selector::MapElites::CustomDescriptors::NbInstr::
+    extractMetricsEpisode(
+        std::vector<double>& metrics, const TPG::TPGVertex* agent,
+        size_t nbStepsExecuted,
+        const Learn::LearningEnvironment& learningEnvironment) const
+{
+    if(dynamic_cast<const TPG::TPGAction*>(agent) == nullptr){
+        throw std::runtime_error("NbInstr descriptor can only be used with TPGAction vertices");
+    }
+
+    // Get the number of lines
+    for(auto edge: agent->getOutgoingEdges()){
+        size_t actionID = dynamic_cast<TPG::TPGActionEdge*>(edge)->getActionClass();
+        size_t nbLines = edge->getProgramSharedPointer()->getNbLines();
+        metrics[actionID] = static_cast<double>(nbLines);
+    }
+}
