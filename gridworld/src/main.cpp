@@ -65,7 +65,7 @@ int main() {
 	}
 
 	// Keep best policy
-	la.keepBestPolicy();
+	la.getSelector()->keepBestPolicy();
 
 	// Clear introns instructions
 	la.getTPGGraph()->clearProgramIntrons();
@@ -76,7 +76,7 @@ int main() {
 
 	TPG::PolicyStats ps;
 	ps.setEnvironment(la.getTPGGraph()->getEnvironment());
-	ps.analyzePolicy(la.getBestRoot().first);
+	ps.analyzePolicy(la.getSelector()->getBestRoot().first);
 	std::ofstream bestStats;
 	bestStats.open("out_best_stats.md");
 	bestStats << ps;
