@@ -14,3 +14,7 @@
 	path = tic-tac-toe
 	url = git@github.com:gegelati/app-tic-tac-toe.git
 	branch = main
+[submodule "gridworld"]
+	path = gridworld
+	url = git@github.com:gegelati/app-gridworld.git
+	branch = main

@@ -6,6 +6,7 @@ The purpose of this repository is to gather several applications built with the 
 
 | App name  | Description                           | Lib. version |
 | --------- | ------------------------------------- | -------------|
+| Gridworld | Control of an agent in a 2D maze.     | latest       |
 | MNIST     | Classification of handwritten digits. | 2.0.0        |
 | Pendulum  | Control of an inverted pendulum.      | latest       |
 | Stickgame | Nim game with 21 sticks.              | 2.0.0        |

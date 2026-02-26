@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        app: [mnist, pendulum, stickgame, tic-tac-toe]
+        app: [mnist, pendulum, stickgame, tic-tac-toe, gridworld]
       fail-fast: false # Continue running all jobs even if one fails
     steps:
       - name: Checkout
@@ -32,7 +32,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        app: [pendulum]
+        app: [pendulum, gridworld]
       fail-fast: false # Continue running all jobs even if one fails
     steps:
       - name: Checkout
@@ -55,7 +55,7 @@ jobs:
           git clone --branch $([ ${GITHUB_REF##*/} == "master" ] && echo "master" || echo "develop") $() https://github.com/gegelati/gegelati.git
           cd gegelati/bin
           cmake .. -DCMAKE_BUILD_TYPE=Release
-          sudo make install
+          sudo make install -j$(nproc)
       - name: Switch app to matching branch
         run: |
           git submodule set-branch --branch $([ ${GITHUB_REF##*/} == "master" ] && echo "main" || echo "develop") ${{ matrix.app }} 
