@@ -10,7 +10,7 @@ jobs:
       fail-fast: false # Continue running all jobs even if one fails
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           submodules: 'true' # Checkout all submodules
       - name: Install Doxygen
@@ -36,7 +36,7 @@ jobs:
       fail-fast: false # Continue running all jobs even if one fails
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           submodules: 'true' # Checkout all submodules
       - name: Install Doxygen
@@ -58,8 +58,8 @@ jobs:
           sudo make install -j$(nproc)
       - name: Switch app to matching branch
         run: |
-          git submodule set-branch --branch $([ ${GITHUB_REF##*/} == "master" ] && echo "main" || echo "develop") ${{ matrix.app }} 
-          git submodule update --remote --checkout ${{ matrix.app }}
+          cd ${{ matrix.app }}
+          git checkout $([ ${GITHUB_REF##*/} == "master" ] && echo "main" || echo "develop") ${{ matrix.app }} 
         shell: bash
       - name: Compile appli
         run: |
