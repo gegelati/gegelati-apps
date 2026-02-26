@@ -1,0 +1,3 @@
+[submodule "app-mnist"]
+	path = mnist
+	url = git@github.com:gegelati/app-mnist.git
