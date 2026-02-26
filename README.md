@@ -4,7 +4,8 @@ The purpose of this repository is to gather several applications built with the 
 
 ## Apps overview
 
-| App name | Description                           | Lib. version |
-| -------- | ------------------------------------- | -------------|
-| MNIST    | Classification of handwritten digits. | 2.0.0        |
-| Pendulum | Control of an inverted pendulum.      | 2.0.0        |
+| App name  | Description                           | Lib. version |
+| --------- | ------------------------------------- | -------------|
+| MNIST     | Classification of handwritten digits. | 2.0.0        |
+| Pendulum  | Control of an inverted pendulum.      | 2.0.0        |
+| Stickgame | Nim game with 21 sticks.              | 2.0.0        |

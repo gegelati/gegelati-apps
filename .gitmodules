@@ -6,3 +6,7 @@
 	path = pendulum
 	url = git@github.com:gegelati/app-pendulum.git
 	branch = main
+[submodule "stickgame"]
+	path = stickgame
+	url = git@github.com:gegelati/app-stickgame.git
+	branch = main
