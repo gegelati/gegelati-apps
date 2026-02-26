@@ -39,6 +39,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: 'true' # Checkout all submodules
+          fetch-depth: 0 # Fetch all history for all branches and tags
       - name: Install Doxygen
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt install doxygen
@@ -59,7 +60,7 @@ jobs:
       - name: Switch app to matching branch
         run: |
           cd ${{ matrix.app }}
-          git checkout $([ ${GITHUB_REF##*/} == "master" ] && echo "main" || echo "develop") ${{ matrix.app }} 
+          git checkout $([ ${GITHUB_REF##*/} == "master" ] && echo "main" || echo "develop")
         shell: bash
       - name: Compile appli
         run: |
