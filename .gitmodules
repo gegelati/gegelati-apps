@@ -2,3 +2,7 @@
 	path = mnist
 	url = git@github.com:gegelati/app-mnist.git
 	branch = main
+[submodule "pendulum"]
+	path = pendulum
+	url = git@github.com:gegelati/app-pendulum.git
+	branch = main
