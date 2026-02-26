@@ -46,21 +46,21 @@ jobs:
       - name: Install gegelati Windows
         if: matrix.os == 'windows-latest'
         run: |
-          if [[ "${{ github.ref }}" == *"master" ]] || [[ "${{ github.base_ref }}" == *"master" ]] || [[ "${{ github.ref }}" == *"tags/v"* ]]; then curl -L -J $(curl -s https://api.github.com/repos/gegelati/gegelati/releases/latest | grep "browser_download_url.*gegelatilib-msvc.*zip" | cut -d':' -f 2,3 | tr -d \") -o gegelatilib-latest.zip; else curl https://gegelati.github.io/neutral-builds/gegelatilib-msvc-latest-develop.zip -o gegelatilib-latest.zip;  fi
+          if [[ "${{ github.ref }}" == *"main" ]] || [[ "${{ github.base_ref }}" == *"main" ]] || [[ "${{ github.ref }}" == *"tags/v"* ]]; then curl -L -J $(curl -s https://api.github.com/repos/gegelati/gegelati/releases/latest | grep "browser_download_url.*gegelatilib-msvc.*zip" | cut -d':' -f 2,3 | tr -d \") -o gegelatilib-latest.zip; else curl https://gegelati.github.io/neutral-builds/gegelatilib-msvc-latest-develop.zip -o gegelatilib-latest.zip;  fi
           7z x gegelatilib-latest.zip
           echo "LATEST_FOLDER=$(find -maxdepth 1 -regextype posix-egrep -regex "./gegelatilib-[0-9]+\.[0-9]+\.[0-9]+\$" | cut -d'/' -f 2)" >> $GITHUB_ENV
         shell: bash
       - name: Install gegelati Ubuntu
         if: matrix.os == 'ubuntu-latest'
         run: |
-          git clone --branch $([ ${GITHUB_REF##*/} == "master" ] && echo "master" || echo "develop") $() https://github.com/gegelati/gegelati.git
+          git clone --branch $([ ${GITHUB_REF##*/} == "main" ] && echo "master" || echo "develop") $() https://github.com/gegelati/gegelati.git
           cd gegelati/bin
           cmake .. -DCMAKE_BUILD_TYPE=Release
           sudo make install -j$(nproc)
       - name: Switch app to matching branch
         run: |
           cd ${{ matrix.app }}
-          git checkout $([ ${GITHUB_REF##*/} == "master" ] && echo "main" || echo "develop")
+          git checkout $([ ${GITHUB_REF##*/} == "main" ] && echo "main" || echo "develop")
         shell: bash
       - name: Compile appli
         run: |
