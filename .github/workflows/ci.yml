@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        app: [mnist, pendulum, stickgame]
+        app: [mnist, pendulum, stickgame, tic-tac-toe]
     steps:
       - name: Checkout
         uses: actions/checkout@v2

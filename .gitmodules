@@ -10,3 +10,7 @@
 	path = stickgame
 	url = git@github.com:gegelati/app-stickgame.git
 	branch = main
+[submodule "tic-tac-toe"]
+	path = tic-tac-toe
+	url = git@github.com:gegelati/app-tic-tac-toe.git
+	branch = main
